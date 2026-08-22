@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm -v)",
+      "Bash(npm -v)",
+      "Bash(supabase --version)",
+      "Bash(docker --version)",
+      "Bash(git --version)",
+      "Bash(npm view *)",
+      "Bash(curl -s https://nodejs.org/dist/index.json)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);const seen=new Set\\(\\);j.filter\\(r=>r.lts\\).forEach\\(r=>{if\\(!seen.has\\(r.lts\\)\\){seen.add\\(r.lts\\);console.log\\(r.lts, r.version, r.date\\)}}\\)}\\)\")",
+      "Bash(corepack enable *)",
+      "Bash(corepack prepare *)",
+      "Read(//private/tmp/**)",
+      "Bash(npx --yes create-next-app@16.3.2 --help)",
+      "Bash(brew --version)",
+      "Read(//Users/gabrielamorim/.nvm/**)",
+      "Bash([ -s \"$HOME/.nvm/nvm.sh\" ])",
+      "Bash(brew list *)",
+      "Read(//Applications/**)"
+    ]
+  }
+}

@@ -1,0 +1,202 @@
+/**
+ * Matriz de permissão — FONTE ÚNICA DA VERDADE (spec §10.3).
+ *
+ * Nada de `if (role === 'owner')` espalhado pelo código. Toda decisão de
+ * autorização da aplicação passa por `can()`.
+ *
+ * Este arquivo é espelhado por `app.has_menu_permission()` no banco
+ * (migration 0012). A duplicação é deliberada: são duas camadas de aplicação,
+ * e a API pode ser contornada — a policy do Postgres, não.
+ *
+ * Regra que atravessa tudo: `roles` é ARRAY. Um funcionário acumula funções
+ * (spec P1b), então a checagem é sempre pertinência, nunca igualdade.
+ */
+
+export const ROLES = ['owner', 'manager', 'waiter', 'kitchen', 'cashier'] as const;
+export type Role = (typeof ROLES)[number];
+
+/** Concessões delegadas do editor de cardápio (spec §12.9). */
+export const DELEGATABLE_PERMISSIONS = [
+  'menu.availability',
+  'menu.content',
+  'menu.price',
+  'menu.structure',
+  'menu.publish',
+  'menu.promotion',
+] as const;
+export type DelegatablePermission = (typeof DELEGATABLE_PERMISSIONS)[number];
+
+export const ACTIONS = [
+  // pedido
+  'order.approve',
+  'order.reject',
+  'order.create_for_table',
+  'order.release_course',
+  // produção
+  'kds.advance_item',
+  'product.mark_out_of_stock',
+  // dinheiro
+  'payment.record',
+  'service_fee.remove',
+  'discount.apply',
+  // mesa
+  'table.open',
+  'table.release',
+  'table.force_release',
+  // gestão
+  'dashboard.view',
+  'customer.view_full_phone',
+  'customer.export',
+  'staff.manage',
+  'audit.view',
+  // cardápio (delegáveis)
+  ...DELEGATABLE_PERMISSIONS,
+] as const;
+export type Action = (typeof ACTIONS)[number];
+
+/**
+ * Papéis que já vêm com a ação por padrão.
+ * Uma ação delegável pode ainda ser concedida pessoa a pessoa via
+ * `profiles.permissions` — ver `can()`.
+ */
+export const PERMISSION_MATRIX: Readonly<Record<Action, readonly Role[]>> = {
+  'order.approve':            ['waiter', 'manager', 'owner'],
+  'order.reject':             ['waiter', 'manager', 'owner'],
+  'order.create_for_table':   ['waiter', 'manager', 'owner'],
+  'order.release_course':     ['waiter', 'manager', 'owner'],
+
+  'kds.advance_item':         ['kitchen', 'waiter', 'manager', 'owner'],
+  'product.mark_out_of_stock':['kitchen', 'waiter', 'manager', 'owner'],
+
+  'payment.record':           ['cashier', 'manager', 'owner'],
+  'service_fee.remove':       ['cashier', 'manager', 'owner'],
+  // o TETO por função é percentual — ver canApplyDiscount()
+  'discount.apply':           ['cashier', 'manager', 'owner'],
+
+  'table.open':               ['waiter', 'cashier', 'manager', 'owner'],
+  'table.release':            ['waiter', 'cashier', 'manager', 'owner'],
+  'table.force_release':      ['manager', 'owner'],
+
+  'dashboard.view':           ['owner'],
+  'customer.view_full_phone': ['manager', 'owner'],
+  'customer.export':          ['owner'],
+  'staff.manage':             ['owner'],
+  'audit.view':               ['manager', 'owner'],
+
+  'menu.availability':        ['kitchen', 'waiter', 'manager', 'owner'],
+  'menu.content':             ['manager', 'owner'],
+  'menu.structure':           ['manager', 'owner'],
+  'menu.promotion':           ['manager', 'owner'],
+  // alterar preço é o vetor de fraude mais comum (spec §12.9): só o dono,
+  // e delegável pessoa a pessoa
+  'menu.price':               ['owner'],
+  'menu.publish':             ['owner'],
+} as const;
+
+/** Teto de desconto por função, em pontos percentuais (spec §10.3). */
+export const DISCOUNT_CEILING_PCT: Readonly<Partial<Record<Role, number>>> = {
+  cashier: 10,
+  manager: 100,
+  owner: 100,
+} as const;
+
+export interface Actor {
+  readonly id: string;
+  readonly restaurantId: string;
+  readonly roles: readonly Role[];
+  /** Concessões delegadas de `profiles.permissions`. */
+  readonly permissions?: readonly string[];
+  readonly active?: boolean;
+}
+
+function isDelegatable(action: Action): action is DelegatablePermission {
+  return (DELEGATABLE_PERMISSIONS as readonly string[]).includes(action);
+}
+
+/**
+ * O funcionário pode executar esta ação?
+ *
+ * Funcionário inativo não pode nada — desligar alguém tem que cortar o acesso
+ * na hora, sem depender de revogar sessão.
+ */
+export function can(actor: Actor | null | undefined, action: Action): boolean {
+  if (!actor) return false;
+  if (actor.active === false) return false;
+  if (!actor.roles?.length) return false;
+
+  if (isDelegatable(action) && actor.permissions?.includes(action)) {
+    return true;
+  }
+
+  const allowed = PERMISSION_MATRIX[action];
+  if (!allowed) return false;
+  return actor.roles.some((role) => allowed.includes(role));
+}
+
+/**
+ * Desconto tem duas portas: poder descontar, e poder descontar TANTO.
+ * Caixa vai até 10%; acima disso exige gerente ou dono.
+ */
+export function canApplyDiscount(
+  actor: Actor | null | undefined,
+  percent: number,
+): boolean {
+  if (!can(actor, 'discount.apply')) return false;
+  if (!Number.isFinite(percent) || percent <= 0 || percent > 100) return false;
+
+  const ceiling = actor!.roles.reduce(
+    (max, role) => Math.max(max, DISCOUNT_CEILING_PCT[role] ?? 0),
+    0,
+  );
+  return percent <= ceiling;
+}
+
+/**
+ * Liberar mesa: o caminho normal exige saldo zerado; com saldo em aberto vira
+ * liberação forçada, que só gerente ou dono faz — e sempre com motivo.
+ *
+ * Mesma função para a tela do garçom e a do caixa (spec §5): em casa pequena
+ * é a mesma pessoa. Uma regra só, um endpoint só.
+ */
+export function canReleaseTable(
+  actor: Actor | null | undefined,
+  balanceCents: number,
+): boolean {
+  return balanceCents <= 0
+    ? can(actor, 'table.release')
+    : can(actor, 'table.force_release');
+}
+
+/**
+ * Ninguém altera os próprios roles ou permissions. Nem o owner (spec §10.3).
+ * Escalonamento de privilégio começa exatamente aí.
+ *
+ * O banco repete esta regra no trigger `forbid_self_role_escalation`, que
+ * também vale para service_role.
+ */
+export function canEditStaffRoles(
+  actor: Actor | null | undefined,
+  targetProfileId: string,
+): boolean {
+  if (!can(actor, 'staff.manage')) return false;
+  return actor!.id !== targetProfileId;
+}
+
+/** Todo acesso é escopado por restaurante. Tenant diferente é sempre 403. */
+export function isSameTenant(
+  actor: Actor | null | undefined,
+  restaurantId: string,
+): boolean {
+  return Boolean(actor?.restaurantId) && actor!.restaurantId === restaurantId;
+}
+
+/**
+ * Telefone mascarado por padrão (spec §10.9). Só manager/owner veem inteiro,
+ * e o acesso ao valor completo vai para audit_log.
+ */
+export function maskPhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 4) return '••••';
+  return `•••••-${digits.slice(-4)}`;
+}

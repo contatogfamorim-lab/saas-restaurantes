@@ -1,0 +1,50 @@
+{
+  "name": "mesa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
+    "db:check-rls": "node --env-file-if-exists=.env.local scripts/check-rls.mts",
+    "check:secrets": "node --env-file-if-exists=.env.local scripts/check-bundle-secrets.mts",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check-rls"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "2.1.0",
+    "@supabase/ssr": "0.12.4",
+    "@supabase/supabase-js": "2.112.3",
+    "jose": "6.2.10",
+    "nanoid": "6.0.1",
+    "next": "16.3.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.13.3",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "dotenv": "17.4.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.2",
+    "pg": "^8.23.0",
+    "supabase": "2.115.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "4.1.11"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

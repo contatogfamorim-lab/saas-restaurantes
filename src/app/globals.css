@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 é CSS-first: não existe tailwind.config.js, e o tema mora aqui,
+ * no @theme. Cores em OKLCH — o espaço é perceptualmente uniforme, então
+ * clarear um tom não muda a saturação junto, o que importa quando o mesmo
+ * token precisa funcionar no salão à noite e na cozinha sob luz forte.
+ *
+ * Esta é só a FUNDAÇÃO (Etapa 1). A direção visual do cardápio — tipografia
+ * com personalidade, densidade, foto em primeiro lugar (spec §11) — é decidida
+ * na Etapa 2, junto com a tela do cliente.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-ink-50:  oklch(0.985 0.002 265);
+  --color-ink-100: oklch(0.955 0.004 265);
+  --color-ink-200: oklch(0.905 0.006 265);
+  --color-ink-300: oklch(0.815 0.010 265);
+  --color-ink-400: oklch(0.660 0.014 265);
+  --color-ink-500: oklch(0.530 0.016 265);
+  --color-ink-600: oklch(0.430 0.016 265);
+  --color-ink-700: oklch(0.350 0.014 265);
+  --color-ink-800: oklch(0.255 0.012 265);
+  --color-ink-900: oklch(0.180 0.010 265);
+  --color-ink-950: oklch(0.125 0.008 265);
+
+  /* Semáforo do mapa do salão e do KDS (spec §5 e §6).
+     Precisa ser lido a 2 metros, sob vapor, em tela suja. */
+  --color-alert-critical: oklch(0.585 0.215 25);
+  --color-alert-warning:  oklch(0.720 0.170 62);
+  --color-alert-soft:     oklch(0.810 0.150 92);
+  --color-alert-calm:     oklch(0.640 0.140 152);
+}
+
+:root {
+  --background: var(--color-ink-50);
+  --foreground: var(--color-ink-900);
+  --surface: oklch(1 0 0);
+  --border: var(--color-ink-200);
+  --muted: var(--color-ink-500);
+  /* substituído em runtime por restaurants.brand_color — nunca inventar marca */
+  --brand: var(--color-ink-900);
+}
+
+.dark {
+  --background: var(--color-ink-950);
+  --foreground: var(--color-ink-100);
+  --surface: var(--color-ink-900);
+  --border: var(--color-ink-800);
+  --muted: var(--color-ink-400);
+}
+
+/* Restaurante à noite é escuro: modo escuro de verdade, não invertido no
+   braço (spec §11). Sem .dark explícita, segue o aparelho do cliente. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: var(--color-ink-950);
+    --foreground: var(--color-ink-100);
+    --surface: var(--color-ink-900);
+    --border: var(--color-ink-800);
+    --muted: var(--color-ink-400);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Transição curta e com propósito, nunca decorativa (spec §11). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
