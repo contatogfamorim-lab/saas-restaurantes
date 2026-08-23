@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { exigirPermissao, exigirStaff } from '@/lib/auth/staff';
 import { can } from '@/lib/permissions';
+import type { MotivoLiberacao, ResultadoAcao } from '@/lib/salao/motivos';
 import { carregarMesa, type DetalheDaMesa } from '@/lib/salao/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -16,14 +17,6 @@ import { createClient } from '@/lib/supabase/server';
  * revalida de novo dentro da própria função SQL — se esta camada fosse
  * contornada, a de baixo ainda recusaria.
  */
-
-export interface ResultadoAcao {
-  ok: boolean;
-  mensagem?: string;
-  /** Preenchido quando a ação precisa de confirmação explícita do humano. */
-  confirmar?: 'itens_na_cozinha' | 'saldo_em_aberto';
-  detalhe?: string;
-}
 
 const MOTIVOS = ['acabou', 'cliente_desistiu', 'erro_no_pedido'] as const;
 
@@ -142,15 +135,6 @@ export async function resolverChamado(callId: string): Promise<ResultadoAcao> {
  * mesma pessoa, e duas implementações divergiriam. A permissão é decidida pelo
  * SALDO, não pela tela de onde veio o clique.
  */
-export const MOTIVOS_LIBERACAO = [
-  'cliente_foi_embora_sem_pagar',
-  'mesa_aberta_por_engano',
-  'cortesia_da_casa',
-  'outro',
-] as const;
-
-export type MotivoLiberacao = (typeof MOTIVOS_LIBERACAO)[number];
-
 export async function liberarMesa(
   sessionId: string,
   opcoes: { forcada?: boolean; motivo?: MotivoLiberacao; observacao?: string } = {},

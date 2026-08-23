@@ -12,9 +12,12 @@ import {
   liberarCurso,
   liberarMesa,
   resolverChamado,
+} from '@/app/app/(equipe)/salao/actions';
+import {
+  MOTIVOS_LIBERACAO,
   type MotivoLiberacao,
   type ResultadoAcao,
-} from '@/app/app/(equipe)/salao/actions';
+} from '@/lib/salao/motivos';
 import type { DetalheDaMesa } from '@/lib/salao/queries';
 
 import { Elapsed } from './elapsed';
@@ -24,13 +27,6 @@ const NOME_CURSO: Record<number, string> = {
   2: 'principais',
   3: 'sobremesas',
 };
-
-const MOTIVOS_LIBERACAO = [
-  { valor: 'cliente_foi_embora_sem_pagar', rotulo: 'Foi embora sem pagar' },
-  { valor: 'mesa_aberta_por_engano', rotulo: 'Aberta por engano' },
-  { valor: 'cortesia_da_casa', rotulo: 'Cortesia da casa' },
-  { valor: 'outro', rotulo: 'Outro' },
-] as const satisfies readonly { valor: MotivoLiberacao; rotulo: string }[];
 
 const ROTULO_STATUS: Record<string, string> = {
   pending: 'aguardando aprovação',
