@@ -20,9 +20,7 @@ export default async function Salao() {
 
   // O middleware redireciona quem não está logado, mas quem pode ver ESTA tela
   // é decidido aqui — middleware não é fronteira de segurança (spec §10.3).
-  if (!can(staff, 'order.approve') && !can(staff, 'table.release')) {
-    forbidden();
-  }
+  if (!can(staff, 'order.approve')) forbidden();
 
   const { pedidos, mesas } = await carregarSalao();
 

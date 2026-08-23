@@ -73,6 +73,78 @@ describe('acúmulo de funções (spec P1b)', () => {
   });
 });
 
+/**
+ * Uma tela por função.
+ *
+ * Espelha `telasVisiveis()` sem importá-la — aquele módulo é server-only. O que
+ * está sendo travado aqui é a propriedade, não a implementação: ninguém ganha
+ * tela por efeito colateral de uma permissão pontual.
+ */
+function telasDe(a: Actor) {
+  return {
+    salao: can(a, 'order.approve'),
+    cozinha: can(a, 'kds.advance_item'),
+    caixa: can(a, 'payment.record'),
+    gestao: can(a, 'dashboard.view'),
+  };
+}
+
+describe('cada função enxerga a própria tela', () => {
+  it('garçom vê só o salão — não o KDS', () => {
+    expect(telasDe(waiter)).toEqual({
+      salao: true,
+      cozinha: false,
+      caixa: false,
+      gestao: false,
+    });
+  });
+
+  it('cozinha vê só o KDS', () => {
+    expect(telasDe(kitchen)).toEqual({
+      salao: false,
+      cozinha: true,
+      caixa: false,
+      gestao: false,
+    });
+  });
+
+  it('caixa vê só o caixa — não o mapa do salão', () => {
+    expect(telasDe(cashier)).toEqual({
+      salao: false,
+      cozinha: false,
+      caixa: true,
+      gestao: false,
+    });
+  });
+
+  it('quem acumula funções vê exatamente as duas que acumula (P1b)', () => {
+    expect(telasDe(waiterCashier)).toEqual({
+      salao: true,
+      cozinha: false,
+      caixa: true,
+      gestao: false,
+    });
+  });
+
+  it('quem administra enxerga tudo — é a única visão panorâmica', () => {
+    expect(telasDe(owner)).toEqual({
+      salao: true,
+      cozinha: true,
+      caixa: true,
+      gestao: true,
+    });
+  });
+
+  it('gerente supervisiona a operação, mas gestão é só de quem administra', () => {
+    expect(telasDe(manager)).toEqual({
+      salao: true,
+      cozinha: true,
+      caixa: true,
+      gestao: false,
+    });
+  });
+});
+
 describe('teto de desconto', () => {
   it('caixa vai até 10% e para aí', () => {
     expect(canApplyDiscount(cashier, 5)).toBe(true);

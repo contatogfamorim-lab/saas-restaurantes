@@ -65,7 +65,10 @@ export const PERMISSION_MATRIX: Readonly<Record<Action, readonly Role[]>> = {
   'order.create_for_table':   ['waiter', 'manager', 'owner'],
   'order.release_course':     ['waiter', 'manager', 'owner'],
 
-  'kds.advance_item':         ['kitchen', 'waiter', 'manager', 'owner'],
+  // Avançar item na produção é da COZINHA. O garçom entrega (mark_item_delivered),
+  // que é outra coisa: um garçom marcando "pronto" pelo celular anula a razão de
+  // existir do KDS — a tela deixa de refletir a chapa.
+  'kds.advance_item':         ['kitchen', 'manager', 'owner'],
   'product.mark_out_of_stock':['kitchen', 'waiter', 'manager', 'owner'],
 
   'payment.record':           ['cashier', 'manager', 'owner'],

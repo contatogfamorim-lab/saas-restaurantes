@@ -9,7 +9,7 @@ import { sair } from '@/app/app/entrar/actions';
 import type { Role } from '@/lib/permissions';
 
 const ROTULO_PAPEL: Record<Role, string> = {
-  owner: 'dono',
+  owner: 'administrador',
   manager: 'gerente',
   waiter: 'garçom',
   kitchen: 'cozinha',

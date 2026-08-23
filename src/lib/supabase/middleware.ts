@@ -51,16 +51,30 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const ehAreaDaEquipe = pathname.startsWith('/app');
-  const ehLogin = pathname === '/app/entrar';
 
-  if (ehAreaDaEquipe && !ehLogin && !user) {
+  /**
+   * DUAS portas, e as duas precisam ficar fora da checagem de sessão:
+   *
+   *   /app/entrar    Administrador, e-mail e senha
+   *   /app/operador  código de operador + 5 dígitos, em aparelho liberado
+   *
+   * Esquecer `/app/operador` aqui recria um laço: o middleware mandaria para
+   * `/app/entrar`, que devolveria para `/app/operador` ao ver o aparelho
+   * liberado, para sempre.
+   */
+  const ehPorta = pathname === '/app/entrar' || pathname === '/app/operador';
+
+  if (ehAreaDaEquipe && !ehPorta && !user) {
     const url = request.nextUrl.clone();
+    // Sempre para /app/entrar: quem decide se o aparelho merece o teclado do
+    // operador é aquela página, que pode consultar o banco. O middleware roda a
+    // cada request e não tem orçamento para isso.
     url.pathname = '/app/entrar';
     url.searchParams.set('de', pathname);
     return NextResponse.redirect(url);
   }
 
-  if (ehLogin && user) {
+  if (ehPorta && user) {
     const url = request.nextUrl.clone();
     url.pathname = '/app';
     url.search = '';

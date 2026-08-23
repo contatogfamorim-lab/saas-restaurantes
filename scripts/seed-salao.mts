@@ -245,7 +245,12 @@ async function main() {
       }`,
     );
   }
-  console.log('\n  /app/salao  ·  garcom@brasaburger.test  ·  senha-de-teste-123\n');
+  console.log('\n  ADMINISTRADOR  /app/entrar?admin=1  ·  dono@brasaburger.test  ·  senha-de-teste-123');
+  console.log('  OPERADORES     /app/operador (depois de liberar o aparelho)');
+  console.log('                   01 / 47628  Ivo    garçom');
+  console.log('                   02 / 91387  Ravi   cozinha');
+  console.log('                   03 / 29574  Selma  caixa');
+  console.log('                   04 / 64839  Nara   garçom + caixa\n');
 
   await c.query('commit');
   await c.end();

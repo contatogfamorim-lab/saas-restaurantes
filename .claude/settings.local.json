@@ -48,7 +48,8 @@
       "Bash(curl -s -L -o /dev/null -w \"  final: %{http_code} apos %{num_redirects} redirecionamentos -> %{url_effective}\\\\n\" --max-time 15 http://localhost:3000/app/entrar)",
       "Bash(curl -s -D - -o /dev/null --max-time 10 http://localhost:3000/app/entrar)",
       "Bash(mkdir -p \"src/app/app/\\(equipe\\)\")",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(node -e \"console.log\\(require.resolve\\('@supabase/supabase-js'\\)\\)\")"
     ]
   }
 }

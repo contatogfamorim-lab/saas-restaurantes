@@ -88,14 +88,23 @@ export async function exigirPermissao(acao: Action): Promise<StaffSession> {
   return staff;
 }
 
-/** Papéis que dão acesso a cada tela — usado para montar a navegação. */
+/**
+ * Quais telas cada pessoa enxerga.
+ *
+ * UMA tela por função. Quem acumula funções (spec P1b) vê as duas e alterna,
+ * mas ninguém ganha tela de tabela por efeito colateral de uma permissão
+ * pontual.
+ *
+ * O caso que isto corrige: `table.release` pertence ao caixa, e usá-lo como
+ * critério fazia o caixa enxergar o mapa do salão inteiro. Ele libera mesa —
+ * pela tela DELE (spec §5), com a mesma função e o mesmo endpoint.
+ */
 export function telasVisiveis(staff: StaffSession) {
   return {
-    salao: can(staff, 'order.approve') || can(staff, 'table.release'),
+    salao: can(staff, 'order.approve'),
     cozinha: can(staff, 'kds.advance_item'),
     caixa: can(staff, 'payment.record'),
-    // O dashboard não aparece no menu das outras telas (spec §8) — só para
-    // quem tem a permissão, e ela é exclusiva do dono.
+    // Gestão não aparece na navegação das outras telas (spec §8).
     gestao: can(staff, 'dashboard.view'),
   };
 }

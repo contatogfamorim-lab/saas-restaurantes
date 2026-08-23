@@ -7,6 +7,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
+  experimental: {
+    // Habilita forbidden() e unauthorized() de next/navigation, que renderizam
+    // forbidden.tsx / unauthorized.tsx com o status HTTP correto.
+    //
+    // Sem a flag, chamar forbidden() lança um erro não tratado — a página
+    // quebra em vez de dizer "sem permissão". Ainda é experimental, mas o que
+    // depende dela é só a APRESENTAÇÃO da negativa: a decisão continua em
+    // can(), nas policies de RLS e nas funções do banco.
+    authInterrupts: true,
+  },
+
   images: {
     // Spec §13.2: egress é o segundo teto do plano Pro. Servir o JPEG original
     // do upload derruba a capacidade de ~200 mil para ~40 mil aberturas/mês.

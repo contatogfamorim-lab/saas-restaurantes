@@ -5,8 +5,12 @@
 -- 1 restaurante · 8 mesas · 5 categorias · 30 produtos · 6 grupos de
 -- modificadores · 5 usuários (um deles acumulando waiter + cashier).
 --
--- Senha de TODOS os usuários: senha-de-teste-123
--- PINs: dono 7391 · garçom 4762 · cozinha 9138 · caixa 2957 · duplo 6483
+-- ADMINISTRADOR   dono@brasaburger.test  ·  senha-de-teste-123
+-- OPERADORES      código + 5 dígitos, no teclado numérico:
+--                   01 / 47628   Ivo      (garçom)
+--                   02 / 91387   Ravi     (cozinha)
+--                   03 / 29574   Selma    (caixa)
+--                   04 / 64839   Nara     (garçom + caixa)
 -- Credenciais de desenvolvimento. Não reaproveitar em lugar nenhum.
 -- =============================================================================
 
@@ -55,28 +59,31 @@ select
 from auth.users u;
 
 -- roles é ARRAY: Nara acumula garçom E caixa, com um cadastro só (spec P1b).
-insert into public.profiles (id, restaurant_id, name, roles, permissions, pin_hash)
+--
+-- Acesso: o Administrador entra por e-mail e senha; o resto da equipe entra
+-- por código de operador + 5 dígitos, e por isso tem operator_code e pin_hash.
+-- Marisa administra e fica sem código — a porta dela é outra, de propósito.
+insert into public.profiles (id, restaurant_id, name, roles, permissions, operator_code, pin_hash)
 values
   ('aaaaaaaa-0000-4000-8000-000000000001',
    '11111111-1111-4111-8111-111111111111', 'Marisa Aoki',
-   array['owner']::public.staff_role[], '{}',
-   '$argon2id$v=19$m=19456,t=2,p=1$almiGCyOHTpjjO8GI9/I4A$drBQ96HG6NpFvfaGBBQRQbqUKU57gvdpkdfzVMwgjJ0'),
+   array['owner']::public.staff_role[], '{}', null, null),
   ('aaaaaaaa-0000-4000-8000-000000000002',
    '11111111-1111-4111-8111-111111111111', 'Ivo Bezerra',
-   array['waiter']::public.staff_role[], '{}',
-   '$argon2id$v=19$m=19456,t=2,p=1$w9U5WutOVEM/UmLsXkAfFw$LWte1oKDuCU0QSsiVNQ/TB5DG3kRyk3AY4amLwjPLAw'),
+   array['waiter']::public.staff_role[], '{}', '01',
+   '$argon2id$v=19$m=19456,t=2,p=1$m8P1lmvplCZMO4uDqNNdKg$HB/2kV2vy8sX1sIkoYUtgBawACv8PhDcj1DKY/j86T0'),
   ('aaaaaaaa-0000-4000-8000-000000000003',
    '11111111-1111-4111-8111-111111111111', 'Ravi Nunes',
-   array['kitchen']::public.staff_role[], '{}',
-   '$argon2id$v=19$m=19456,t=2,p=1$4syRp8mOzGuvoYZfYNexFA$qfWQEcE5SQDL5B8KbCSKlSmklEBtJRRNGuFaVrU6TYs'),
+   array['kitchen']::public.staff_role[], '{}', '02',
+   '$argon2id$v=19$m=19456,t=2,p=1$aQogRRVvi8D/JaOgjr8jbA$wdxmZdlMY6qWAoGBgMO7K24Ai3se+lbgGhh3EgsLHY8'),
   ('aaaaaaaa-0000-4000-8000-000000000004',
    '11111111-1111-4111-8111-111111111111', 'Selma Prado',
-   array['cashier']::public.staff_role[], '{}',
-   '$argon2id$v=19$m=19456,t=2,p=1$s6vbxSnPgGyxqy6gzc0ctQ$/BZEXM8onJo5d2kj58IK4wq8aOR6wuq6bUrk1Djf+7g'),
+   array['cashier']::public.staff_role[], '{}', '03',
+   '$argon2id$v=19$m=19456,t=2,p=1$eCZWbZAdUjV0RoMMo5Z0Pw$tauZLMD3YZ9npeFeDbRIjLOJZLmiXTsBt/uS/sA6Kwo'),
   ('aaaaaaaa-0000-4000-8000-000000000005',
    '11111111-1111-4111-8111-111111111111', 'Nara Vilaça',
-   array['waiter','cashier']::public.staff_role[], '{}',
-   '$argon2id$v=19$m=19456,t=2,p=1$zoA72IHaTZL8qEnC9SW2aA$3eSJTcCVXQgejS0ZqJUXejucPV44raarKizUvUDR2BQ');
+   array['waiter','cashier']::public.staff_role[], '{}', '04',
+   '$argon2id$v=19$m=19456,t=2,p=1$Y3bxzgXiupJjIc1oWhKwXQ$V3QaVMZ5sfc5+JbWM3jvInUncVm/SQywxJXju5V7CJA');
 
 -- -----------------------------------------------------------------------------
 -- 8 mesas. short_code vem do default aleatório — nunca derivado do número.
