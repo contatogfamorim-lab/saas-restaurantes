@@ -457,3 +457,47 @@ $$;
 create trigger audit_product_price_change
   after update of price_cents on public.products
   for each row execute function app.audit_product_price_change();
+
+-- =============================================================================
+-- Privilégios sobre o schema `app`
+-- =============================================================================
+-- Duas armadilhas do Postgres se cruzam aqui:
+--
+-- 1. EXECUTE em função nova é concedido a PUBLIC por padrão. Só criar as
+--    funções no schema `app` não as protege.
+-- 2. Uma policy é avaliada com os privilégios de QUEM consulta. Se `anon` não
+--    puder executar `app.is_within_service_window`, a policy do cardápio
+--    público falha com "permission denied for schema app" — e o cardápio,
+--    que é a razão de existir do produto, não abre.
+--
+-- Então: tira tudo de PUBLIC e devolve nominalmente, função a função.
+-- Funções de TRIGGER ficam de fora de propósito — o Postgres não checa
+-- privilégio de execução ao disparar trigger, e concedê-las só ampliaria a
+-- superfície.
+-- =============================================================================
+revoke all on all functions in schema app from public, anon, authenticated;
+grant usage on schema app to anon, authenticated, service_role;
+
+-- o cardápio público precisa saber se a categoria está no horário
+grant execute on function app.is_within_service_window(time, time, int[], text, timestamptz)
+  to anon, authenticated, service_role;
+
+-- helpers de autorização: só para quem está logado
+grant execute on function app.current_restaurant_id()      to authenticated, service_role;
+grant execute on function app.current_roles()              to authenticated, service_role;
+grant execute on function app.current_permissions()        to authenticated, service_role;
+grant execute on function app.has_role(text)               to authenticated, service_role;
+grant execute on function app.has_any_role(text[])         to authenticated, service_role;
+grant execute on function app.is_staff_of(uuid)            to authenticated, service_role;
+grant execute on function app.has_menu_permission(text)    to authenticated, service_role;
+grant execute on function app.promotion_is_live(public.promotions, text, timestamptz)
+  to authenticated, service_role;
+
+-- DEFAULT de restaurant_tables.short_code: quem insere a mesa precisa executar
+grant execute on function app.generate_short_code(int) to authenticated, service_role;
+
+-- Reserva de estoque de promoção: SÓ service_role.
+-- Ela decrementa estoque de forma irreversível dentro da transação. Fica
+-- restrita à camada única de comandos do servidor (spec §13.7) — nenhum
+-- funcionário logado consegue queimar estoque de promoção com uma chamada solta.
+grant execute on function app.claim_promotion_quantity(uuid, int) to service_role;

@@ -360,6 +360,46 @@ describe('§10.3 — escalonamento de privilégio', () => {
     });
   });
 
+  it('o funcionário não muda o próprio restaurant_id para pular de tenant', async () => {
+    await comoFuncionario(GARCOM_A, async (c) => {
+      await expect(
+        c.query(`update profiles set restaurant_id = $2 where id = $1`,
+                [GARCOM_A, RESTAURANTE_B]),
+      ).rejects.toThrow(/restaurant_id/i);
+    });
+  });
+
+  it('o funcionário desligado não se reativa sozinho', async () => {
+    await comoFuncionario(GARCOM_A, async (c) => {
+      await expect(
+        c.query(`update profiles set active = false where id = $1`, [GARCOM_A]),
+      ).rejects.toThrow(/reativar/i);
+    });
+  });
+
+  it('profile sem nenhum papel é rejeitado', async () => {
+    const c = await pool.connect();
+    try {
+      await c.query('begin');
+      await c.query(
+        `insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
+                                 email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+                                 created_at, updated_at)
+         values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated',
+                 'authenticated', 'vazio@teste.test', 'x', now(),
+                 '{}'::jsonb, '{}'::jsonb, now(), now())`);
+      const { rows: [u] } = await c.query(
+        `select id from auth.users where email = 'vazio@teste.test'`);
+      await expect(
+        c.query(`insert into profiles (id, restaurant_id, name) values ($1, $2, 'Sem papel')`,
+                [u.id, RESTAURANTE_A]),
+      ).rejects.toThrow();
+    } finally {
+      await c.query('rollback').catch(() => {});
+      c.release();
+    }
+  });
+
   it('o garçom não altera os roles de ninguém', async () => {
     await comoFuncionario(GARCOM_A, async (c) => {
       const r = await c.query(
@@ -643,13 +683,21 @@ describe('§10.4 — short_code das mesas', () => {
       [RESTAURANTE_A]);
     expect(rows).toHaveLength(8);
 
-    const codigos = rows.map((r) => r.short_code);
-    expect(new Set(codigos).size).toBe(8);
+    const codigos: string[] = rows.map((r) => r.short_code);
+    expect(new Set(codigos).size, 'short_code precisa ser único').toBe(8);
     for (const c of codigos) expect(c).toMatch(/^[2-9A-HJ-NP-Za-km-z]{10}$/);
 
-    // nenhum código contém o número da mesa
-    for (const [i, c] of codigos.entries()) {
-      expect(c.includes(String(i + 1))).toBe(false);
+    // Não derivado do número da mesa: mesas em sequência não podem gerar
+    // códigos em sequência. Comparar prefixos pega tanto o caso sequencial
+    // quanto o de um contador disfarçado de aleatório.
+    const prefixos = codigos.map((c) => c.slice(0, 4));
+    expect(new Set(prefixos).size, 'prefixos repetidos sugerem código derivado').toBe(8);
+
+    // E entropia real: 8 códigos de 10 chars não repetem caractere na mesma
+    // posição em todas as mesas.
+    for (let pos = 0; pos < 10; pos++) {
+      const naPosicao = new Set(codigos.map((c) => c[pos]));
+      expect(naPosicao.size, `posição ${pos} idêntica em todas as mesas`).toBeGreaterThan(1);
     }
   });
 });

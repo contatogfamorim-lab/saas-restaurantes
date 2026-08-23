@@ -31,8 +31,10 @@ create table public.profiles (
   restaurant_id  uuid not null references public.restaurants(id) on delete restrict,
   name           text not null check (length(btrim(name)) between 1 and 120),
   pin_hash       text,
+  -- coalesce é essencial: array_length('{}', 1) devolve NULL, e `NULL >= 1`
+  -- é NULL, que o CHECK aceita. Sem isto, um profile SEM NENHUM papel passaria.
   roles          public.staff_role[] not null default '{}'
-                   check (array_length(roles, 1) >= 1),
+                   check (coalesce(array_length(roles, 1), 0) >= 1),
   permissions    text[] not null default '{}',
   active         boolean not null default true,
   pin_failed_attempts int not null default 0 check (pin_failed_attempts >= 0),
@@ -96,6 +98,11 @@ create trigger touch_restaurant_tables before update on public.restaurant_tables
 -- -----------------------------------------------------------------------------
 -- Ninguém edita os próprios roles/permissions. Nem o owner (spec §10.3).
 -- Vale contra service_role também, por isso é trigger e não policy.
+--
+-- `restaurant_id` e `active` entram na mesma trava: a policy `profiles_self_update`
+-- deixa cada funcionário manter o próprio nome e PIN, e sem esta guarda ele
+-- poderia reescrever o próprio restaurant_id e pular para outro tenant — ou
+-- se reativar depois de desligado.
 -- -----------------------------------------------------------------------------
 create or replace function app.forbid_self_role_escalation()
 returns trigger
@@ -111,6 +118,13 @@ begin
           or new.permissions is distinct from old.permissions) then
     raise exception
       'Um usuário não pode alterar os próprios roles ou permissions'
+      using errcode = 'check_violation';
+  end if;
+  if new.id = (select auth.uid())
+     and (new.restaurant_id is distinct from old.restaurant_id
+          or new.active is distinct from old.active) then
+    raise exception
+      'Um usuário não pode alterar o próprio restaurant_id nem se reativar'
       using errcode = 'check_violation';
   end if;
   return new;

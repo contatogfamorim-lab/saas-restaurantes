@@ -77,6 +77,9 @@ as $$
   where p.id = (select auth.uid()) and p.active
 $$;
 
+-- Devolve text[], não staff_role[]: o cast é explícito porque o Postgres NÃO
+-- converte array de enum para array de texto implicitamente, e trabalhar com
+-- text[] deixa os helpers utilizáveis sem arrastar o tipo enum para toda policy.
 create or replace function app.current_roles()
 returns text[]
 language sql
@@ -84,7 +87,7 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce(p.roles, '{}')
+  select coalesce(p.roles::text[], '{}'::text[])
   from public.profiles p
   where p.id = (select auth.uid()) and p.active
 $$;

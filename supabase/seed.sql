@@ -21,9 +21,13 @@ values
 -- -----------------------------------------------------------------------------
 -- Equipe — auth.users + identities + profiles
 -- -----------------------------------------------------------------------------
+-- Os campos de token vão como '' e não NULL de propósito: o GoTrue trata NULL
+-- nessas colunas como estado inconsistente e o login falha sem mensagem útil.
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current
 )
 select
   '00000000-0000-0000-0000-000000000000',
@@ -32,7 +36,8 @@ select
   now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object('name', u.name),
-  now(), now()
+  now(), now(),
+  '', '', '', '', ''
 from (values
   ('aaaaaaaa-0000-4000-8000-000000000001'::uuid, 'dono@cantinadobeco.test',    'Marisa Aoki'),
   ('aaaaaaaa-0000-4000-8000-000000000002'::uuid, 'garcom@cantinadobeco.test',  'Ivo Bezerra'),

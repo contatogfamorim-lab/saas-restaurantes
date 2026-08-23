@@ -92,7 +92,7 @@ create trigger touch_promotion_targets before update on public.promotion_targets
 -- Promoção fora da janela ou esgotada some sozinha, sem ninguém mexer.
 -- -----------------------------------------------------------------------------
 create or replace function app.promotion_is_live(
-  p promotions,
+  p public.promotions,
   p_timezone text default 'America/Sao_Paulo',
   p_at timestamptz default now()
 )

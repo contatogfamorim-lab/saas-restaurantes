@@ -44,9 +44,8 @@ async function main() {
     order by c.relname
   `);
 
-  await client.end();
-
   if (rows.length === 0) {
+    await client.end();
     console.error('✗ Nenhuma tabela encontrada em public. O banco subiu e as migrations rodaram?');
     process.exit(1);
   }
@@ -74,9 +73,33 @@ async function main() {
     );
   }
 
-  if (semRls.length > 0 || semPolicy.length > 0) process.exit(1);
+  // ---------------------------------------------------------------------------
+  // anon não escreve em NADA. A `revoke` da migration 0012 só alcança as
+  // tabelas que existiam naquele momento — uma migration futura reintroduz o
+  // privilégio sem ninguém perceber. Por isso a checagem é aqui, no CI.
+  // ---------------------------------------------------------------------------
+  const { rows: escritas } = await client.query<{ table_name: string; privileges: string }>(`
+    select table_name, string_agg(privilege_type, ', ' order by privilege_type) as privileges
+    from information_schema.role_table_grants
+    where grantee = 'anon'
+      and table_schema = 'public'
+      and privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
+    group by table_name
+    order by table_name
+  `);
+
+  await client.end();
+
+  if (escritas.length > 0) {
+    console.error(`\n✗ anon tem privilégio de ESCRITA em ${escritas.length} tabela(s):`);
+    for (const e of escritas) console.error(`    ${e.table_name}: ${e.privileges}`);
+    console.error('\n  Adicione o revoke na migration que criou a tabela.');
+  }
+
+  if (semRls.length > 0 || semPolicy.length > 0 || escritas.length > 0) process.exit(1);
 
   console.log(`\n✓ ${rows.length} tabelas, todas com RLS habilitada e ao menos uma policy.`);
+  console.log('✓ anon não tem privilégio de escrita em nenhuma tabela.');
 }
 
 main().catch((err) => {

@@ -37,8 +37,11 @@ create table public.table_sessions (
 );
 
 -- REGRA INEGOCIÁVEL (spec §3, regra 2): uma única sessão aberta por mesa.
+-- 'closing' entra no índice junto com 'open': a mesa segue ocupada enquanto o
+-- caixa fecha a conta. Cobrir só 'open' deixaria uma segunda comanda nascer
+-- entre o "pedir a conta" e o "liberar mesa".
 create unique index table_sessions_one_open_per_table
-  on public.table_sessions (table_id) where status = 'open';
+  on public.table_sessions (table_id) where status in ('open', 'closing');
 
 create index table_sessions_open_idx
   on public.table_sessions (restaurant_id, opened_at desc)
