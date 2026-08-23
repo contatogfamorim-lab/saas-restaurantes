@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { MinusIcon, PlusIcon, ShoppingBagIcon, Trash2Icon } from 'lucide-react';
 
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 import { formatCents } from '@/lib/money';
 import {
   cartItemCount,
@@ -11,6 +11,7 @@ import {
   lineTotalCents,
   type CartLine,
 } from '@/lib/menu/cart';
+import type { ConvidadoNaMesa } from '@/lib/menu/use-order-status';
 
 /**
  * Barra flutuante persistente do carrinho (spec §4).
@@ -22,14 +23,37 @@ import {
 interface Props {
   lines: CartLine[];
   onChangeQty: (lineId: string, qty: number) => void;
+  onChangeEater: (lineId: string, guestId: string | undefined) => void;
   onClear: () => void;
+  onEnviar: () => void;
+  enviando: boolean;
+  erro: string | null;
+  convidados: ConvidadoNaMesa[];
+  /** Controlado pelo pai: o envio bem-sucedido precisa fechar esta folha. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function CartBar({ lines, onChangeQty, onClear }: Props) {
-  const [open, setOpen] = useState(false);
+export function CartBar({
+  lines,
+  onChangeQty,
+  onChangeEater,
+  onClear,
+  onEnviar,
+  enviando,
+  erro,
+  convidados,
+  open,
+  onOpenChange,
+}: Props) {
+  const setOpen = onOpenChange;
 
   const count = cartItemCount(lines);
   const total = cartTotalCents(lines);
+
+  // Os chips de "para quem" só aparecem quando há mais de uma pessoa na mesa.
+  // Com uma só, seria um passo a mais para responder o óbvio.
+  const dividindo = convidados.length > 1;
 
   if (count === 0) return null;
 
@@ -72,7 +96,7 @@ export function CartBar({ lines, onChangeQty, onClear }: Props) {
             </button>
           </div>
 
-          <ul className="divide-y overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom)+8.5rem)]">
+          <ul className="divide-y overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom)+9rem)]">
             {lines.map((line) => (
               <li key={line.lineId} className="px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -96,6 +120,37 @@ export function CartBar({ lines, onChangeQty, onClear }: Props) {
                     {formatCents(lineTotalCents(line))}
                   </span>
                 </div>
+
+                {dividindo && (
+                  <div className="mt-2">
+                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      Para
+                    </span>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {convidados.map((g) => {
+                        const escolhido = g.euMesmo
+                          ? !line.eaterGuestId || line.eaterGuestId === g.id
+                          : line.eaterGuestId === g.id;
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => onChangeEater(line.lineId, g.id)}
+                            aria-pressed={escolhido}
+                            className={cn(
+                              'rounded-full border px-2.5 py-1 text-[12px] transition-colors',
+                              escolhido
+                                ? 'border-primary bg-primary/15 font-medium text-primary'
+                                : 'border-input text-muted-foreground',
+                            )}
+                          >
+                            {g.euMesmo ? 'Eu' : g.nome}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-2 flex items-center gap-1 rounded-lg border border-input">
                   <button
@@ -128,6 +183,12 @@ export function CartBar({ lines, onChangeQty, onClear }: Props) {
           </ul>
 
           <div className="absolute inset-x-0 bottom-0 border-t bg-popover px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
+            {erro && (
+              <p role="alert" className="mb-2 text-center text-[13px] text-destructive">
+                {erro}
+              </p>
+            )}
+
             <div className="flex items-baseline justify-between">
               <span className="text-[15px] text-muted-foreground">Total</span>
               <span className="tabular text-xl font-semibold">{formatCents(total)}</span>
@@ -135,13 +196,14 @@ export function CartBar({ lines, onChangeQty, onClear }: Props) {
 
             <button
               type="button"
-              disabled
+              onClick={onEnviar}
+              disabled={enviando}
               className="mt-3 h-12 w-full rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground disabled:opacity-40"
             >
-              Enviar pedido
+              {enviando ? 'Enviando…' : 'Enviar pedido'}
             </button>
             <p className="mt-2 text-center text-[12px] text-muted-foreground">
-              O envio entra na Etapa 3, junto com a identificação do cliente.
+              O garçom confere antes de ir para a cozinha.
             </p>
           </div>
         </SheetContent>

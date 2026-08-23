@@ -30,6 +30,13 @@ export interface CartLine {
   modifiers: CartModifier[];
   qty: number;
   notes: string;
+  /**
+   * Quem vai COMER este item (spec §4). `undefined` = quem está pedindo.
+   * É o que permite o caixa dividir a conta por pessoa depois — por isso a
+   * escolha acontece aqui, no momento do pedido, e não no fechamento, quando
+   * ninguém mais lembra de quem era o quê.
+   */
+  eaterGuestId?: string;
 }
 
 export function lineUnitCents(line: CartLine): number {
@@ -56,6 +63,9 @@ export function cartItemCount(lines: CartLine[]): number {
 export function sameConfiguration(a: CartLine, b: CartLine): boolean {
   if (a.productId !== b.productId) return false;
   if (a.notes.trim() !== b.notes.trim()) return false;
+  // itens para pessoas diferentes nunca se fundem: juntá-los apagaria a
+  // informação que a divisão da conta usa
+  if ((a.eaterGuestId ?? null) !== (b.eaterGuestId ?? null)) return false;
   if (a.modifiers.length !== b.modifiers.length) return false;
   const ids = (line: CartLine) => line.modifiers.map((m) => m.optionId).sort().join('|');
   return ids(a) === ids(b);

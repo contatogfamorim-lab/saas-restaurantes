@@ -11,6 +11,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client, Pool } from 'pg';
 
+import { prepararBanco } from './_prepare';
+
 const DATABASE_URL =
   process.env.DATABASE_URL ??
   'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
@@ -95,6 +97,7 @@ async function abrirComandaComItem(c: Client, mesaLabel = 'Mesa 1') {
 
 beforeAll(async () => {
   pool = new Pool({ connectionString: DATABASE_URL });
+  await prepararBanco(pool, RESTAURANTE_A);
 
   // Restaurante B + dono, para os testes de isolamento
   await pool.query(

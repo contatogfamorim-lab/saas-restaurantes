@@ -257,6 +257,13 @@ export type Database = {
             foreignKeyName: "menu_events_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "menu_events_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -602,6 +609,13 @@ export type Database = {
             foreignKeyName: "order_items_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -819,6 +833,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "modifier_groups"
             referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "product_modifier_groups_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
           },
           {
             foreignKeyName: "product_modifier_groups_product_id_restaurant_id_fkey"
@@ -1581,11 +1602,52 @@ export type Database = {
             foreignKeyName: "order_items_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id", "restaurant_id"]
           },
           {
             foreignKeyName: "order_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_effective_prices: {
+        Row: {
+          badge_color: string | null
+          badge_label: string | null
+          category_id: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          effective_price_cents: number | null
+          ends_at: string | null
+          list_price_cents: number | null
+          max_quantity: number | null
+          product_id: string | null
+          promotion_id: string | null
+          remaining_quantity: number | null
+          restaurant_id: string | null
+          time_from: string | null
+          time_to: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_restaurant_id_fkey"
+            columns: ["category_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "products_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1666,7 +1728,25 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      create_guest_order: {
+        Args: {
+          p_guest_id: string
+          p_idempotency_key: string
+          p_items: Json
+          p_session_id: string
+        }
+        Returns: string
+      }
+      open_guest_session: {
+        Args: {
+          p_device_hash: string
+          p_display_name: string
+          p_lgpd_consent: boolean
+          p_phone: string
+          p_short_code: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       adjustment_type: "discount" | "service_fee_waiver"

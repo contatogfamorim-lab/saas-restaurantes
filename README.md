@@ -21,11 +21,16 @@ Node 20 **não serve**: saiu do suporte em abril/2026 e o pnpm 11 exige ≥ 22.1
 ```bash
 nvm use && pnpm install
 pnpm db:start          # sobe o Supabase local (sem Studio — ver nota de disco)
-pnpm db:reset          # aplica as migrations e roda o seed
-pnpm db:types          # gera src/lib/supabase/database.types.ts
 cp .env.example .env.local   # preencha com o que o db:start imprimiu
+pnpm db:reset          # aplica as migrations e roda o seed
+pnpm db:photos         # baixa e sobe as 30 fotos de teste para o Storage
+pnpm db:types          # gera src/lib/supabase/database.types.ts
 pnpm dev
 ```
+
+`db:reset` limpa o banco, e com ele os registros do Storage — rode `db:photos`
+logo depois, sempre. As fotos são material de teste (Unsplash, licença livre);
+no cliente real elas vêm do onboarding.
 
 `pnpm db:start` sobe um subconjunto dos serviços (`-x studio,edge-runtime,…`)
 porque esta máquina tem pouco disco livre. Para o stack completo:
@@ -82,6 +87,20 @@ preço do item, máquina de estados, e a proibição de editar os próprios `rol
 **O celular do cliente não abre Realtime.** Status por polling de 10s. O plano
 Pro dá 500 conexões para a plataforma inteira; assinar o cliente derrubaria o
 teto de ~80 restaurantes para ~9.
+
+**Preço tem uma fonte só.** A view `product_effective_prices` responde "quanto
+custa isto agora", e tanto o cardápio quanto a criação do pedido perguntam para
+ela. É o que garante que o preço exibido seja o preço cobrado.
+
+**O cliente nunca manda valor.** O corpo de `POST /api/pedidos` carrega apenas
+`productId`, `qty`, `modifierOptionIds`, `notes` e `guestId`. Todo o resto —
+preço, promoção, estação, curso — é decidido dentro de `create_guest_order()`,
+em uma transação. Se um campo monetário aparecer no request, o desenho está
+errado.
+
+**`session_id` só vem do cookie assinado.** Nunca de body, query ou header.
+Aceitar de outro lugar seria IDOR: trocar um uuid daria acesso à comanda da
+mesa ao lado.
 
 ## Estrutura
 

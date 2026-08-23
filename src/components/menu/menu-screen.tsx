@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { ReceiptTextIcon } from 'lucide-react';
 
 import { brandStyle } from '@/lib/brand';
 import { addLine, setLineQty } from '@/lib/menu/cart';
 import { useCart } from '@/lib/menu/use-cart';
+import { useOrderStatus } from '@/lib/menu/use-order-status';
 import type { DietTag, MenuData, MenuProduct } from '@/lib/menu/types';
 
 import { CartBar } from './cart-bar';
 import { CategoryNav, useScrollSpy } from './category-nav';
 import { FilterBar } from './filter-bar';
+import { IdentifySheet } from './identify-sheet';
 import { MarkelloBadge } from './markello-badge';
+import { OrderTracker } from './order-tracker';
 import { ProductCard } from './product-card';
 import { ProductSheet } from './product-sheet';
 import { PromoRail } from './promo-rail';
@@ -18,9 +22,9 @@ import { PromoRail } from './promo-rail';
 /**
  * Tela do cardápio do cliente.
  *
- * Mantém carrinho, filtros e busca. NÃO abre conexão Realtime: o celular do
- * cliente custaria caro demais no orçamento de 500 conexões do plano Pro
- * (spec §9) — a partir da Etapa 3, o status dos itens vem por polling de 10s.
+ * Mantém carrinho, filtros, busca e o envio do pedido. NÃO abre conexão
+ * Realtime: o celular do cliente custaria caro demais no orçamento de 500
+ * conexões do plano Pro (spec §9) — o status vem por polling de 10s.
  */
 interface Props {
   menu: MenuData;
@@ -33,6 +37,11 @@ export function MenuScreen({ menu, shortCode }: Props) {
   const [onlyPromos, setOnlyPromos] = useState(false);
   const [selected, setSelected] = useState<MenuProduct | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [identifyOpen, setIdentifyOpen] = useState(false);
+  const [trackerOpen, setTrackerOpen] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(
     menu.categories[0]?.id ?? null,
   );
@@ -40,10 +49,25 @@ export function MenuScreen({ menu, shortCode }: Props) {
   // O carrinho sobrevive a fechar a aba sem querer — no meio do serviço isso
   // acontece o tempo todo, e remontar o pedido do zero é onde a pessoa desiste.
   const [lines, setLines] = useCart(`carrinho:${shortCode}`);
+  const status = useOrderStatus();
+
+  /**
+   * Chave de idempotência da TENTATIVA de envio em curso (spec §13.7).
+   *
+   * Nasce no primeiro toque em "Enviar" e só é descartada quando o pedido
+   * entra. Se a rede cair depois de o servidor gravar mas antes de a resposta
+   * voltar, o retry manda a MESMA chave e recebe o mesmo pedido em vez de
+   * criar outro.
+   *
+   * Não pode ser derivada do conteúdo do carrinho: "quero mais um igual" é
+   * pedido normal numa mesa, e uma chave por conteúdo faria a segunda rodada
+   * idêntica desaparecer silenciosamente.
+   */
+  const chaveEnvio = useRef<string | null>(null);
 
   const isFiltering = query.trim().length > 0 || diets.length > 0 || onlyPromos;
-
   const needle = query.trim().toLowerCase();
+
   const visibleCategories = menu.categories
     .map((category) => ({
       ...category,
@@ -82,16 +106,126 @@ export function MenuScreen({ menu, shortCode }: Props) {
       .reduce((sum, l) => sum + l.qty, 0);
   }
 
+  /**
+   * Envia a rodada.
+   *
+   * O corpo carrega SÓ o que foi escolhido — nenhum valor em centavos. O
+   * servidor recalcula tudo a partir do banco (spec §10.1).
+   */
+  async function enviarPedido() {
+    chaveEnvio.current ??= crypto.randomUUID();
+
+    const res = await fetch('/api/pedidos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        idempotencyKey: chaveEnvio.current,
+        items: lines.map((l) => ({
+          productId: l.productId,
+          qty: l.qty,
+          modifierOptionIds: l.modifiers.map((m) => m.optionId),
+          notes: l.notes || undefined,
+          guestId: l.eaterGuestId,
+        })),
+      }),
+    });
+
+    if (res.ok) {
+      // pedido entrou: a chave cumpriu o papel e a próxima rodada usa outra
+      chaveEnvio.current = null;
+      setLines([]);
+      setCartOpen(false);
+      setErro(null);
+      await status.recarregar();
+      setTrackerOpen(true);
+      return true;
+    }
+
+    const corpo = await res.json().catch(() => ({}));
+    setErro(corpo.message ?? 'Não conseguimos enviar. Tente de novo.');
+    return false;
+  }
+
+  async function handleEnviar() {
+    if (enviando || lines.length === 0) return;
+
+    // Sem comanda ainda: pede o nome primeiro (spec §4). Com comanda, a pessoa
+    // já se identificou nesta mesa e não é perguntada de novo.
+    if (!status.ativo) {
+      setErro(null);
+      setIdentifyOpen(true);
+      return;
+    }
+
+    setEnviando(true);
+    await enviarPedido();
+    setEnviando(false);
+  }
+
+  async function handleIdentificar(dados: {
+    nome: string;
+    telefone?: string;
+    consentimento: boolean;
+  }) {
+    setEnviando(true);
+    setErro(null);
+
+    const res = await fetch(`/api/mesa/${shortCode}/entrar`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        nome: dados.nome,
+        telefone: dados.telefone,
+        consentimentoLgpd: dados.consentimento,
+      }),
+    });
+
+    if (!res.ok) {
+      const corpo = await res.json().catch(() => ({}));
+      setErro(corpo.message ?? 'Não conseguimos abrir sua comanda.');
+      setEnviando(false);
+      return;
+    }
+
+    const ok = await enviarPedido();
+    if (ok) setIdentifyOpen(false);
+    setEnviando(false);
+  }
+
+  const temPedidoEmAndamento = status.ativo && status.itens.length > 0;
+
   return (
     <div className="mx-auto min-h-dvh max-w-lg" style={brandStyle(menu.restaurant.brandColor)}>
-      <header className="px-4 pt-5">
-        <p className="text-[12px] uppercase tracking-wider text-muted-foreground">
-          {menu.table.label} · {menu.table.area}
-        </p>
-        <h1 className="font-display mt-0.5 text-[26px] leading-tight">
-          {menu.restaurant.name}
-        </h1>
+      <header className="flex items-start justify-between gap-3 px-4 pt-5">
+        <div>
+          <p className="text-[12px] uppercase tracking-wider text-muted-foreground">
+            {menu.table.label} · {menu.table.area}
+          </p>
+          <h1 className="font-display mt-0.5 text-[26px] leading-tight">
+            {menu.restaurant.name}
+          </h1>
+        </div>
+
+        {temPedidoEmAndamento && (
+          <button
+            type="button"
+            onClick={() => setTrackerOpen(true)}
+            className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3 py-1.5 text-[12px] font-medium active:bg-accent"
+          >
+            <ReceiptTextIcon className="size-3.5" />
+            Meu pedido
+          </button>
+        )}
       </header>
+
+      {status.encerrada && (
+        <p
+          role="status"
+          className="mx-4 mt-4 rounded-lg bg-muted px-3 py-2 text-[13px] text-muted-foreground"
+        >
+          Esta mesa foi encerrada. Um novo pedido abre uma comanda nova.
+        </p>
+      )}
 
       {!isFiltering && <PromoRail products={menu.promoted} onOpen={openProduct} />}
 
@@ -158,9 +292,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
 
         {resultCount === 0 && isFiltering && (
           <div className="px-4 py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              Nada com esses filtros agora.
-            </p>
+            <p className="text-sm text-muted-foreground">Nada com esses filtros agora.</p>
             <button
               type="button"
               onClick={() => {
@@ -187,9 +319,40 @@ export function MenuScreen({ menu, shortCode }: Props) {
 
       <CartBar
         lines={lines}
+        open={cartOpen}
+        onOpenChange={setCartOpen}
         onChangeQty={(lineId, qty) => setLines((prev) => setLineQty(prev, lineId, qty))}
+        onChangeEater={(lineId, guestId) =>
+          setLines((prev) =>
+            prev.map((l) => (l.lineId === lineId ? { ...l, eaterGuestId: guestId } : l)),
+          )
+        }
         onClear={() => setLines([])}
+        onEnviar={handleEnviar}
+        enviando={enviando}
+        erro={erro}
+        convidados={status.convidados}
+      />
+
+      <IdentifySheet
+        open={identifyOpen}
+        onOpenChange={setIdentifyOpen}
+        restaurantName={menu.restaurant.name}
+        requirePhone={menu.restaurant.requirePhone}
+        enviando={enviando}
+        erro={erro}
+        onConfirm={handleIdentificar}
+      />
+
+      <OrderTracker
+        open={trackerOpen}
+        onOpenChange={setTrackerOpen}
+        itens={status.itens}
+        totais={status.totais}
+        offline={status.offline}
+        temMaisDeUmaPessoa={status.convidados.length > 1}
       />
     </div>
   );
 }
+
