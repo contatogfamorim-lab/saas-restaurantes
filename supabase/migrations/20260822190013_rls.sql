@@ -57,6 +57,13 @@ alter table public.audit_log               enable row level security;
 -- =============================================================================
 revoke all on all tables in schema public from anon, authenticated;
 
+-- E para os objetos que AINDA NÃO EXISTEM: toda migration futura criaria a
+-- tabela já com os privilégios padrão do Supabase para anon, e o revoke acima
+-- (que só alcança o presente) não pegaria. Deny-by-default para anon fecha a
+-- classe inteira do problema; cada tabela pública precisa se declarar.
+alter default privileges for role postgres in schema public
+  revoke all on tables from anon;
+
 -- --- anon: SELECT, e SÓ no cardápio público (spec §10.2) ---------------------
 grant select on public.restaurants             to anon;
 grant select on public.categories              to anon;

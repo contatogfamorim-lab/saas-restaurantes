@@ -1,81 +1,332 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/*
- * Tailwind v4 é CSS-first: não existe tailwind.config.js, e o tema mora aqui,
- * no @theme. Cores em OKLCH — o espaço é perceptualmente uniforme, então
- * clarear um tom não muda a saturação junto, o que importa quando o mesmo
- * token precisa funcionar no salão à noite e na cozinha sob luz forte.
+/* =============================================================================
+ * Balcão noturno — direção visual do cardápio do cliente
+ * =============================================================================
+ * Tailwind v4 é CSS-first: não existe tailwind.config.js. Cores em OKLCH,
+ * espaço perceptualmente uniforme — clarear um tom não muda a saturação junto,
+ * o que importa quando o mesmo token precisa funcionar no salão à noite e na
+ * cozinha sob luz forte.
  *
- * Esta é só a FUNDAÇÃO (Etapa 1). A direção visual do cardápio — tipografia
- * com personalidade, densidade, foto em primeiro lugar (spec §11) — é decidida
- * na Etapa 2, junto com a tela do cliente.
- */
+ * ESCURO É O PADRÃO, não uma inversão. Restaurante à noite é escuro, e a foto
+ * do hambúrguer tem mais presença sobre preto do que sobre creme. O claro
+ * existe e é desenhado de verdade (spec §11: "modo escuro real, não invertido
+ * no braço") — só não é o ponto de partida.
+ *
+ * Cascata: :root é escuro → o aparelho pedindo claro troca → .light/.dark
+ * explícitas vencem as duas.
+ * ========================================================================== */
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(:root:not(.light), .dark, .dark *));
 
 @theme {
-  --color-ink-50:  oklch(0.985 0.002 265);
-  --color-ink-100: oklch(0.955 0.004 265);
-  --color-ink-200: oklch(0.905 0.006 265);
-  --color-ink-300: oklch(0.815 0.010 265);
-  --color-ink-400: oklch(0.660 0.014 265);
-  --color-ink-500: oklch(0.530 0.016 265);
-  --color-ink-600: oklch(0.430 0.016 265);
-  --color-ink-700: oklch(0.350 0.014 265);
-  --color-ink-800: oklch(0.255 0.012 265);
-  --color-ink-900: oklch(0.180 0.010 265);
-  --color-ink-950: oklch(0.125 0.008 265);
+  /* --- Neutros quentes: preto de brasa, não cinza azulado -------------- */
+  --color-coal-50:  oklch(0.97 0.010 80);
+  --color-coal-100: oklch(0.93 0.012 78);
+  --color-coal-200: oklch(0.86 0.012 74);
+  --color-coal-300: oklch(0.74 0.014 70);
+  --color-coal-400: oklch(0.60 0.016 66);
+  --color-coal-500: oklch(0.48 0.016 62);
+  --color-coal-600: oklch(0.38 0.015 58);
+  --color-coal-700: oklch(0.29 0.014 56);
+  --color-coal-800: oklch(0.21 0.014 55);
+  --color-coal-900: oklch(0.175 0.013 55);
+  --color-coal-950: oklch(0.135 0.012 55);
 
-  /* Semáforo do mapa do salão e do KDS (spec §5 e §6).
-     Precisa ser lido a 2 metros, sob vapor, em tela suja. */
-  --color-alert-critical: oklch(0.585 0.215 25);
-  --color-alert-warning:  oklch(0.720 0.170 62);
-  --color-alert-soft:     oklch(0.810 0.150 92);
-  --color-alert-calm:     oklch(0.640 0.140 152);
+  /* --- Âmbar de brasa: o único acento. Um só, e forte ------------------ */
+  --color-ember-300: oklch(0.86 0.13 70);
+  --color-ember-400: oklch(0.80 0.16 62);
+  --color-ember-500: oklch(0.72 0.19 55);
+  --color-ember-600: oklch(0.63 0.19 48);
+  --color-ember-700: oklch(0.52 0.17 44);
+
+  /* --- Semáforo das telas internas (spec §5 e §6) ----------------------
+     Lido a 2 metros, sob vapor, em tela suja. Não compartilha paleta com o
+     cardápio de propósito: alerta não pode parecer decoração. */
+  --color-alert-critical: oklch(0.60 0.22 25);
+  --color-alert-warning:  oklch(0.74 0.17 62);
+  --color-alert-soft:     oklch(0.83 0.15 95);
+  --color-alert-calm:     oklch(0.66 0.14 152);
+
+  --font-display: var(--font-oswald), "Arial Narrow", system-ui, sans-serif;
 }
 
+/* ---------------------------------------------------------------------------
+ * ESCURO — o padrão
+ * ------------------------------------------------------------------------ */
 :root {
-  --background: var(--color-ink-50);
-  --foreground: var(--color-ink-900);
-  --surface: oklch(1 0 0);
-  --border: var(--color-ink-200);
-  --muted: var(--color-ink-500);
-  /* substituído em runtime por restaurants.brand_color — nunca inventar marca */
-  --brand: var(--color-ink-900);
+  --background: var(--color-coal-950);
+  --foreground: oklch(0.96 0.020 85);
+
+  --card: var(--color-coal-900);
+  --card-foreground: oklch(0.96 0.020 85);
+  --popover: var(--color-coal-800);
+  --popover-foreground: oklch(0.96 0.020 85);
+
+  --primary: var(--color-ember-500);
+  --primary-foreground: oklch(0.16 0.030 55);
+
+  --secondary: var(--color-coal-800);
+  --secondary-foreground: oklch(0.93 0.012 78);
+
+  --muted: var(--color-coal-800);
+  --muted-foreground: oklch(0.68 0.020 70);
+
+  --accent: var(--color-coal-800);
+  --accent-foreground: var(--color-ember-400);
+
+  --destructive: oklch(0.62 0.21 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.28 0.013 56);
+  --input: oklch(0.31 0.013 56);
+  --ring: var(--color-ember-500);
+
+  --surface: var(--color-coal-900);
+  /* Sobrescrito em runtime por restaurants.brand_color.
+     White label: a marca é do restaurante, nunca inventada por nós. */
+  --brand: var(--color-ember-500);
+
+  --radius: 0.5rem;
+
+  --chart-1: var(--color-ember-500);
+  --chart-2: oklch(0.66 0.14 152);
+  --chart-3: oklch(0.70 0.13 240);
+  --chart-4: oklch(0.74 0.15 320);
+  --chart-5: oklch(0.60 0.016 62);
+
+  --sidebar: var(--color-coal-900);
+  --sidebar-foreground: oklch(0.93 0.012 78);
+  --sidebar-primary: var(--color-ember-500);
+  --sidebar-primary-foreground: oklch(0.16 0.030 55);
+  --sidebar-accent: var(--color-coal-800);
+  --sidebar-accent-foreground: oklch(0.93 0.012 78);
+  --sidebar-border: oklch(0.28 0.013 56);
+  --sidebar-ring: var(--color-ember-500);
 }
 
-.dark {
-  --background: var(--color-ink-950);
-  --foreground: var(--color-ink-100);
-  --surface: var(--color-ink-900);
-  --border: var(--color-ink-800);
-  --muted: var(--color-ink-400);
-}
+/* ---------------------------------------------------------------------------
+ * CLARO — desenhado, não invertido.
+ * O âmbar escurece: oklch(0.72) sobre papel não alcança contraste de texto.
+ * ------------------------------------------------------------------------ */
+/* Os dois seletores repetem os mesmos valores porque um deles vive dentro de
+   uma @media e CSS não permite lista de seletores atravessando esse limite.
+   Ao mexer na paleta clara, mexa nos DOIS blocos. */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --background: oklch(0.985 0.006 85);
+    --foreground: oklch(0.19 0.015 52);
 
-/* Restaurante à noite é escuro: modo escuro de verdade, não invertido no
-   braço (spec §11). Sem .dark explícita, segue o aparelho do cliente. */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: var(--color-ink-950);
-    --foreground: var(--color-ink-100);
-    --surface: var(--color-ink-900);
-    --border: var(--color-ink-800);
-    --muted: var(--color-ink-400);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.19 0.015 52);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.19 0.015 52);
+
+    --primary: var(--color-ember-600);
+    --primary-foreground: oklch(0.99 0.005 85);
+
+    --secondary: oklch(0.955 0.010 82);
+    --secondary-foreground: oklch(0.26 0.015 52);
+
+    --muted: oklch(0.955 0.010 82);
+    --muted-foreground: oklch(0.48 0.020 60);
+
+    --accent: oklch(0.955 0.010 82);
+    --accent-foreground: var(--color-ember-700);
+
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.99 0 0);
+
+    --border: oklch(0.90 0.010 80);
+    --input: oklch(0.88 0.010 80);
+    --ring: var(--color-ember-600);
+
+    --surface: oklch(1 0 0);
+    --brand: var(--color-ember-600);
+
+    --sidebar: oklch(0.985 0.006 85);
+    --sidebar-foreground: oklch(0.26 0.015 52);
+    --sidebar-primary: var(--color-ember-600);
+    --sidebar-primary-foreground: oklch(0.99 0.005 85);
+    --sidebar-accent: oklch(0.955 0.010 82);
+    --sidebar-accent-foreground: oklch(0.26 0.015 52);
+    --sidebar-border: oklch(0.90 0.010 80);
+    --sidebar-ring: var(--color-ember-600);
   }
 }
 
+.light {
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.19 0.015 52);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.015 52);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.015 52);
+
+  --primary: var(--color-ember-600);
+  --primary-foreground: oklch(0.99 0.005 85);
+
+  --secondary: oklch(0.955 0.010 82);
+  --secondary-foreground: oklch(0.26 0.015 52);
+
+  --muted: oklch(0.955 0.010 82);
+  --muted-foreground: oklch(0.48 0.020 60);
+
+  --accent: oklch(0.955 0.010 82);
+  --accent-foreground: var(--color-ember-700);
+
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.90 0.010 80);
+  --input: oklch(0.88 0.010 80);
+  --ring: var(--color-ember-600);
+
+  --surface: oklch(1 0 0);
+  --brand: var(--color-ember-600);
+
+  --sidebar: oklch(0.985 0.006 85);
+  --sidebar-foreground: oklch(0.26 0.015 52);
+  --sidebar-primary: var(--color-ember-600);
+  --sidebar-primary-foreground: oklch(0.99 0.005 85);
+  --sidebar-accent: oklch(0.955 0.010 82);
+  --sidebar-accent-foreground: oklch(0.26 0.015 52);
+  --sidebar-border: oklch(0.90 0.010 80);
+  --sidebar-ring: var(--color-ember-600);
+}
+
+/* ---------------------------------------------------------------------------
+ * Mapeamento para as utilitárias do Tailwind
+ * ------------------------------------------------------------------------ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface: var(--surface);
   --color-brand: var(--brand);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    /* o cardápio é rolado com o polegar; a barra do carrinho é fixa */
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* impede o "pull to refresh" derrubar o cardápio no meio do pedido */
+    overscroll-behavior-y: none;
+  }
+
+  /* Nome de prato: condensada pesada, apertada. É o que dá personalidade —
+     descrição e preço ficam na neutra (spec §11: duas famílias, não uma). */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+
+  /* Preço alinha em coluna: tabular-nums impede o "R$ 9,00" dançar sob o
+     "R$ 42,00" quando a lista rola. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Placeholder de foto de produto.
+ *
+ * A matiz vem do NOME do prato (via --ph-hue, inline), mas a LUMINOSIDADE
+ * precisa acompanhar o tema — no claro, um bloco escuro ao lado de texto claro
+ * parece imagem quebrada, que é exatamente o que a spec §4 proíbe.
+ * ------------------------------------------------------------------------ */
+.product-placeholder {
+  --ph-l1: 0.30;
+  --ph-l2: 0.21;
+  --ph-l3: 0.17;
+  --ph-c: 0.055;
+  --ph-ink-l: 0.62;
+  --ph-ink-a: 0.55;
+
+  background: linear-gradient(
+    145deg,
+    oklch(var(--ph-l1) var(--ph-c) var(--ph-hue)) 0%,
+    oklch(var(--ph-l2) calc(var(--ph-c) * 0.64) calc(var(--ph-hue) + 8)) 55%,
+    oklch(var(--ph-l3) calc(var(--ph-c) * 0.40) calc(var(--ph-hue) + 14)) 100%
+  );
+}
+
+.product-placeholder > span {
+  color: oklch(var(--ph-ink-l) 0.09 var(--ph-hue) / var(--ph-ink-a));
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .product-placeholder {
+    --ph-l1: 0.93;
+    --ph-l2: 0.88;
+    --ph-l3: 0.84;
+    --ph-c: 0.045;
+    --ph-ink-l: 0.62;
+    --ph-ink-a: 0.5;
+  }
+}
+
+.light .product-placeholder {
+  --ph-l1: 0.93;
+  --ph-l2: 0.88;
+  --ph-l3: 0.84;
+  --ph-c: 0.045;
+  --ph-ink-l: 0.62;
+  --ph-ink-a: 0.5;
 }
 
 /* Transição curta e com propósito, nunca decorativa (spec §11). */

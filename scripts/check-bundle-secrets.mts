@@ -18,18 +18,34 @@ import path from 'node:path';
 
 const BUILD_DIR = path.resolve(process.cwd(), '.next');
 
+/**
+ * SÓ `.next/static` é servido ao browser.
+ *
+ * `.next/server` e `.next/dev` são código de servidor — a chave service_role
+ * aparece lá por construção, e apontar o dedo para isso é ruído que treina
+ * todo mundo a ignorar o alerta.
+ */
+const CLIENT_DIR = path.join(BUILD_DIR, 'static');
+
 /** Extensões que de fato chegam ao browser. */
 const CLIENT_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.map', '.json', '.html', '.css']);
 
-/** `.next/server` não vai para o browser — segredo ali é esperado. */
-const SERVER_ONLY_DIRS = ['server', 'cache', 'standalone', 'trace', 'types'];
-
+/**
+ * O grep literal por "service_role" que a spec §10.10 sugere dispara em falso:
+ * `@supabase/auth-js` carrega a string no próprio código, então qualquer bundle
+ * que use o SDK acusaria. Um alerta que grita sempre não protege nada.
+ *
+ * O que importa é a CREDENCIAL, não a palavra. Então: o nome da variável de
+ * ambiente (que só apareceria se alguém a importasse no cliente), o valor
+ * literal dela, e um JWT cujo payload declare role service_role.
+ */
 const FORBIDDEN_PATTERNS: ReadonlyArray<{ label: string; re: RegExp }> = [
   { label: 'SUPABASE_SERVICE_ROLE_KEY', re: /SUPABASE_SERVICE_ROLE_KEY/ },
-  { label: 'literal "service_role"', re: /service_role/ },
   { label: 'SESSION_COOKIE_SECRET', re: /SESSION_COOKIE_SECRET/ },
   // JWT do Supabase cujo payload declara role service_role
   { label: 'JWT com role service_role', re: /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]*c2VydmljZV9yb2xl/ },
+  // chave nova do Supabase (formato sb_secret_*)
+  { label: 'secret key do Supabase', re: /\bsb_secret_[A-Za-z0-9_-]{10,}/ },
 ];
 
 /** Valores literais que, se presentes no ambiente, não podem estar no bundle. */
@@ -37,7 +53,7 @@ const SECRET_ENV_VARS = ['SUPABASE_SERVICE_ROLE_KEY', 'SESSION_COOKIE_SECRET'];
 
 type Finding = { file: string; label: string; line: number; excerpt: string };
 
-async function* walk(dir: string, depth = 0): AsyncGenerator<string> {
+async function* walk(dir: string): AsyncGenerator<string> {
   let entries: string[];
   try {
     entries = await readdir(dir);
@@ -45,12 +61,11 @@ async function* walk(dir: string, depth = 0): AsyncGenerator<string> {
     return;
   }
   for (const entry of entries) {
-    if (depth === 0 && SERVER_ONLY_DIRS.includes(entry)) continue;
     const full = path.join(dir, entry);
     const info = await stat(full).catch(() => null);
     if (!info) continue;
     if (info.isDirectory()) {
-      yield* walk(full, depth + 1);
+      yield* walk(full);
     } else if (CLIENT_EXTENSIONS.has(path.extname(entry))) {
       yield full;
     }
@@ -58,9 +73,12 @@ async function* walk(dir: string, depth = 0): AsyncGenerator<string> {
 }
 
 async function main() {
-  const buildExists = await stat(BUILD_DIR).catch(() => null);
-  if (!buildExists) {
-    console.error('✗ .next não existe. Rode `pnpm build` antes de `pnpm check:secrets`.');
+  const clientExists = await stat(CLIENT_DIR).catch(() => null);
+  if (!clientExists) {
+    console.error(
+      '✗ .next/static não existe. Rode `pnpm build` antes de `pnpm check:secrets`.\n' +
+        '  (a saída de `pnpm dev` não serve: dev não gera o bundle de cliente)',
+    );
     process.exit(1);
   }
 
@@ -70,7 +88,7 @@ async function main() {
   const findings: Finding[] = [];
   let scanned = 0;
 
-  for await (const file of walk(BUILD_DIR)) {
+  for await (const file of walk(CLIENT_DIR)) {
     scanned += 1;
     const content = await readFile(file, 'utf8').catch(() => null);
     if (!content) continue;

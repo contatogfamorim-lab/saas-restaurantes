@@ -609,6 +609,13 @@ export type Database = {
             foreignKeyName: "order_items_promotion_id_restaurant_id_fkey"
             columns: ["promotion_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "live_promotions"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_promotion_id_restaurant_id_fkey"
+            columns: ["promotion_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "promotions"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -996,6 +1003,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "promotion_targets_promotion_id_restaurant_id_fkey"
+            columns: ["promotion_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "live_promotions"
+            referencedColumns: ["id", "restaurant_id"]
+          },
           {
             foreignKeyName: "promotion_targets_promotion_id_restaurant_id_fkey"
             columns: ["promotion_id", "restaurant_id"]
@@ -1509,6 +1523,40 @@ export type Database = {
       }
     }
     Views: {
+      live_promotions: {
+        Row: {
+          applies_to: Database["public"]["Enums"]["promotion_applies_to"] | null
+          badge_color: string | null
+          badge_label: string | null
+          buy_quantity: number | null
+          days_of_week: number[] | null
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number | null
+          ends_at: string | null
+          id: string | null
+          is_stackable: boolean | null
+          max_quantity: number | null
+          min_order_cents: number | null
+          name: string | null
+          pay_quantity: number | null
+          priority: number | null
+          remaining_quantity: number | null
+          restaurant_id: string | null
+          time_from: string | null
+          time_to: string | null
+          timezone: string | null
+          used_quantity: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_item_timings: {
         Row: {
           delivered_at: string | null

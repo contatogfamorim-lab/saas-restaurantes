@@ -19,7 +19,7 @@ const RESTAURANTE_A = '11111111-1111-4111-8111-111111111111';
 const DONO_A = 'aaaaaaaa-0000-4000-8000-000000000001';
 const GARCOM_A = 'aaaaaaaa-0000-4000-8000-000000000002';
 const COZINHA_A = 'aaaaaaaa-0000-4000-8000-000000000003';
-const PRODUTO_PICANHA = '44444444-0000-4000-8000-000000000007';
+const PRODUTO_DESTAQUE = '44444444-0000-4000-8000-000000000007'; // Trinca da Casa, R
 
 /** Restaurante B, criado só para provar que A não enxerga nada dele. */
 const RESTAURANTE_B = 'bbbbbbbb-1111-4111-8111-111111111111';
@@ -88,7 +88,7 @@ async function abrirComandaComItem(c: Client, mesaLabel = 'Mesa 1') {
        (restaurant_id, order_id, product_id, guest_id, qty,
         unit_price_cents, total_price_cents, station)
      values ($1, $2, $3, $4, 1, 8900, 8900, 'cozinha') returning id`,
-    [RESTAURANTE_A, pedido.id, PRODUTO_PICANHA, guest.id],
+    [RESTAURANTE_A, pedido.id, PRODUTO_DESTAQUE, guest.id],
   );
   return { mesaId: mesa.id, sessaoId: sessao.id, guestId: guest.id, pedidoId: pedido.id, itemId: item.id };
 }
@@ -215,7 +215,7 @@ describe('§10.2 — superfície anônima', () => {
   it('anon não escreve em lugar nenhum', async () => {
     await comoAnonimo(async (c) => {
       await expect(
-        c.query(`update products set price_cents = 1 where id = $1`, [PRODUTO_PICANHA]),
+        c.query(`update products set price_cents = 1 where id = $1`, [PRODUTO_DESTAQUE]),
       ).rejects.toThrow();
     });
   });
@@ -236,7 +236,7 @@ describe('§3 regra 1 — snapshot de preço', () => {
         `select subtotal_cents from session_totals where session_id = $1`, [sessaoId]);
 
       await c.query(`update products set price_cents = 19900 where id = $1`,
-                    [PRODUTO_PICANHA]);
+                    [PRODUTO_DESTAQUE]);
 
       const depois = await c.query(
         `select subtotal_cents from session_totals where session_id = $1`, [sessaoId]);
@@ -277,7 +277,7 @@ describe('§3 regra 1 — snapshot de preço', () => {
         `insert into order_items (restaurant_id, order_id, product_id, qty,
                                   unit_price_cents, total_price_cents, station)
          values ($1, $2, $3, 1, 8900, 100, 'cozinha')`,
-        [RESTAURANTE_A, pedido.id, PRODUTO_PICANHA]);
+        [RESTAURANTE_A, pedido.id, PRODUTO_DESTAQUE]);
 
       await expect(client.query('commit')).rejects.toThrow(/inconsistente/i);
     } finally {
@@ -296,7 +296,7 @@ describe('§10.1 — validação de quantidade', () => {
           `insert into order_items (restaurant_id, order_id, product_id, qty,
                                     unit_price_cents, total_price_cents, station)
            values ($1, $2, $3, $4, 100, 100, 'cozinha')`,
-          [RESTAURANTE_A, pedidoId, PRODUTO_PICANHA, qty]),
+          [RESTAURANTE_A, pedidoId, PRODUTO_DESTAQUE, qty]),
       ).rejects.toThrow();
     });
   });
@@ -325,7 +325,7 @@ describe('§3 — máquina de estados do item', () => {
           `insert into order_items (restaurant_id, order_id, product_id, qty,
                                     unit_price_cents, total_price_cents, station, status)
            values ($1, $2, $3, 1, 100, 100, 'cozinha', 'queued')`,
-          [RESTAURANTE_A, pedidoId, PRODUTO_PICANHA]),
+          [RESTAURANTE_A, pedidoId, PRODUTO_DESTAQUE]),
       ).rejects.toThrow(/pending/i);
     });
   });
@@ -436,7 +436,7 @@ describe('§12.9 — guarda de coluna em products', () => {
   it('sem menu.price, o garçom não altera preço por nenhum caminho', async () => {
     await comoFuncionario(GARCOM_A, async (c) => {
       await expect(
-        c.query(`update products set price_cents = 1 where id = $1`, [PRODUTO_PICANHA]),
+        c.query(`update products set price_cents = 1 where id = $1`, [PRODUTO_DESTAQUE]),
       ).rejects.toThrow(/menu\.price/i);
     });
   });
@@ -444,7 +444,7 @@ describe('§12.9 — guarda de coluna em products', () => {
   it('a cozinha marca esgotado — é o botão "Acabou" do KDS', async () => {
     await comoFuncionario(COZINHA_A, async (c) => {
       const r = await c.query(
-        `update products set is_available = false where id = $1`, [PRODUTO_PICANHA]);
+        `update products set is_available = false where id = $1`, [PRODUTO_DESTAQUE]);
       expect(r.rowCount).toBe(1);
     });
   });
@@ -452,11 +452,11 @@ describe('§12.9 — guarda de coluna em products', () => {
   it('§16 — toda alteração de preço vai para audit_log com antes e depois', async () => {
     await comoFuncionario(DONO_A, async (c) => {
       await c.query(`update products set price_cents = 9500 where id = $1`,
-                    [PRODUTO_PICANHA]);
+                    [PRODUTO_DESTAQUE]);
       const { rows } = await c.query(
         `select before, after from audit_log
           where action = 'product.price_changed' and entity_id = $1
-          order by created_at desc limit 1`, [PRODUTO_PICANHA]);
+          order by created_at desc limit 1`, [PRODUTO_DESTAQUE]);
       expect(rows).toHaveLength(1);
       expect(rows[0].before.price_cents).toBe(8900);
       expect(rows[0].after.price_cents).toBe(9500);
@@ -469,7 +469,7 @@ describe('§10.8 — audit_log é imutável', () => {
   it('rejeita UPDATE e DELETE mesmo para o dono', async () => {
     await comoFuncionario(DONO_A, async (c) => {
       await c.query(`update products set price_cents = 9100 where id = $1`,
-                    [PRODUTO_PICANHA]);
+                    [PRODUTO_DESTAQUE]);
       const { rows: [linha] } = await c.query(
         `select id from audit_log order by created_at desc limit 1`);
 
