@@ -40,7 +40,15 @@
       "Bash(:)",
       "Bash(curl -s -o /dev/null -w \"prod responde: %{http_code}\\\\n\" \"http://localhost:3001/m/d6FB3xBNN4\")",
       "Bash(curl -s -o /dev/null -w \"servidor: %{http_code}\\\\n\" --max-time 8 http://localhost:3000/app/entrar)",
-      "Bash(xargs -I{} echo \"{} containers\")"
+      "Bash(xargs -I{} echo \"{} containers\")",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(curl -s -o /dev/null -w \" /app/salao -> %{http_code} %{redirect_url}\\\\n\" --max-time 10 http://localhost:3000/app/salao)",
+      "Bash(curl -s -o /dev/null -w \" /app/entrar -> %{http_code}\\\\n\" --max-time 10 http://localhost:3000/app/entrar)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" --max-time 10 http://localhost:3000/app/entrar)",
+      "Bash(curl -s -L -o /dev/null -w \"  final: %{http_code} apos %{num_redirects} redirecionamentos -> %{url_effective}\\\\n\" --max-time 15 http://localhost:3000/app/entrar)",
+      "Bash(curl -s -D - -o /dev/null --max-time 10 http://localhost:3000/app/entrar)",
+      "Bash(mkdir -p \"src/app/app/\\(equipe\\)\")",
+      "Bash(git mv *)"
     ]
   }
 }

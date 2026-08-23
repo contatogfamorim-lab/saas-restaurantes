@@ -14,7 +14,7 @@ import {
   resolverChamado,
   type MotivoLiberacao,
   type ResultadoAcao,
-} from '@/app/app/salao/actions';
+} from '@/app/app/(equipe)/salao/actions';
 import type { DetalheDaMesa } from '@/lib/salao/queries';
 
 import { Elapsed } from './elapsed';

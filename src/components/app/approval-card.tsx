@@ -5,7 +5,7 @@ import { CheckIcon, XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { formatCents } from '@/lib/money';
-import { aprovarPedido } from '@/app/app/salao/actions';
+import { aprovarPedido } from '@/app/app/(equipe)/salao/actions';
 import type { PedidoParaAprovar } from '@/lib/salao/queries';
 
 import { Elapsed } from './elapsed';
