@@ -602,6 +602,13 @@ export type Database = {
             foreignKeyName: "order_items_order_id_restaurant_id_fkey"
             columns: ["order_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "approval_queue"
+            referencedColumns: ["order_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_restaurant_id_fkey"
+            columns: ["order_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -1544,6 +1551,43 @@ export type Database = {
       }
     }
     Views: {
+      approval_queue: {
+        Row: {
+          created_at: string | null
+          esperando_segundos: number | null
+          guest_name: string | null
+          order_id: string | null
+          restaurant_id: string | null
+          session_id: string | null
+          source: Database["public"]["Enums"]["order_source"] | null
+          table_area: string | null
+          table_id: string | null
+          table_label: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "session_totals"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "orders_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "table_sessions"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+        ]
+      }
       live_promotions: {
         Row: {
           applies_to: Database["public"]["Enums"]["promotion_applies_to"] | null
@@ -1728,6 +1772,15 @@ export type Database = {
       }
     }
     Functions: {
+      approve_order: {
+        Args: {
+          p_aprovados: string[]
+          p_order_id: string
+          p_recusas?: Json
+          p_reter_cursos?: number[]
+        }
+        Returns: Json
+      }
       create_guest_order: {
         Args: {
           p_guest_id: string
@@ -1737,6 +1790,7 @@ export type Database = {
         }
         Returns: string
       }
+      mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
       open_guest_session: {
         Args: {
           p_device_hash: string
@@ -1747,6 +1801,20 @@ export type Database = {
         }
         Returns: Json
       }
+      release_course: {
+        Args: { p_course: number; p_session_id: string }
+        Returns: number
+      }
+      release_table: {
+        Args: {
+          p_forcada?: boolean
+          p_motivo?: Database["public"]["Enums"]["release_reason"]
+          p_observacao?: string
+          p_session_id: string
+        }
+        Returns: Json
+      }
+      resolve_waiter_call: { Args: { p_call_id: string }; Returns: undefined }
     }
     Enums: {
       adjustment_type: "discount" | "service_fee_waiver"
@@ -1771,6 +1839,7 @@ export type Database = {
       menu_layout_status: "draft" | "published"
       order_item_status:
         | "pending"
+        | "held"
         | "queued"
         | "preparing"
         | "ready"
@@ -1954,6 +2023,7 @@ export const Constants = {
       menu_layout_status: ["draft", "published"],
       order_item_status: [
         "pending",
+        "held",
         "queued",
         "preparing",
         "ready",
