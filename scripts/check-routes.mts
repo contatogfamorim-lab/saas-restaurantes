@@ -38,9 +38,6 @@ interface Caso {
 
 const CASOS: Caso[] = [
   { caminho: '/app/entrar', espera: 'pagina', descricao: 'porta do Administrador abre' },
-  // Sem aparelho liberado, a porta do operador MANDA para a do Administrador —
-  // o teclado numérico nunca aparece para quem chega de fora (spec §10.5).
-  { caminho: '/app/operador', espera: 'login', descricao: 'operador sem aparelho vai ao admin' },
   { caminho: '/app', espera: 'login', descricao: 'raiz da equipe exige login' },
   { caminho: '/app/salao', espera: 'login', descricao: 'salão exige login' },
   { caminho: '/privacidade', espera: 'pagina', descricao: 'aviso de dados é público' },

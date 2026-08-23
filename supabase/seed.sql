@@ -5,12 +5,16 @@
 -- 1 restaurante · 8 mesas · 5 categorias · 30 produtos · 6 grupos de
 -- modificadores · 5 usuários (um deles acumulando waiter + cashier).
 --
--- ADMINISTRADOR   dono@brasaburger.test  ·  senha-de-teste-123
--- OPERADORES      código + 5 dígitos, no teclado numérico:
---                   01 / 47628   Ivo      (garçom)
---                   02 / 91387   Ravi     (cozinha)
---                   03 / 29574   Selma    (caixa)
---                   04 / 64839   Nara     (garçom + caixa)
+-- Login: usuário e senha. "Usuário" aceita o e-mail OU o código do crachá.
+--
+--   usuário   senha                 quem
+--   --------  --------------------  ---------------------------
+--   00        senha-de-teste-123    Marisa   administrador
+--   01        senha-de-teste-123    Ivo      garçom
+--   02        senha-de-teste-123    Ravi     cozinha
+--   03        senha-de-teste-123    Selma    caixa
+--   04        senha-de-teste-123    Nara     garçom + caixa
+--
 -- Credenciais de desenvolvimento. Não reaproveitar em lugar nenhum.
 -- =============================================================================
 
@@ -60,30 +64,25 @@ from auth.users u;
 
 -- roles é ARRAY: Nara acumula garçom E caixa, com um cadastro só (spec P1b).
 --
--- Acesso: o Administrador entra por e-mail e senha; o resto da equipe entra
--- por código de operador + 5 dígitos, e por isso tem operator_code e pin_hash.
--- Marisa administra e fica sem código — a porta dela é outra, de propósito.
-insert into public.profiles (id, restaurant_id, name, roles, permissions, operator_code, pin_hash)
+-- `operator_code` é NOME DE USUÁRIO, não segredo: quem está no tablet digita
+-- "02" em vez de cozinha@brasaburger.test. A senha é que autentica.
+insert into public.profiles (id, restaurant_id, name, roles, permissions, operator_code)
 values
   ('aaaaaaaa-0000-4000-8000-000000000001',
    '11111111-1111-4111-8111-111111111111', 'Marisa Aoki',
-   array['owner']::public.staff_role[], '{}', null, null),
+   array['owner']::public.staff_role[], '{}', '00'),
   ('aaaaaaaa-0000-4000-8000-000000000002',
    '11111111-1111-4111-8111-111111111111', 'Ivo Bezerra',
-   array['waiter']::public.staff_role[], '{}', '01',
-   '$argon2id$v=19$m=19456,t=2,p=1$m8P1lmvplCZMO4uDqNNdKg$HB/2kV2vy8sX1sIkoYUtgBawACv8PhDcj1DKY/j86T0'),
+   array['waiter']::public.staff_role[], '{}', '01'),
   ('aaaaaaaa-0000-4000-8000-000000000003',
    '11111111-1111-4111-8111-111111111111', 'Ravi Nunes',
-   array['kitchen']::public.staff_role[], '{}', '02',
-   '$argon2id$v=19$m=19456,t=2,p=1$aQogRRVvi8D/JaOgjr8jbA$wdxmZdlMY6qWAoGBgMO7K24Ai3se+lbgGhh3EgsLHY8'),
+   array['kitchen']::public.staff_role[], '{}', '02'),
   ('aaaaaaaa-0000-4000-8000-000000000004',
    '11111111-1111-4111-8111-111111111111', 'Selma Prado',
-   array['cashier']::public.staff_role[], '{}', '03',
-   '$argon2id$v=19$m=19456,t=2,p=1$eCZWbZAdUjV0RoMMo5Z0Pw$tauZLMD3YZ9npeFeDbRIjLOJZLmiXTsBt/uS/sA6Kwo'),
+   array['cashier']::public.staff_role[], '{}', '03'),
   ('aaaaaaaa-0000-4000-8000-000000000005',
    '11111111-1111-4111-8111-111111111111', 'Nara Vilaça',
-   array['waiter','cashier']::public.staff_role[], '{}', '04',
-   '$argon2id$v=19$m=19456,t=2,p=1$Y3bxzgXiupJjIc1oWhKwXQ$V3QaVMZ5sfc5+JbWM3jvInUncVm/SQywxJXju5V7CJA');
+   array['waiter','cashier']::public.staff_role[], '{}', '04');
 
 -- -----------------------------------------------------------------------------
 -- 8 mesas. short_code vem do default aleatório — nunca derivado do número.

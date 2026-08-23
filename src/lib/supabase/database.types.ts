@@ -960,9 +960,6 @@ export type Database = {
           name: string
           operator_code: string | null
           permissions: string[]
-          pin_failed_attempts: number
-          pin_hash: string | null
-          pin_locked_until: string | null
           restaurant_id: string
           roles: Database["public"]["Enums"]["staff_role"][]
           updated_at: string
@@ -974,9 +971,6 @@ export type Database = {
           name: string
           operator_code?: string | null
           permissions?: string[]
-          pin_failed_attempts?: number
-          pin_hash?: string | null
-          pin_locked_until?: string | null
           restaurant_id: string
           roles?: Database["public"]["Enums"]["staff_role"][]
           updated_at?: string
@@ -988,9 +982,6 @@ export type Database = {
           name?: string
           operator_code?: string | null
           permissions?: string[]
-          pin_failed_attempts?: number
-          pin_hash?: string | null
-          pin_locked_until?: string | null
           restaurant_id?: string
           roles?: Database["public"]["Enums"]["staff_role"][]
           updated_at?: string
@@ -1470,64 +1461,6 @@ export type Database = {
           },
         ]
       }
-      trusted_devices: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          label: string
-          last_seen_at: string | null
-          restaurant_id: string
-          revoked_at: string | null
-          revoked_by: string | null
-          token_hash: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          label: string
-          last_seen_at?: string | null
-          restaurant_id: string
-          revoked_at?: string | null
-          revoked_by?: string | null
-          token_hash: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          label?: string
-          last_seen_at?: string | null
-          restaurant_id?: string
-          revoked_at?: string | null
-          revoked_by?: string | null
-          token_hash?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trusted_devices_created_by_restaurant_id_fkey"
-            columns: ["created_by", "restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id", "restaurant_id"]
-          },
-          {
-            foreignKeyName: "trusted_devices_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trusted_devices_revoked_by_restaurant_id_fkey"
-            columns: ["revoked_by", "restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id", "restaurant_id"]
-          },
-        ]
-      }
       waiter_calls: {
         Row: {
           created_at: string
@@ -1861,11 +1794,6 @@ export type Database = {
           p_short_code: string
         }
         Returns: Json
-      }
-      register_pin_failure: { Args: { p_profile_id: string }; Returns: Json }
-      register_pin_success: {
-        Args: { p_profile_id: string }
-        Returns: undefined
       }
       release_course: {
         Args: { p_course: number; p_session_id: string }

@@ -245,12 +245,12 @@ async function main() {
       }`,
     );
   }
-  console.log('\n  ADMINISTRADOR  /app/entrar?admin=1  ·  dono@brasaburger.test  ·  senha-de-teste-123');
-  console.log('  OPERADORES     /app/operador (depois de liberar o aparelho)');
-  console.log('                   01 / 47628  Ivo    garçom');
-  console.log('                   02 / 91387  Ravi   cozinha');
-  console.log('                   03 / 29574  Selma  caixa');
-  console.log('                   04 / 64839  Nara   garçom + caixa\n');
+  console.log('\n  /app/entrar  ·  senha de todos: senha-de-teste-123');
+  console.log('    usuário 00  Marisa  administrador');
+  console.log('    usuário 01  Ivo     garçom');
+  console.log('    usuário 02  Ravi    cozinha');
+  console.log('    usuário 03  Selma   caixa');
+  console.log('    usuário 04  Nara    garçom + caixa\n');
 
   await c.query('commit');
   await c.end();
