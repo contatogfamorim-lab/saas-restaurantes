@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "127.0.0.1", port: "54321", pathname: "/storage/v1/object/public/**" },
     ],
     minimumCacheTTL: 60 * 60 * 24 * 30,
+
+    // O Next 16 recusa otimizar imagem cujo host resolve para IP privado —
+    // é proteção contra SSRF, e em produção ela tem que continuar de pé: sem
+    // ela, um `image_url` malicioso faria o servidor buscar endereços da rede
+    // interna e devolver o conteúdo pelo /_next/image.
+    //
+    // Em desenvolvimento o Supabase local serve o Storage em 127.0.0.1, então
+    // a proteção impediria qualquer foto de aparecer. Liberada SÓ aqui, e
+    // amarrada ao NODE_ENV para não haver como vazar para produção por
+    // esquecimento.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === "development",
   },
 
   async headers() {

@@ -17,7 +17,8 @@
     "db:check-rls": "node --env-file-if-exists=.env.local scripts/check-rls.mts",
     "check:secrets": "node --env-file-if-exists=.env.local scripts/check-bundle-secrets.mts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check-rls && pnpm test:db",
-    "test:db": "vitest run --config vitest.db.config.mts"
+    "test:db": "vitest run --config vitest.db.config.mts",
+    "db:photos": "node --env-file=.env.local scripts/seed-photos.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

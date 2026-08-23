@@ -85,6 +85,14 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
   const categories = categoriesRes.data ?? [];
   const products = productsRes.data ?? [];
 
+  // `products.image_url` guarda o CAMINHO no bucket, não a URL inteira — assim
+  // o mesmo dado serve local, staging e produção sem reescrita (migration 0015).
+  const publicUrl = (value: string | null): string | null => {
+    if (!value) return null;
+    if (/^https?:\/\//i.test(value)) return value;
+    return supabase.storage.from('product-photos').getPublicUrl(value).data.publicUrl;
+  };
+
   // --- promoções vivas AGORA, resolvidas pela view (migration 0014) ---------
   const { data: livePromos } = await admin
     .from('live_promotions')
@@ -154,7 +162,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       description: (p.description as string | null) ?? null,
       priceCents: resolved.priceCents,
       originalPriceCents: resolved.originalPriceCents,
-      imageUrl: (p.image_url as string | null) ?? null,
+      imageUrl: publicUrl(p.image_url as string | null),
       prepMinutes: p.prep_minutes as number,
       servesPeople: Number(p.serves_people),
       dietTags: ((p.diet_tags as DietTag[] | null) ?? []) as DietTag[],
