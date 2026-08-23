@@ -49,7 +49,8 @@
       "Bash(curl -s -D - -o /dev/null --max-time 10 http://localhost:3000/app/entrar)",
       "Bash(mkdir -p \"src/app/app/\\(equipe\\)\")",
       "Bash(git mv *)",
-      "Bash(node -e \"console.log\\(require.resolve\\('@supabase/supabase-js'\\)\\)\")"
+      "Bash(node -e \"console.log\\(require.resolve\\('@supabase/supabase-js'\\)\\)\")",
+      "Bash(docker exec supabase_db_SaaS_RESTAURANTE psql -U postgres -d postgres -tAc ' *)"
     ]
   }
 }

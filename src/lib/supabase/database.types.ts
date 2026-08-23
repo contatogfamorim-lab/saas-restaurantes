@@ -278,6 +278,13 @@ export type Database = {
             foreignKeyName: "menu_events_session_id_restaurant_id_fkey"
             columns: ["session_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "menu_events_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "session_totals"
             referencedColumns: ["session_id", "restaurant_id"]
           },
@@ -732,6 +739,13 @@ export type Database = {
             foreignKeyName: "orders_session_id_restaurant_id_fkey"
             columns: ["session_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "orders_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "session_totals"
             referencedColumns: ["session_id", "restaurant_id"]
           },
@@ -795,6 +809,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
           },
           {
             foreignKeyName: "payments_session_id_restaurant_id_fkey"
@@ -1302,6 +1323,13 @@ export type Database = {
             foreignKeyName: "session_adjustments_session_id_restaurant_id_fkey"
             columns: ["session_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "session_adjustments_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "session_totals"
             referencedColumns: ["session_id", "restaurant_id"]
           },
@@ -1358,6 +1386,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_guests_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
           },
           {
             foreignKeyName: "session_guests_session_id_restaurant_id_fkey"
@@ -1524,6 +1559,13 @@ export type Database = {
             foreignKeyName: "waiter_calls_session_id_restaurant_id_fkey"
             columns: ["session_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "waiter_calls_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "session_totals"
             referencedColumns: ["session_id", "restaurant_id"]
           },
@@ -1572,6 +1614,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
           },
           {
             foreignKeyName: "orders_session_id_restaurant_id_fkey"
@@ -1645,6 +1694,39 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "promotions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      open_bills: {
+        Row: {
+          aberta_ha_segundos: number | null
+          area: string | null
+          balance_cents: number | null
+          discount_cents: number | null
+          em_producao: number | null
+          garcom: string | null
+          guest_count: number | null
+          mesa: string | null
+          opened_at: string | null
+          paid_cents: number | null
+          pediu_a_conta: boolean | null
+          pending_cents: number | null
+          pessoas: number | null
+          restaurant_id: string | null
+          service_fee_cents: number | null
+          service_fee_waived: boolean | null
+          session_id: string | null
+          status: Database["public"]["Enums"]["session_status"] | null
+          subtotal_cents: number | null
+          total_cents: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_sessions_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1802,6 +1884,15 @@ export type Database = {
       }
     }
     Functions: {
+      apply_discount: {
+        Args: {
+          p_amount_cents?: number
+          p_percent?: number
+          p_reason: string
+          p_session_id: string
+        }
+        Returns: Json
+      }
       approve_order: {
         Args: {
           p_aprovados: string[]
@@ -1837,6 +1928,16 @@ export type Database = {
         }
         Returns: Json
       }
+      register_payment: {
+        Args: {
+          p_amount_cents: number
+          p_idempotency_key: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_session_id: string
+          p_tendered_cents?: number
+        }
+        Returns: Json
+      }
       release_course: {
         Args: { p_course: number; p_session_id: string }
         Returns: number
@@ -1851,6 +1952,10 @@ export type Database = {
         Returns: Json
       }
       resolve_waiter_call: { Args: { p_call_id: string }; Returns: undefined }
+      waive_service_fee: {
+        Args: { p_reason: string; p_session_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       adjustment_type: "discount" | "service_fee_waiver"
