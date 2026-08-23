@@ -44,6 +44,7 @@ const CASOS: Caso[] = [
 
   // --- com sessão: é onde erro de avaliação de módulo aparece ---------------
   { caminho: '/app/salao', espera: 'pagina', autenticado: true, descricao: 'salão renderiza logado' },
+  { caminho: '/app/cozinha', espera: 'pagina', autenticado: true, descricao: 'KDS renderiza logado' },
 ];
 
 /**

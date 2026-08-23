@@ -495,6 +495,13 @@ export type Database = {
             foreignKeyName: "order_item_modifiers_order_item_id_restaurant_id_fkey"
             columns: ["order_item_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "kitchen_queue"
+            referencedColumns: ["item_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_item_modifiers_order_item_id_restaurant_id_fkey"
+            columns: ["order_item_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "order_item_timings"
             referencedColumns: ["order_item_id", "restaurant_id"]
           },
@@ -1582,6 +1589,35 @@ export type Database = {
           },
         ]
       }
+      kitchen_queue: {
+        Row: {
+          cliente: string | null
+          course: number | null
+          em_preparo_segundos: number | null
+          item_id: string | null
+          mesa: string | null
+          na_fila_segundos: number | null
+          notes: string | null
+          prep_minutes: number | null
+          produto: string | null
+          qty: number | null
+          queued_at: string | null
+          restaurant_id: string | null
+          session_id: string | null
+          started_at: string | null
+          station: Database["public"]["Enums"]["station"] | null
+          status: Database["public"]["Enums"]["order_item_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_promotions: {
         Row: {
           applies_to: Database["public"]["Enums"]["promotion_applies_to"] | null
@@ -1784,6 +1820,12 @@ export type Database = {
         }
         Returns: string
       }
+      kds_item_ready: { Args: { p_item_id: string }; Returns: undefined }
+      kds_out_of_stock: {
+        Args: { p_item_id: string; p_marcar_indisponivel?: boolean }
+        Returns: Json
+      }
+      kds_start_item: { Args: { p_item_id: string }; Returns: undefined }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
       open_guest_session: {
         Args: {

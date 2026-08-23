@@ -25,6 +25,7 @@ const SMASH = '44444444-0000-4000-8000-000000000001';
 const CHEDDAR = '44444444-0000-4000-8000-000000000003';
 const FRITAS = '44444444-0000-4000-8000-000000000013';
 const PETIT = '44444444-0000-4000-8000-000000000020';
+const LIMONADA = '44444444-0000-4000-8000-000000000027';
 
 const c = new Client({ connectionString: DATABASE_URL });
 
@@ -59,7 +60,13 @@ async function abrir(label: string, nome: string, minutosAtras = 0) {
 async function itens(
   sessionId: string,
   guestId: string,
-  lista: { produto: string; qty: number; status: string; minutosAtras?: number }[],
+  lista: {
+    produto: string;
+    qty: number;
+    status: string;
+    minutosAtras?: number;
+    modificadores?: { grupo: string; opcao: string; delta: number }[];
+  }[],
 ) {
   const { rows: o } = await c.query(
     `insert into orders (restaurant_id, session_id, guest_id, source, idempotency_key, status, approved_by, approved_at)
@@ -76,12 +83,27 @@ async function itens(
       [item.produto],
     );
 
+    // O total já nasce somando os modificadores: preço de item lançado é
+    // imutável, e a constraint deferida confere no COMMIT.
+    const extra = (item.modificadores ?? []).reduce((s, m) => s + m.delta, 0);
+
     const { rows: oi } = await c.query(
       `insert into order_items (restaurant_id, order_id, product_id, guest_id, qty,
                                 unit_price_cents, total_price_cents, station)
-       values ($1, $2, $3, $4, $5, $6::int, $6::int * $5::int, $7) returning id`,
-      [RESTAURANTE, orderId, item.produto, guestId, item.qty, p[0].price_cents, p[0].station],
+       values ($1, $2, $3, $4, $5, $6::int, ($6::int + $8::int) * $5::int, $7)
+       returning id`,
+      [RESTAURANTE, orderId, item.produto, guestId, item.qty, p[0].price_cents,
+       p[0].station, extra],
     );
+
+    for (const m of item.modificadores ?? []) {
+      await c.query(
+        `insert into order_item_modifiers
+           (restaurant_id, order_item_id, group_name, option_name, price_delta_cents)
+         values ($1, $2, $3, $4, $5)`,
+        [RESTAURANTE, oi[0].id, m.grupo, m.opcao, m.delta],
+      );
+    }
 
     // A máquina de estados exige passo a passo; o trigger carimba os
     // timestamps. Depois recuamos queued_at para simular o tempo decorrido.
@@ -119,7 +141,20 @@ async function main() {
   // inconsistente por um instante que, em autocommit, é o instante que conta.
   await c.query('begin');
 
-  // limpa o cenário anterior para o script ser reexecutável
+  // Limpa o cenário anterior. Cancela o que está em produção ANTES de fechar a
+  // comanda, que é o que release_table() faz de verdade — fechar sem cancelar
+  // deixaria prato órfão na fila da cozinha.
+  await c.query(
+    `update order_items oi
+        set status = 'cancelled', rejection_reason = 'erro_no_pedido'
+       from orders o, table_sessions s
+      where o.id = oi.order_id
+        and s.id = o.session_id
+        and s.restaurant_id = $1
+        and s.status in ('open', 'closing')
+        and oi.status in ('pending', 'held', 'queued', 'preparing', 'ready')`,
+    [RESTAURANTE],
+  );
   await c.query(
     `update table_sessions set status = 'closed', closed_at = now()
       where restaurant_id = $1 and status in ('open', 'closing')`,
@@ -176,6 +211,8 @@ async function main() {
     await itens(m.sessionId, m.guestId, [
       { produto: CHEDDAR, qty: 2, status: 'ready', minutosAtras: 8 },
       { produto: AGUA, qty: 2, status: 'delivered', minutosAtras: 35 },
+      // estação BAR na fila: sem isto a aba do bar abre vazia
+      { produto: LIMONADA, qty: 2, status: 'queued', minutosAtras: 3 },
     ]);
   }
 
@@ -184,6 +221,17 @@ async function main() {
     const m = await abrir('Mesa 3', 'Célia', 25);
     await itens(m.sessionId, m.guestId, [
       { produto: SMASH, qty: 2, status: 'delivered', minutosAtras: 20 },
+      // na fila da COZINHA, com modificador: é o caso em que errar custa prato
+      {
+        produto: CHEDDAR,
+        qty: 1,
+        status: 'queued',
+        minutosAtras: 5,
+        modificadores: [
+          { grupo: 'Ponto da carne', opcao: 'Mal passado', delta: 0 },
+          { grupo: 'Retirar ingrediente', opcao: 'Sem cebola', delta: 0 },
+        ],
+      },
     ]);
     await c.query(
       `insert into waiter_calls (restaurant_id, session_id, table_id, type, created_at)
