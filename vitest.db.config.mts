@@ -6,9 +6,8 @@ import { fileURLToPath } from 'node:url';
  *
  *   pnpm db:start && pnpm db:reset && pnpm test:db
  *
- * `fileParallelism: false` e um único fork: vários testes abrem transações
- * sobre as mesmas linhas do seed, e rodá-los em paralelo produziria deadlock
- * em vez de falha de verdade.
+ * Um worker só: vários testes abrem transações sobre as mesmas linhas do seed,
+ * e rodá-los em paralelo produziria deadlock em vez de falha de verdade.
  */
 export default defineConfig({
   resolve: {
@@ -21,7 +20,7 @@ export default defineConfig({
     include: ['tests/db/**/*.test.ts'],
     fileParallelism: false,
     pool: 'forks',
-    poolOptions: { forks: { singleFork: true } },
+    maxWorkers: 1,
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },

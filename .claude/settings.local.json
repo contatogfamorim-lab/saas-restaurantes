@@ -21,7 +21,14 @@
       "Bash(colima version *)",
       "Bash(colima start *)",
       "Bash(docker info *)",
-      "Bash(colima status *)"
+      "Bash(colima status *)",
+      "Bash(mv 20260822190012_rls.sql                   20260822190013_rls.sql)",
+      "Bash(mv 20260822190011_views.sql                 20260822190012_views.sql)",
+      "Bash(mv 20260822190010_state_machines.sql        20260822190011_state_machines.sql)",
+      "Bash(mv 20260822190009_menu_layouts_and_audit.sql 20260822190010_menu_layouts_and_audit.sql)",
+      "Bash(mv 20260822190008_ops.sql                   20260822190009_ops.sql)",
+      "Bash(perl -pi -e 's/Os triggers de 0009 fecham/Os triggers de 0010 fecham/' 20260822190013_rls.sql)",
+      "Bash(perl -pi -e 's/\\\\\\(migration 0012\\\\\\)/\\(migration 0013\\)/' ../../src/lib/permissions.ts)"
     ]
   }
 }

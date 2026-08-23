@@ -1,8 +1,13 @@
 -- =============================================================================
--- 0001 — Extensões, schema privado de helpers e funções de apoio a RLS
+-- 0001 — Extensões, schema privado e utilitários sem dependência de tabela
 -- =============================================================================
 -- O schema `app` NÃO é exposto pelo PostgREST (ver supabase/config.toml,
--- api.schemas). Helpers de autorização vivem aqui para não virarem endpoint.
+-- api.schemas). Helpers vivem aqui para não virarem endpoint.
+--
+-- Só entram aqui funções que NÃO tocam em tabela. Os helpers de autorização,
+-- que consultam `profiles`, estão em 0004 — funções `language sql` têm o corpo
+-- validado no CREATE, então referenciar uma tabela que ainda não existe faz a
+-- migration falhar.
 -- =============================================================================
 
 create extension if not exists pgcrypto with schema extensions;
@@ -51,89 +56,3 @@ begin
   return result;
 end;
 $$;
-
--- =============================================================================
--- Helpers de autorização
--- =============================================================================
--- SECURITY DEFINER é obrigatório aqui: a policy de `profiles` consulta
--- `profiles`, e sem definer o Postgres entra em recursão infinita. Todas com
--- `search_path = ''` (blindagem contra search_path hijacking) e `stable`.
---
--- Nota (spec §10.2): a proibição de SECURITY DEFINER vale para VIEWS, que
--- contornariam RLS silenciosamente. As views deste projeto são todas
--- `security_invoker = on` (ver 0011). Estas funções são o oposto: existem
--- justamente para tornar a policy avaliável.
--- =============================================================================
-
-create or replace function app.current_restaurant_id()
-returns uuid
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select p.restaurant_id
-  from public.profiles p
-  where p.id = (select auth.uid()) and p.active
-$$;
-
--- Devolve text[], não staff_role[]: o cast é explícito porque o Postgres NÃO
--- converte array de enum para array de texto implicitamente, e trabalhar com
--- text[] deixa os helpers utilizáveis sem arrastar o tipo enum para toda policy.
-create or replace function app.current_roles()
-returns text[]
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select coalesce(p.roles::text[], '{}'::text[])
-  from public.profiles p
-  where p.id = (select auth.uid()) and p.active
-$$;
-
-create or replace function app.current_permissions()
-returns text[]
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select coalesce(p.permissions, '{}')
-  from public.profiles p
-  where p.id = (select auth.uid()) and p.active
-$$;
-
--- Pertinência no ARRAY. Nunca igualdade com campo único — um funcionário
--- acumula funções (spec P1b: caixa que também é garçom).
-create or replace function app.has_role(target_role text)
-returns boolean
-language sql
-stable
-set search_path = ''
-as $$
-  select target_role = any(app.current_roles())
-$$;
-
-create or replace function app.has_any_role(variadic target_roles text[])
-returns boolean
-language sql
-stable
-set search_path = ''
-as $$
-  select app.current_roles() && target_roles
-$$;
-
--- Pertence ao restaurante X e está ativo?
-create or replace function app.is_staff_of(target_restaurant_id uuid)
-returns boolean
-language sql
-stable
-set search_path = ''
-as $$
-  select target_restaurant_id is not null
-     and target_restaurant_id = app.current_restaurant_id()
-$$;
-
-comment on function app.has_role(text) is
-  'Testa pertinência no array profiles.roles. Nunca comparar roles por igualdade.';

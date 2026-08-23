@@ -74,32 +74,60 @@ async function main() {
   }
 
   // ---------------------------------------------------------------------------
-  // anon não escreve em NADA. A `revoke` da migration 0012 só alcança as
-  // tabelas que existiam naquele momento — uma migration futura reintroduz o
-  // privilégio sem ninguém perceber. Por isso a checagem é aqui, no CI.
+  // Superfície do anon, conferida NOS DOIS SENTIDOS.
+  //
+  // Checar só "anon não escreve" passa por vacuidade quando anon não tem
+  // privilégio nenhum — foi exatamente o que aconteceu aqui: as tabelas
+  // nasceram sem GRANT, o script deu verde, e o cardápio público não abria.
+  // Então: a lista de SELECT precisa ser EXATAMENTE a esperada, nem mais nem
+  // menos, e escrita tem que ser zero.
   // ---------------------------------------------------------------------------
-  const { rows: escritas } = await client.query<{ table_name: string; privileges: string }>(`
-    select table_name, string_agg(privilege_type, ', ' order by privilege_type) as privileges
+  const ANON_SELECT_ESPERADO = new Set([
+    'restaurants',
+    'categories',
+    'products',
+    'modifier_groups',
+    'modifier_options',
+    'product_modifier_groups',
+  ]);
+
+  const { rows: grantsAnon } = await client.query<{ table_name: string; privilege_type: string }>(`
+    select distinct table_name, privilege_type
     from information_schema.role_table_grants
-    where grantee = 'anon'
-      and table_schema = 'public'
-      and privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
-    group by table_name
-    order by table_name
+    where grantee = 'anon' and table_schema = 'public'
+      and privilege_type in ('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
   `);
 
   await client.end();
 
+  const escritas = grantsAnon.filter((g) => g.privilege_type !== 'SELECT');
+  const leituras = new Set(
+    grantsAnon.filter((g) => g.privilege_type === 'SELECT').map((g) => g.table_name),
+  );
+
+  const aMais = [...leituras].filter((t) => !ANON_SELECT_ESPERADO.has(t));
+  const aMenos = [...ANON_SELECT_ESPERADO].filter((t) => !leituras.has(t));
+
   if (escritas.length > 0) {
-    console.error(`\n✗ anon tem privilégio de ESCRITA em ${escritas.length} tabela(s):`);
-    for (const e of escritas) console.error(`    ${e.table_name}: ${e.privileges}`);
-    console.error('\n  Adicione o revoke na migration que criou a tabela.');
+    console.error(`\n✗ anon tem privilégio de ESCRITA em ${escritas.length} caso(s):`);
+    for (const e of escritas) console.error(`    ${e.table_name}: ${e.privilege_type}`);
+  }
+  if (aMais.length > 0) {
+    console.error(`\n✗ anon lê tabela que NÃO deveria: ${aMais.join(', ')}`);
+    console.error('  Cardápio é público; comanda, cliente e pagamento não são.');
+  }
+  if (aMenos.length > 0) {
+    console.error(`\n✗ anon NÃO lê tabela que precisa: ${aMenos.join(', ')}`);
+    console.error('  Sem isto o cardápio público não abre — e é o produto inteiro.');
   }
 
-  if (semRls.length > 0 || semPolicy.length > 0 || escritas.length > 0) process.exit(1);
+  const falhou =
+    semRls.length > 0 || semPolicy.length > 0 ||
+    escritas.length > 0 || aMais.length > 0 || aMenos.length > 0;
+  if (falhou) process.exit(1);
 
   console.log(`\n✓ ${rows.length} tabelas, todas com RLS habilitada e ao menos uma policy.`);
-  console.log('✓ anon não tem privilégio de escrita em nenhuma tabela.');
+  console.log(`✓ anon lê exatamente as ${leituras.size} tabelas do cardápio público, e escreve em nenhuma.`);
 }
 
 main().catch((err) => {

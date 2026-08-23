@@ -39,9 +39,57 @@ alter table public.menu_layouts            enable row level security;
 alter table public.menu_blocks             enable row level security;
 alter table public.audit_log               enable row level security;
 
--- anon jamais escreve nada, em nenhuma tabela. Direto no GRANT, antes de
--- qualquer policy: uma policy esquecida não vira brecha de escrita.
-revoke insert, update, delete, truncate on all tables in schema public from anon;
+-- =============================================================================
+-- GRANTs de tabela — a camada ABAIXO da RLS
+-- =============================================================================
+-- RLS restringe LINHAS, mas só depois que o papel tem o privilégio no objeto.
+-- Sem GRANT, a policy nem é avaliada: o Postgres responde "permission denied".
+--
+-- Não dá para confiar nas default privileges do Supabase. Nesta versão, tabela
+-- criada por `postgres` em `public` nasce com `Dxtm` para anon/authenticated
+-- (TRUNCATE, REFERENCES, TRIGGER, MAINTAIN) — sem SELECT, INSERT nem UPDATE.
+-- Configuração do ambiente não pertence a este repositório; então os grants são
+-- explícitos, e o CI confere que continuam do tamanho certo.
+--
+-- DELETE fica de fora de propósito para as tabelas de negócio (spec §10.7:
+-- "Nada é deletado"). Só as tabelas de junção e de composição de cardápio
+-- recebem DELETE, porque ali remover linha é a operação legítima.
+-- =============================================================================
+revoke all on all tables in schema public from anon, authenticated;
+
+-- --- anon: SELECT, e SÓ no cardápio público (spec §10.2) ---------------------
+grant select on public.restaurants             to anon;
+grant select on public.categories              to anon;
+grant select on public.products                to anon;
+grant select on public.modifier_groups         to anon;
+grant select on public.modifier_options        to anon;
+grant select on public.product_modifier_groups to anon;
+
+-- --- authenticated: leitura em tudo do próprio restaurante (a RLS filtra) ----
+grant select on all tables in schema public to authenticated;
+
+-- --- authenticated: escrita onde a operação existe --------------------------
+grant insert, update on
+  public.restaurants, public.profiles, public.restaurant_tables,
+  public.categories, public.products,
+  public.modifier_groups, public.modifier_options, public.product_modifier_groups,
+  public.promotions, public.promotion_targets,
+  public.table_sessions, public.session_guests,
+  public.orders, public.order_items, public.order_item_modifiers,
+  public.waiter_calls, public.session_adjustments, public.payments,
+  public.menu_layouts, public.menu_blocks
+  to authenticated;
+
+grant insert on public.audit_log to authenticated;
+
+-- Remover um bloco do cardápio, desvincular um grupo de modificadores de um
+-- prato ou tirar um produto de uma promoção são remoções de verdade — não há
+-- histórico a preservar nessas linhas.
+grant delete on
+  public.product_modifier_groups, public.promotion_targets, public.menu_blocks
+  to authenticated;
+
+grant all on all tables in schema public to service_role;
 
 -- =============================================================================
 -- Permissões delegadas do cardápio (spec §12.9)
@@ -363,7 +411,7 @@ create policy menu_blocks_structure_write on public.menu_blocks
 
 -- =============================================================================
 -- audit_log — insert e select. NENHUMA policy de update ou delete, de propósito.
--- Sem policy, a operação é negada. Os triggers de 0009 fecham o cerco para
+-- Sem policy, a operação é negada. Os triggers de 0010 fecham o cerco para
 -- service_role.
 -- =============================================================================
 create policy audit_log_insert on public.audit_log
@@ -441,7 +489,10 @@ begin
       before, after
     ) values (
       new.restaurant_id,
-      case when (select auth.uid()) is null then 'system' else 'staff' end,
+      -- cast explícito: um CASE com dois literais resolve para `text`, e o
+      -- Postgres não converte text para enum implicitamente
+      (case when (select auth.uid()) is null then 'system' else 'staff' end)
+        ::public.audit_actor_type,
       (select auth.uid()),
       'product.price_changed',
       'products',

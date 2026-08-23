@@ -20,7 +20,6 @@ const DONO_A = 'aaaaaaaa-0000-4000-8000-000000000001';
 const GARCOM_A = 'aaaaaaaa-0000-4000-8000-000000000002';
 const COZINHA_A = 'aaaaaaaa-0000-4000-8000-000000000003';
 const PRODUTO_PICANHA = '44444444-0000-4000-8000-000000000007';
-const PRODUTO_MOQUECA = '44444444-0000-4000-8000-000000000010';
 
 /** Restaurante B, criado só para provar que A não enxerga nada dele. */
 const RESTAURANTE_B = 'bbbbbbbb-1111-4111-8111-111111111111';
@@ -173,20 +172,43 @@ describe('§10.2 — superfície anônima', () => {
     });
   });
 
+  /**
+   * "Não enxerga" tem duas formas válidas, e a mais forte é a primeira:
+   *   1. `permission denied` — falta o GRANT, a policy nem chega a ser avaliada
+   *   2. zero linhas — tem GRANT, e a RLS filtrou tudo
+   * O que não pode, em hipótese alguma, é voltar dado.
+   */
+  async function naoEnxerga(c: Client, tabela: string) {
+    try {
+      const { rows } = await c.query(`select count(*)::int as n from ${tabela}`);
+      expect(rows[0].n, `anon leu ${rows[0].n} linha(s) de ${tabela}`).toBe(0);
+    } catch (err) {
+      expect(
+        String((err as Error).message),
+        `${tabela} falhou por outro motivo que não permissão`,
+      ).toMatch(/permission denied/i);
+      // a transação aborta após o erro; reabre para o próximo laço
+      await c.query('rollback');
+      await c.query('begin');
+      await c.query('set local role anon');
+    }
+  }
+
   it('anon NÃO lê comandas, clientes, pagamentos nem auditoria', async () => {
     await comoAnonimo(async (c) => {
       for (const tabela of ['table_sessions', 'session_guests', 'orders',
-                            'order_items', 'payments', 'audit_log', 'promotions']) {
-        const { rows } = await c.query(`select count(*)::int as n from ${tabela}`);
-        expect(rows[0].n, `anon leu ${tabela}`).toBe(0);
+                            'order_items', 'order_item_modifiers', 'payments',
+                            'session_adjustments', 'audit_log', 'promotions',
+                            'promotion_targets', 'menu_events', 'profiles',
+                            'waiter_calls', 'menu_layouts', 'menu_blocks']) {
+        await naoEnxerga(c, tabela);
       }
     });
   });
 
   it('anon NÃO enumera short_code das mesas', async () => {
     await comoAnonimo(async (c) => {
-      const { rows } = await c.query(`select count(*)::int as n from restaurant_tables`);
-      expect(rows[0].n).toBe(0);
+      await naoEnxerga(c, 'restaurant_tables');
     });
   });
 
@@ -715,8 +737,10 @@ describe('§16 — seed exigido pela Etapa 1', () => {
   });
 
   it('tem um funcionário acumulando waiter e cashier (P1b)', async () => {
+    // roles::text[] no SELECT: o driver não conhece o OID de staff_role[] e
+    // devolveria a string bruta '{waiter,cashier}' em vez de um array.
     const { rows } = await pool.query(
-      `select name, roles from profiles
+      `select name, roles::text[] as roles from profiles
         where restaurant_id = $1 and roles @> array['waiter','cashier']::staff_role[]`,
       [RESTAURANTE_A]);
     expect(rows).toHaveLength(1);

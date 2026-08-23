@@ -5,7 +5,7 @@
  * autorização da aplicação passa por `can()`.
  *
  * Este arquivo é espelhado por `app.has_menu_permission()` no banco
- * (migration 0012). A duplicação é deliberada: são duas camadas de aplicação,
+ * (migration 0013). A duplicação é deliberada: são duas camadas de aplicação,
  * e a API pode ser contornada — a policy do Postgres, não.
  *
  * Regra que atravessa tudo: `roles` é ARRAY. Um funcionário acumula funções

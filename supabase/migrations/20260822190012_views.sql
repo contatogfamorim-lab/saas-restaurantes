@@ -183,15 +183,12 @@ left join public.session_totals st on st.session_id = s.id
 where t.active;
 
 -- -----------------------------------------------------------------------------
--- Grants explícitos. As default privileges do Supabase costumam cobrir objetos
--- novos em `public`, mas depender disso é depender de configuração que não está
--- neste repositório — e a falha apareceria como "permission denied" na tela do
--- caixa, em produção.
+-- Os GRANTs destas views ficam em 0013, junto com os das tabelas.
+-- `GRANT ... ON ALL TABLES IN SCHEMA` alcança views também, então conceder aqui
+-- e revogar lá em cima produziria um resultado que depende da ordem dos
+-- arquivos. Um lugar só decide privilégio.
 --
--- Não há grant para `anon`: nenhuma destas views é pública. Todas expõem
--- comanda, e o cliente só enxerga a própria sessão, via Route Handler.
--- A RLS das tabelas de base continua valendo (security_invoker = on).
+-- Nenhuma delas é pública: todas expõem comanda, e o cliente só enxerga a
+-- própria sessão, via Route Handler. Com `security_invoker = on`, a RLS das
+-- tabelas de base continua valendo dentro da view.
 -- -----------------------------------------------------------------------------
-grant select on public.session_totals      to authenticated, service_role;
-grant select on public.order_item_timings  to authenticated, service_role;
-grant select on public.table_status        to authenticated, service_role;
