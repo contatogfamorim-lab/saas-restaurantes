@@ -17,7 +17,11 @@
       "Read(//Users/gabrielamorim/.nvm/**)",
       "Bash([ -s \"$HOME/.nvm/nvm.sh\" ])",
       "Bash(brew list *)",
-      "Read(//Applications/**)"
+      "Read(//Applications/**)",
+      "Bash(colima version *)",
+      "Bash(colima start *)",
+      "Bash(docker info *)",
+      "Bash(colima status *)"
     ]
   }
 }

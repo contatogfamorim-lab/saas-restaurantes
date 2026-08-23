@@ -10,13 +10,14 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:start": "supabase start",
+    "db:start": "supabase start -x studio,edge-runtime,logflare,vector,supavisor,imgproxy,mailpit",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "db:check-rls": "node --env-file-if-exists=.env.local scripts/check-rls.mts",
     "check:secrets": "node --env-file-if-exists=.env.local scripts/check-bundle-secrets.mts",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check-rls"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check-rls",
+    "test:db": "vitest run --config vitest.db.config.mts"
   },
   "dependencies": {
     "@node-rs/argon2": "2.1.0",
