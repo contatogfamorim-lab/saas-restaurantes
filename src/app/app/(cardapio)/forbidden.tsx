@@ -22,11 +22,14 @@ export default function SemPermissao() {
         Se você deveria mexer aqui, peça a quem administra o restaurante.
       </p>
 
+      {/* Aponta para `/app`, que manda cada um para a própria tela. Apontar
+          para `/app/cardapio` deixava a cozinha num botão que leva de volta
+          para o mesmo 403 — ela não abre o editor por definição. */}
       <Link
-        href="/app/cardapio"
+        href="/app"
         className="mx-auto mt-6 flex h-12 items-center justify-center rounded-lg bg-foreground px-6 text-[15px] font-semibold text-background"
       >
-        Voltar para os itens
+        Voltar para a minha tela
       </Link>
     </main>
   );

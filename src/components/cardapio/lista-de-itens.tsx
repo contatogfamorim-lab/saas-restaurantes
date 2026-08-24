@@ -11,7 +11,7 @@ import { formatCents } from '@/lib/money';
 import type { DelegatablePermission } from '@/lib/permissions';
 import type { CategoriaDoEditor, ProdutoDoEditor } from '@/lib/cardapio/queries';
 
-import { alternarDisponibilidade } from '@/app/app/(cardapio)/cardapio/actions';
+import { alternarDisponibilidade } from '@/app/app/(equipe)/disponibilidade/actions';
 import { NovoItem } from './novo-item';
 
 type Filtro = 'todos' | 'fora' | 'sem-foto' | 'arquivados';

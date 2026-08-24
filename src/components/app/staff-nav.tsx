@@ -29,6 +29,7 @@ interface Props {
     cozinha: boolean;
     caixa: boolean;
     gestao: boolean;
+    disponibilidade: boolean;
     cardapio: boolean;
   };
   nome: string;
@@ -43,9 +44,9 @@ export function StaffNav({ telas, nome, restaurante, papeis }: Props) {
     { href: '/app/salao', rotulo: 'Salão', visivel: telas.salao },
     { href: '/app/cozinha', rotulo: 'Cozinha', visivel: telas.cozinha },
     { href: '/app/caixa', rotulo: 'Caixa', visivel: telas.caixa },
-    // O cardápio é a exceção à regra de uma tela por função: para a cozinha e
-    // para o garçom é a mesma tarefa de todo dia — marcar que acabou.
-    { href: '/app/cardapio', rotulo: 'Cardápio', visivel: telas.cardapio },
+    // "Acabou" é operação e fica junto das outras telas de serviço. O EDITOR
+    // não aparece aqui: é ferramenta de quem administra, com casca própria.
+    { href: '/app/disponibilidade', rotulo: 'Acabou', visivel: telas.disponibilidade },
     // Gestão não aparece na navegação das outras telas (spec §8) — só para
     // quem tem a permissão, que é exclusiva do dono.
     { href: '/app/gestao', rotulo: 'Gestão', visivel: telas.gestao },

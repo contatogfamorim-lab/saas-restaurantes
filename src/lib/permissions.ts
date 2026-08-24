@@ -153,9 +153,44 @@ export function menuPermissions(
   return DELEGATABLE_PERMISSIONS.filter((p) => can(actor, p));
 }
 
-/** Tem alguma coisa a fazer no editor de cardápio? */
+/**
+ * As permissões que EDITAM o cardápio — todas menos disponibilidade.
+ *
+ * `menu.availability` é a única que não muda o cardápio, só liga e desliga o
+ * que já existe. É a operação da noite: a cozinha diz que acabou o cheddar e o
+ * item some até alguém religar. Nada ali é decisão de cardápio.
+ *
+ * A separação define duas telas: a equipe recebe uma lista de ligar e desligar,
+ * e o editor de verdade é ferramenta de quem administra.
+ */
+export const MENU_EDIT_PERMISSIONS = [
+  'menu.content',
+  'menu.price',
+  'menu.structure',
+  'menu.publish',
+  'menu.promotion',
+] as const satisfies readonly DelegatablePermission[];
+
+/**
+ * Abre o editor de cardápio?
+ *
+ * Repare que `menu.availability` NÃO entra. Não é para tirar poder da cozinha —
+ * ela continua marcando esgotado, na tela dela e no KDS. É que um editor com
+ * todos os campos cadeados não é um editor, é uma tela de aviso: foi
+ * exatamente o que a cozinha via antes desta separação.
+ *
+ * Na matriz padrão isto dá gerente e administrador. Mas continua sendo
+ * permissão, e não papel: o administrador delega `menu.price` a alguém e essa
+ * pessoa passa a abrir o editor (spec §12.9). Amarrar em `roles.includes('owner')`
+ * mataria a delegação, que é o motivo de a §12.9 existir.
+ */
 export function canOpenMenuEditor(actor: Actor | null | undefined): boolean {
-  return menuPermissions(actor).length > 0;
+  return MENU_EDIT_PERMISSIONS.some((p) => can(actor, p));
+}
+
+/** Liga e desliga item — a tela da equipe. */
+export function canMarkOutOfStock(actor: Actor | null | undefined): boolean {
+  return can(actor, 'menu.availability');
 }
 
 /**

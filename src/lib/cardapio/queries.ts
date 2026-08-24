@@ -37,6 +37,12 @@ export interface ProdutoDoEditor {
   categoriaNome: string;
   ordem: number;
   arquivado: boolean;
+  // Campos que o CLIENTE vê. Carregados aqui para o preview do editor ser o
+  // componente de verdade com os dados de verdade — um preview aproximado é
+  // pior que nenhum, porque dá confiança sem dar informação.
+  servePessoas: number;
+  dietTags: string[];
+  badges: string[];
 }
 
 export async function carregarCategorias(): Promise<CategoriaDoEditor[]> {
@@ -77,7 +83,7 @@ export async function carregarProdutos(): Promise<ProdutoDoEditor[]> {
     // Literal único, e não concatenação: o Supabase infere o tipo do retorno a
     // partir do TEXTO do select, e uma string montada em runtime devolve
     // `GenericStringError` — o typecheck cai sem dizer o motivo verdadeiro.
-    .select('id, name, description, price_cents, is_available, image_url, prep_minutes, category_id, sort_order, archived_at, categories(name, sort_order)')
+    .select('id, name, description, price_cents, is_available, image_url, prep_minutes, category_id, sort_order, archived_at, serves_people, diet_tags, badges, categories(name, sort_order)')
     .order('sort_order')
     .order('name');
 
@@ -95,6 +101,9 @@ export async function carregarProdutos(): Promise<ProdutoDoEditor[]> {
       categoriaNome: cat?.name ?? '—',
       ordem: (p.sort_order as number) ?? 0,
       arquivado: p.archived_at != null,
+      servePessoas: Number(p.serves_people ?? 1),
+      dietTags: (p.diet_tags as string[] | null) ?? [],
+      badges: (p.badges as string[] | null) ?? [],
     };
   });
 }
@@ -108,7 +117,7 @@ export async function carregarProduto(id: string): Promise<ProdutoDoEditor | nul
   // parecer redundante, ninguém saberia dizer se ainda estava protegido.
   const { data } = await supabase
     .from('products')
-    .select('id, name, description, price_cents, is_available, image_url, prep_minutes, category_id, sort_order, archived_at, categories(name)')
+    .select('id, name, description, price_cents, is_available, image_url, prep_minutes, category_id, sort_order, archived_at, serves_people, diet_tags, badges, categories(name)')
     .eq('id', id)
     .maybeSingle();
 
@@ -127,6 +136,9 @@ export async function carregarProduto(id: string): Promise<ProdutoDoEditor | nul
     categoriaNome: cat?.name ?? '—',
     ordem: (data.sort_order as number) ?? 0,
     arquivado: data.archived_at != null,
+    servePessoas: Number(data.serves_people ?? 1),
+    dietTags: (data.diet_tags as string[] | null) ?? [],
+    badges: (data.badges as string[] | null) ?? [],
   };
 }
 

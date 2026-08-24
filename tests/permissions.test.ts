@@ -10,6 +10,7 @@ import {
   can,
   canApplyDiscount,
   canEditStaffRoles,
+  canMarkOutOfStock,
   canOpenMenuEditor,
   menuPermissions,
   canReleaseTable,
@@ -270,23 +271,44 @@ describe('mascaramento de telefone (LGPD, spec §10.9)', () => {
   });
 });
 
-describe('quem entra no editor de cardápio (spec §12)', () => {
-  it('cozinha e garçom entram — é onde eles marcam "acabou"', () => {
-    // O teste que impede alguém de "arrumar" isso trancando o editor atrás de
-    // dashboard.view. Se isso acontecer, a cozinha perde a tarefa que faz
-    // todo dia e ninguém descobre até o item esgotado continuar no ar.
-    expect(canOpenMenuEditor(actor(['kitchen']))).toBe(true);
-    expect(canOpenMenuEditor(actor(['waiter']))).toBe(true);
+describe('duas telas de cardápio, e não uma (spec §12)', () => {
+  it('o EDITOR é de quem edita: gerente e administrador', () => {
     expect(canOpenMenuEditor(actor(['manager']))).toBe(true);
     expect(canOpenMenuEditor(actor(['owner']))).toBe(true);
   });
 
-  it('o caixa não tem nada a fazer lá', () => {
+  it('cozinha e garçom NÃO abrem o editor', () => {
+    // `menu.availability` sozinha não abre. Quando abria, a cozinha via seis
+    // campos com cadeado e um "Salvar" que não salvava nada — uma tela cujo
+    // único uso era descobrir que você não pode.
+    expect(canOpenMenuEditor(actor(['kitchen']))).toBe(false);
+    expect(canOpenMenuEditor(actor(['waiter']))).toBe(false);
     expect(canOpenMenuEditor(actor(['cashier']))).toBe(false);
   });
 
-  it('mas entra se receber uma permissão delegada', () => {
+  it('mas cozinha e garçom marcam "acabou"', () => {
+    // O outro lado da separação, e o teste que impede alguém de "endurecer" o
+    // cardápio a ponto de tirar da cozinha a tarefa que ela faz toda noite.
+    expect(canMarkOutOfStock(actor(['kitchen']))).toBe(true);
+    expect(canMarkOutOfStock(actor(['waiter']))).toBe(true);
+    expect(canMarkOutOfStock(actor(['manager']))).toBe(true);
+    expect(canMarkOutOfStock(actor(['owner']))).toBe(true);
+  });
+
+  it('o caixa não marca esgotado nem edita', () => {
+    expect(canMarkOutOfStock(actor(['cashier']))).toBe(false);
+    expect(canOpenMenuEditor(actor(['cashier']))).toBe(false);
+  });
+
+  it('delegar menu.price abre o editor para quem não é gerente', () => {
+    // É por isso que a porta é PERMISSÃO e não papel: amarrar em
+    // `roles.includes('owner')` mataria a delegação da §12.9.
     expect(canOpenMenuEditor(actor(['cashier'], ['menu.price']))).toBe(true);
+  });
+
+  it('delegar SÓ menu.availability não abre o editor', () => {
+    expect(canOpenMenuEditor(actor(['cashier'], ['menu.availability']))).toBe(false);
+    expect(canMarkOutOfStock(actor(['cashier'], ['menu.availability']))).toBe(true);
   });
 
   it('a cozinha só leva menu.availability, e nada mais', () => {

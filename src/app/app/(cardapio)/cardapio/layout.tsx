@@ -11,14 +11,18 @@ import { sair } from '../../entrar/actions';
 /**
  * Casca do editor de cardápio (spec §12).
  *
- * CASCA PRÓPRIA, e não uma seção do console de gestão, por causa de quem entra:
- * o console exige `dashboard.view`, que é só do Administrador. Já
- * `menu.availability` é da cozinha e do garçom, e `menu.content` do gerente —
- * pendurar o editor dentro do console trancaria justamente quem usa a parte
- * dele que roda todo dia ("acabou o cheddar").
+ * FERRAMENTA DE QUEM ADMINISTRA, e não uma tela de serviço. A diferença é
+ * concreta: aqui alguém está sentado decidindo o que a casa vende e por quanto,
+ * com tempo para olhar o preview antes de publicar. As telas de `(equipe)` são
+ * o oposto — de pé, no meio do movimento, uma decisão por vez.
  *
- * Quem chega aqui tem ALGUMA permissão de cardápio. Qual delas decide o que
- * cada tela mostra — e o que o banco aceita, que é o que vale.
+ * `menu.availability` NÃO abre esta porta. A cozinha marca esgotado em
+ * `/app/disponibilidade` e no próprio KDS; trazê-la para cá dava um editor com
+ * todos os campos cadeados, que é uma tela cujo único uso é descobrir que você
+ * não pode.
+ *
+ * Continua sendo PERMISSÃO e não papel: o administrador delega `menu.price` a
+ * alguém e essa pessoa entra (spec §12.9).
  */
 export default async function CardapioLayout({ children }: { children: React.ReactNode }) {
   const staff = await getStaff();
@@ -32,9 +36,12 @@ export default async function CardapioLayout({ children }: { children: React.Rea
   const permissoes = menuPermissions(staff);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div
+      className="flex min-h-dvh flex-col bg-background"
+      style={{ '--brand': staff.restaurantBrandColor } as React.CSSProperties}
+    >
       <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2.5">
+        <div className="mx-auto flex max-w-360 items-center gap-3 px-5 py-2.5">
           <Link
             href="/app"
             aria-label="Voltar para as telas de operação"
@@ -44,11 +51,20 @@ export default async function CardapioLayout({ children }: { children: React.Rea
           </Link>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-[15px] leading-tight">Cardápio</p>
+            <p className="truncate font-display text-[15px] leading-tight">
+              Editor de cardápio
+            </p>
             <p className="truncate text-[11px] text-muted-foreground">
               {staff.restaurantName} · {staff.name}
             </p>
           </div>
+
+          <Link
+            href="/app/gestao/cardapio"
+            className="hidden rounded-md px-2.5 py-1.5 text-[12px] text-muted-foreground hover:bg-secondary hover:text-foreground sm:block"
+          >
+            Ver desempenho
+          </Link>
 
           <form action={sair}>
             <button
@@ -63,7 +79,7 @@ export default async function CardapioLayout({ children }: { children: React.Rea
         <CardapioNav permissoes={permissoes} />
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4">{children}</main>
+      <main className="mx-auto w-full max-w-360 flex-1 px-5 py-4">{children}</main>
     </div>
   );
 }

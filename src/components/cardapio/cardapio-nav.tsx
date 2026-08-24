@@ -12,9 +12,6 @@ import type { DelegatablePermission } from '@/lib/permissions';
  * Aba que a pessoa não pode usar não aparece — mas isso é arrumação de tela, e
  * não segurança: cada página revalida a permissão, e o banco recusa a escrita
  * de qualquer jeito (spec §10.3, "esconder o botão não protege nada").
- *
- * Quem tem só `menu.availability` — a cozinha — vê uma aba só, e a tela inteira
- * vira a lista de ligar e desligar item. É o uso que acontece toda noite.
  */
 export function CardapioNav({ permissoes }: { permissoes: DelegatablePermission[] }) {
   const caminho = usePathname();
@@ -30,10 +27,8 @@ export function CardapioNav({ permissoes }: { permissoes: DelegatablePermission[
     },
   ].filter((a) => a.visivel);
 
-  if (abas.length < 2) return null;
-
   return (
-    <nav className="mx-auto flex max-w-5xl gap-1 px-3 pb-1.5">
+    <nav className="mx-auto flex max-w-360 gap-1 px-4 pb-1.5">
       {abas.map((aba) => {
         const ativa =
           aba.href === '/app/cardapio' ? caminho === aba.href : caminho.startsWith(aba.href);

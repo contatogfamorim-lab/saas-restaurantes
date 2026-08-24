@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import {
   can,
+  canMarkOutOfStock,
   canOpenMenuEditor,
   type Action,
   type Actor,
@@ -112,9 +113,10 @@ export function telasVisiveis(staff: StaffSession) {
     caixa: can(staff, 'payment.record'),
     // Gestão não aparece na navegação das outras telas (spec §8).
     gestao: can(staff, 'dashboard.view'),
-    // O cardápio é a exceção à regra de uma tela por função: quase todo mundo
-    // tem alguma coisa a fazer nele, e para a cozinha é a mesma tarefa de
-    // sempre — dizer que acabou. Deixar isso só no console trancaria quem usa.
+    // Duas telas, e não uma com cadeados: "acabou" é operação da noite e cabe
+    // a quase todo mundo; EDITAR o cardápio é decisão, e é ferramenta de quem
+    // administra. Juntar as duas dava à cozinha um editor onde nada abria.
+    disponibilidade: canMarkOutOfStock(staff),
     cardapio: canOpenMenuEditor(staff),
   };
 }

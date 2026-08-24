@@ -28,11 +28,14 @@ export function CampoDeFoto({
   fotoUrl,
   nome,
   podeEditar,
+  onPreviewLocal,
 }: {
   produtoId: string;
   fotoUrl: string | null;
   nome: string;
   podeEditar: boolean;
+  /** Recebe a URL local da foto já comprimida, para o preview não esperar o servidor. */
+  onPreviewLocal?: (url: string | null) => void;
 }) {
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
@@ -48,6 +51,11 @@ export function CampoDeFoto({
 
     try {
       const pronta = await comprimirFoto(arquivo);
+
+      // O preview mostra o resultado da COMPRESSÃO, não o arquivo original:
+      // é o que o cliente vai receber, e é onde se vê se a foto ficou escura
+      // ou perdeu detalhe demais.
+      onPreviewLocal?.(URL.createObjectURL(pronta.arquivo));
 
       const supabase = createClient();
       const { data: sessao } = await supabase.auth.getUser();

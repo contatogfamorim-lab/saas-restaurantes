@@ -71,6 +71,13 @@ const edicao = z.object({
   // constraint depois de a pessoa já ter digitado o resto.
   prepMinutos: z.coerce.number().int().min(0).max(240),
   categoriaId: z.uuid(),
+  servePessoas: z.coerce.number().min(1).max(20),
+  // Lista fechada dos dois lados: o banco tem enum, e mandar valor fora dele
+  // devolveria erro de tipo cru na cara de quem está editando.
+  dietTags: z.array(
+    z.enum(['vegetariano', 'vegano', 'sem_gluten', 'sem_lactose', 'apimentado']),
+  ),
+  badges: z.array(z.enum(['novo', 'mais_pedido', 'picante', 'da_casa'])),
 });
 
 export async function salvarProduto(formData: FormData): Promise<ResultadoDaEdicao> {
@@ -84,6 +91,11 @@ export async function salvarProduto(formData: FormData): Promise<ResultadoDaEdic
       preco: formData.get('preco'),
       prepMinutos: formData.get('prepMinutos') || 0,
       categoriaId: formData.get('categoriaId'),
+      servePessoas: formData.get('servePessoas') || 1,
+      // `getAll` porque os marcadores vão como campos ocultos repetidos —
+      // nenhum marcado simplesmente não manda nada, e vira lista vazia.
+      dietTags: formData.getAll('dietTags'),
+      badges: formData.getAll('badges'),
     };
 
     const parsed = edicao.safeParse(bruto);
@@ -105,6 +117,9 @@ export async function salvarProduto(formData: FormData): Promise<ResultadoDaEdic
         price_cents: parsed.data.preco,
         prep_minutes: parsed.data.prepMinutos,
         category_id: parsed.data.categoriaId,
+        serves_people: parsed.data.servePessoas,
+        diet_tags: parsed.data.dietTags,
+        badges: parsed.data.badges,
       })
       .eq('id', parsed.data.id);
 
@@ -169,28 +184,14 @@ export async function criarProduto(formData: FormData): Promise<ResultadoDaEdica
   }
 }
 
-/** Liga e desliga o item — o "acabou" da cozinha e do garçom. */
-export async function alternarDisponibilidade(
-  id: string,
-  disponivel: boolean,
-): Promise<ResultadoDaEdicao> {
-  try {
-    await exigirEditor();
-
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('products')
-      .update({ is_available: disponivel })
-      .eq('id', z.uuid().parse(id));
-
-    if (error) return { ok: false, erro: error.message };
-
-    revalidatePath('/app/cardapio');
-    return { ok: true };
-  } catch (err) {
-    return falha(err);
-  }
-}
+// "Acabou" NÃO mora aqui: está em `(equipe)/disponibilidade/actions.ts`, com a
+// guarda dela (`menu.availability`). Quem precisa importa de lá.
+//
+// Não dá para reexportar: em módulo `'use server'` só é permitido exportar
+// função async declarada no próprio arquivo, e `export { x } from '...'`
+// derruba TODAS as exportações do módulo — o bundler diz "The module has no
+// exports at all" e cada import vira erro em cascata. O `tsc` não reclama, só
+// o build.
 
 /** Arquiva ou desarquiva. Produto não se apaga — `order_items` aponta para ele. */
 export async function arquivarProduto(
