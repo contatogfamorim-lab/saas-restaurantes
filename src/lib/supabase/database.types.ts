@@ -527,6 +527,13 @@ export type Database = {
             referencedColumns: ["id", "restaurant_id"]
           },
           {
+            foreignKeyName: "order_item_modifiers_order_item_id_restaurant_id_fkey"
+            columns: ["order_item_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "ready_pass"
+            referencedColumns: ["item_id", "restaurant_id"]
+          },
+          {
             foreignKeyName: "order_item_modifiers_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
@@ -2009,6 +2016,34 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "promotions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ready_pass: {
+        Row: {
+          area: string | null
+          cliente: string | null
+          esperando_segundos: number | null
+          estacao: Database["public"]["Enums"]["station"] | null
+          item_id: string | null
+          mesa: string | null
+          modificadores: string[] | null
+          notes: string | null
+          produto: string | null
+          qty: number | null
+          ready_at: string | null
+          restaurant_id: string | null
+          session_id: string | null
+          table_id: string | null
+          tempo: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"

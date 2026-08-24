@@ -520,6 +520,84 @@ describe('§5 — entrega e chamados', () => {
 });
 
 // ===========================================================================
+describe('§5, §6 — a passagem', () => {
+  /** Leva um item até `ready`, que é onde ele entra na passagem. */
+  async function ateAPassagem(c: Client) {
+    const p = await comandaComPedido(c, [{ product_id: AGUA, qty: 1 }]);
+    await c.query(`select public.approve_order($1, $2::uuid[])`,
+      [p.orderId, p.itens.map((i) => i.id)]);
+    await c.query(`update order_items set status = 'preparing' where id = $1`, [p.itens[0].id]);
+    await c.query(`update order_items set status = 'ready' where id = $1`, [p.itens[0].id]);
+    return p;
+  }
+
+  it('item pronto aparece na passagem com mesa, cliente e troca', async () => {
+    await como(GARCOM, async (c) => {
+      const p = await ateAPassagem(c);
+
+      await c.query('set local role postgres');
+      await c.query(
+        `insert into order_item_modifiers
+           (restaurant_id, order_item_id, group_name, option_name, price_delta_cents)
+         values ($1, $2, 'Ajustes', 'SEM GELO', 0)`,
+        [RESTAURANTE_A, p.itens[0].id]);
+      await c.query('set local role authenticated');
+
+      const { rows } = await c.query(
+        `select mesa, cliente, modificadores, esperando_segundos
+           from ready_pass where item_id = $1`, [p.itens[0].id]);
+
+      expect(rows.length).toBe(1);
+      expect(rows[0].cliente).toBe('Tereza');
+      // A troca precisa vir junto: dois pratos iguais na passagem, um sem
+      // gelo, e quem leva decide qual é qual antes de chegar na mesa.
+      expect(rows[0].modificadores).toEqual(['SEM GELO']);
+      expect(rows[0].esperando_segundos).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  it('entregar tira da passagem', async () => {
+    await como(GARCOM, async (c) => {
+      const p = await ateAPassagem(c);
+      await c.query(`select public.mark_item_delivered($1)`, [p.itens[0].id]);
+
+      const { rows } = await c.query(
+        `select count(*)::int as n from ready_pass where item_id = $1`, [p.itens[0].id]);
+      expect(rows[0].n).toBe(0);
+    });
+  });
+
+  it('item pronto de comanda FECHADA não fica na passagem', async () => {
+    // Sem esta regra, um item que ficou `ready` numa mesa já liberada
+    // permaneceria na fila para sempre. A lista que deveria gritar vira uma
+    // lista que ninguém confia — e uma lista em que ninguém confia é igual a
+    // não ter lista.
+    await como(GARCOM, async (c) => {
+      const p = await ateAPassagem(c);
+
+      await c.query('set local role postgres');
+      await c.query(
+        `update table_sessions set status = 'closed', closed_at = now() where id = $1`,
+        [p.session_id]);
+      await c.query('set local role authenticated');
+
+      const { rows } = await c.query(
+        `select count(*)::int as n from ready_pass where item_id = $1`, [p.itens[0].id]);
+      expect(rows[0].n).toBe(0);
+    });
+  });
+
+  it('a cozinha não enxerga a passagem de outro restaurante', async () => {
+    await como(COZINHA, async (c) => {
+      const { rows } = await c.query(
+        `select count(*)::int as n from ready_pass where restaurant_id <> $1`,
+        [RESTAURANTE_A]);
+      expect(rows[0].n).toBe(0);
+    });
+  });
+});
+
+// ===========================================================================
 describe('§10.11 — isolamento nas ações do garçom', () => {
   it('garçom do restaurante A não aprova pedido do restaurante B', async () => {
     // monta um pedido no restaurante B

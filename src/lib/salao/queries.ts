@@ -34,6 +34,22 @@ export interface PedidoParaAprovar {
   itens: ItemDoPedido[];
 }
 
+/** Um prato pronto esperando na passagem. */
+export interface ItemNaPassagem {
+  itemId: string;
+  sessionId: string;
+  mesa: string;
+  area: string;
+  produto: string;
+  qty: number;
+  estacao: string;
+  cliente: string | null;
+  tempo: number;
+  esperandoSegundos: number;
+  modificadores: string[];
+  notes: string | null;
+}
+
 export interface MesaNoMapa {
   tableId: string;
   sessionId: string | null;
@@ -184,7 +200,7 @@ export async function carregarMesa(sessionId: string): Promise<DetalheDaMesa | n
 export async function carregarSalao() {
   const supabase = await createClient();
 
-  const [filaRes, mapaRes, chamadosRes] = await Promise.all([
+  const [filaRes, mapaRes, chamadosRes, passagemRes] = await Promise.all([
     supabase.from('approval_queue').select('*').order('created_at'),
     supabase.from('table_status').select('*'),
     supabase
@@ -192,6 +208,9 @@ export async function carregarSalao() {
       .select('id, session_id, table_id, type, created_at')
       .eq('status', 'open')
       .order('created_at'),
+    // Ordenado pelo mais antigo: quem ficou pronto primeiro é quem está
+    // esfriando há mais tempo, e é essa a fila que importa.
+    supabase.from('ready_pass').select('*').order('ready_at'),
   ]);
 
   const fila = filaRes.data ?? [];
@@ -271,5 +290,20 @@ export async function carregarSalao() {
     }))
     .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR', { numeric: true }));
 
-  return { pedidos, mesas, chamados: chamadosPorMesa };
+  const passagem: ItemNaPassagem[] = (passagemRes.data ?? []).map((i) => ({
+    itemId: i.item_id as string,
+    sessionId: i.session_id as string,
+    mesa: i.mesa as string,
+    area: (i.area as string) ?? '',
+    produto: i.produto as string,
+    qty: (i.qty as number) ?? 1,
+    estacao: (i.estacao as string) ?? 'cozinha',
+    cliente: (i.cliente as string | null) ?? null,
+    tempo: (i.tempo as number) ?? 1,
+    esperandoSegundos: (i.esperando_segundos as number) ?? 0,
+    modificadores: (i.modificadores as string[] | null) ?? [],
+    notes: (i.notes as string | null) ?? null,
+  }));
+
+  return { pedidos, mesas, chamados: chamadosPorMesa, passagem };
 }

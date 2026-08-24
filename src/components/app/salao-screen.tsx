@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 
-import type { MesaNoMapa, PedidoParaAprovar } from '@/lib/salao/queries';
+import type { ItemNaPassagem, MesaNoMapa, PedidoParaAprovar } from '@/lib/salao/queries';
 
 import { ApprovalCard } from './approval-card';
 import { FloorMap } from './floor-map';
+import { Passagem } from './passagem';
 import { TableSheet } from './table-sheet';
 
 /**
@@ -18,6 +19,7 @@ import { TableSheet } from './table-sheet';
 interface Props {
   pedidos: PedidoParaAprovar[];
   mesas: MesaNoMapa[];
+  passagem: ItemNaPassagem[];
   podeMarcarEsgotado: boolean;
   podeForcarLiberacao: boolean;
 }
@@ -25,6 +27,7 @@ interface Props {
 export function SalaoScreen({
   pedidos,
   mesas,
+  passagem,
   podeMarcarEsgotado,
   podeForcarLiberacao,
 }: Props) {
@@ -34,6 +37,11 @@ export function SalaoScreen({
 
   return (
     <div className="pb-8">
+      {/* A passagem vem PRIMEIRO: comida pronta tem prazo, pedido pendente
+          não. Um pedido esperando aprovação custa a paciência de quem pediu;
+          um prato esperando garçom custa o prato. */}
+      <Passagem itens={passagem} />
+
       {pedidos.length > 0 ? (
         <section className="px-3 pt-2">
           <h2 className="text-[13px] font-bold uppercase tracking-wide text-alert-critical">

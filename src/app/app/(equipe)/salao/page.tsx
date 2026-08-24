@@ -23,7 +23,7 @@ export default async function Salao() {
   // é decidido aqui — middleware não é fronteira de segurança (spec §10.3).
   if (!can(staff, 'order.approve')) forbidden();
 
-  const { pedidos, mesas } = await carregarSalao();
+  const { pedidos, mesas, passagem } = await carregarSalao();
 
   return (
     <>
@@ -36,6 +36,7 @@ export default async function Salao() {
       <SalaoScreen
         pedidos={pedidos}
         mesas={mesas}
+        passagem={passagem}
         podeMarcarEsgotado={can(staff, 'menu.availability')}
         podeForcarLiberacao={can(staff, 'table.force_release')}
       />
