@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { forbidden } from 'next/navigation';
-import { CameraOffIcon } from 'lucide-react';
+import { CameraOffIcon, PencilIcon } from 'lucide-react';
 
 import { Cabecalho } from '@/components/gestao/cabecalho';
 import { Cartao, Celula, Linha, Numero, Tabela, Vazio } from '@/components/gestao/painel';
@@ -57,6 +58,33 @@ export default async function Cardapio({
         descricao={`${ativos.length} itens ativos · desempenho dos últimos ${periodo} dias`}
       />
 
+      {/* Esta tela é RELATÓRIO. O editor mora fora do console, porque o console
+          exige `dashboard.view` e mexer no cardápio não — a cozinha marca
+          esgotado todo dia (spec §12).
+
+          O link existe porque sem ele isto vira um beco: o dono senta aqui para
+          gerenciar, vê números que não respondem a clique nenhum, e nada na
+          tela conta que existe um lugar onde se edita. Cada linha da tabela
+          também leva direto ao item. */}
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+        <p className="text-[12px] text-muted-foreground">
+          Aqui você <strong className="font-semibold text-foreground">vê</strong> como o
+          cardápio está vendendo. Para mudar preço, foto ou disponibilidade, abra o
+          editor — ou clique num item da tabela.
+        </p>
+        {/* `bg-[--brand]` sairia INVISÍVEL aqui: a variável é definida pelo
+            layout da EQUIPE, e o console tem casca própria, sem ela. Um botão
+            que some sem erro nenhum é o tipo de coisa que só aparece olhando a
+            tela. O console usa `accent` para destaque — ver console-nav. */}
+        <Link
+          href="/app/cardapio"
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-[12px] font-bold text-accent-foreground"
+        >
+          <PencilIcon className="size-3.5" />
+          Editar cardápio
+        </Link>
+      </div>
+
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <Numero
           rotulo="Sem venda no período"
@@ -98,7 +126,10 @@ export default async function Cardapio({
               return (
                 <Linha key={p.id}>
                   <Celula className="font-medium">
-                    <span className="flex items-center gap-1.5">
+                    <Link
+                      href={`/app/cardapio/${p.id}`}
+                      className="flex items-center gap-1.5 hover:underline"
+                    >
                       {p.nome}
                       {!p.temFoto && (
                         <CameraOffIcon
@@ -106,7 +137,7 @@ export default async function Cardapio({
                           aria-label="sem foto"
                         />
                       )}
-                    </span>
+                    </Link>
                   </Celula>
                   <Celula fraca>{p.categoria}</Celula>
                   <Celula direita>{formatCents(p.precoCents)}</Celula>
