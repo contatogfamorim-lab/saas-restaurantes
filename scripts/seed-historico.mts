@@ -54,10 +54,25 @@ const produtos = await pegar(
     where p.restaurant_id = $1 and p.is_available`,
 );
 
+/**
+ * Promoções ATIVAS com o produto que cada uma mira.
+ *
+ * A primeira versão sorteava promoção para qualquer produto, e isso produzia
+ * dados que não querem dizer nada: "Chopp pela metade" descontando um
+ * hambúrguer, e pior, "Terça do burger" — preço fixo de R$ 39 — aplicada a uma
+ * água de R$ 8, o que ENCARECE o item e vira desconto negativo na tela de
+ * promoções. Aqui cada promoção só alcança o alvo dela, como no app.
+ */
 const promocoes = await pegar(
-  `select id, discount_type, discount_value from public.promotions
-    where restaurant_id = $1 and status = 'active'`,
+  `select pr.id, pr.discount_type, pr.discount_value, pr.max_quantity,
+          t.target_id as produto_alvo
+     from public.promotions pr
+     join public.promotion_targets t on t.promotion_id = pr.id
+    where pr.restaurant_id = $1 and pr.status = 'active' and t.target_type = 'product'`,
 );
+
+const promoDoProduto = new Map<string, (typeof promocoes)[number]>();
+for (const pr of promocoes) promoDoProduto.set(pr.produto_alvo, pr);
 
 async function pegar(sql: string) {
   const { rows } = await c.query(sql, [RESTAURANTE]);
@@ -223,16 +238,31 @@ for (let d = DIAS; d >= 1; d--) {
       const prod = sorteio(produtos);
       const qty = Math.random() < 0.85 ? 1 : 2;
 
-      // Uma em cada oito linhas leva promoção — o suficiente para a tela de
-      // promoções ter o que mostrar sem virar liquidação.
-      const promo = promocoes.length > 0 && Math.random() < 0.12 ? sorteio(promocoes) : null;
+      // Promoção só existe se ESTE produto for o alvo dela. E nem sempre pega:
+      // as campanhas da spec têm janela de horário e dia, então dois terços
+      // das vezes é o suficiente para a tela ter o que mostrar sem parecer que
+      // a casa vive em liquidação.
+      const candidata = promoDoProduto.get(prod.id as string);
+      let promo = candidata && Math.random() < 0.66 ? candidata : null;
+
+      // Estoque limitado é reservado pela MESMA função do app, que decrementa
+      // atomicamente. Sem isto o relatório mostraria 53 unidades vendidas com
+      // o estoque intacto em "10 de 10" — e o que a §13 pede é justamente que
+      // esse número seja verdade.
+      if (promo && promo.max_quantity != null) {
+        const { rows } = await c.query(
+          `select app.claim_promotion_quantity($1, $2::int) as ok`,
+          [promo.id, qty],
+        );
+        if (!rows[0].ok) promo = null; // acabou: o item sai a preço cheio
+      }
 
       const cheio = prod.price_cents as number;
       const unitario =
         promo?.discount_type === 'percent'
           ? Math.round(cheio * (1 - Number(promo.discount_value) / 100))
           : promo?.discount_type === 'fixed_price'
-            ? Number(promo.discount_value)
+            ? Math.min(cheio, Number(promo.discount_value))
             : cheio;
 
       // O item NASCE pendente — a trigger `order_item_starts_pending` recusa
