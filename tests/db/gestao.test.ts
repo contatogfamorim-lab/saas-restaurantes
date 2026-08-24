@@ -174,9 +174,55 @@ async function comandaFechada(c: Client, precoCents = 2500) {
     )
   ).rows[0].id as string;
 
-  await c.query(`update public.order_items set status = 'queued' where id = $1`, [item]);
+  // O item percorre a produção inteira, e não para em 'queued': é isso que
+  // preenche `queued_at`/`started_at`/`ready_at`, sem os quais
+  // `kitchen_performance` não tem o que medir e volta vazia.
+  for (const estado of ['queued', 'preparing', 'ready', 'delivered']) {
+    await c.query(`update public.order_items set status = $2 where id = $1`, [item, estado]);
+  }
 
-  return { sessao, guest, item, produto };
+  // O pagamento faz parte da fixture, e não é detalhe: sem ele `payment_mix`
+  // fica vazia e o teste dos relatórios passa ou falha conforme alguém tenha
+  // rodado `seed-historico` antes. Foi o que aconteceu — passou verde por
+  // semanas apoiado em dado que um `db:reset` levava embora. Teste que depende
+  // de o desenvolvedor ter feito a coisa certa antes não é teste, é armadilha.
+  await c.query(
+    `insert into public.payments (restaurant_id, session_id, method, amount_cents,
+                                  idempotency_key, created_by)
+     values ($1, $2, 'pix', $3::int, $4, $5)`,
+    [RESTAURANTE_A, sessao, precoCents, `pg-${crypto.randomUUID()}`, CAIXA_A],
+  );
+
+  // Um item recusado, para `rejected_items` ter o que contar. Recusa faz parte
+  // de uma noite normal — a tela existe justamente para mostrar qual prato
+  // volta com frequência.
+  const recusado = (
+    await c.query(
+      `insert into public.order_items
+         (restaurant_id, order_id, product_id, guest_id, qty, unit_price_cents,
+          total_price_cents, station)
+       values ($1, $2, $3, $4, 1, $5::int, $5::int, 'cozinha') returning id`,
+      [RESTAURANTE_A, pedido, produto, guest, precoCents],
+    )
+  ).rows[0].id as string;
+
+  await c.query(
+    `update public.order_items
+        set status = 'cancelled', rejection_reason = 'acabou'
+      where id = $1`,
+    [recusado],
+  );
+
+  // E um desconto, para `staff_money_actions` — a view da §10.8, que lista o
+  // que move valor sem uma venda por trás.
+  await c.query(
+    `insert into public.session_adjustments
+       (restaurant_id, session_id, type, amount_cents, reason, created_by)
+     values ($1, $2, 'discount', 500, 'cortesia da casa', $3)`,
+    [RESTAURANTE_A, sessao, CAIXA_A],
+  );
+
+  return { sessao, guest, item, produto, recusado };
 }
 
 beforeAll(async () => {

@@ -2,7 +2,13 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 
-import { can, type Action, type Actor, type Role } from '@/lib/permissions';
+import {
+  can,
+  canOpenMenuEditor,
+  type Action,
+  type Actor,
+  type Role,
+} from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -106,5 +112,9 @@ export function telasVisiveis(staff: StaffSession) {
     caixa: can(staff, 'payment.record'),
     // Gestão não aparece na navegação das outras telas (spec §8).
     gestao: can(staff, 'dashboard.view'),
+    // O cardápio é a exceção à regra de uma tela por função: quase todo mundo
+    // tem alguma coisa a fazer nele, e para a cozinha é a mesma tarefa de
+    // sempre — dizer que acabou. Deixar isso só no console trancaria quem usa.
+    cardapio: canOpenMenuEditor(staff),
   };
 }

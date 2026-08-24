@@ -24,7 +24,13 @@ const ROTULO_PAPEL: Record<Role, string> = {
  * transição é tempo que o garçom fica olhando para a tela em vez do salão.
  */
 interface Props {
-  telas: { salao: boolean; cozinha: boolean; caixa: boolean; gestao: boolean };
+  telas: {
+    salao: boolean;
+    cozinha: boolean;
+    caixa: boolean;
+    gestao: boolean;
+    cardapio: boolean;
+  };
   nome: string;
   restaurante: string;
   papeis: Role[];
@@ -37,6 +43,9 @@ export function StaffNav({ telas, nome, restaurante, papeis }: Props) {
     { href: '/app/salao', rotulo: 'Salão', visivel: telas.salao },
     { href: '/app/cozinha', rotulo: 'Cozinha', visivel: telas.cozinha },
     { href: '/app/caixa', rotulo: 'Caixa', visivel: telas.caixa },
+    // O cardápio é a exceção à regra de uma tela por função: para a cozinha e
+    // para o garçom é a mesma tarefa de todo dia — marcar que acabou.
+    { href: '/app/cardapio', rotulo: 'Cardápio', visivel: telas.cardapio },
     // Gestão não aparece na navegação das outras telas (spec §8) — só para
     // quem tem a permissão, que é exclusiva do dono.
     { href: '/app/gestao', rotulo: 'Gestão', visivel: telas.gestao },

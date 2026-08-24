@@ -137,6 +137,28 @@ export function can(actor: Actor | null | undefined, action: Action): boolean {
 }
 
 /**
+ * Quais permissões de cardápio esta pessoa tem, considerando as delegadas.
+ *
+ * O editor usa isto para mostrar cada campo no estado certo — preço travado
+ * para quem não pode precificar, com o motivo à vista em vez de um erro depois
+ * de digitar.
+ *
+ * Isso é CONVENIÊNCIA, não proteção. Quem manda são a policy e o
+ * `products_column_guard`, no banco: campo desabilitado no HTML não impede
+ * ninguém de mandar o POST na mão.
+ */
+export function menuPermissions(
+  actor: Actor | null | undefined,
+): DelegatablePermission[] {
+  return DELEGATABLE_PERMISSIONS.filter((p) => can(actor, p));
+}
+
+/** Tem alguma coisa a fazer no editor de cardápio? */
+export function canOpenMenuEditor(actor: Actor | null | undefined): boolean {
+  return menuPermissions(actor).length > 0;
+}
+
+/**
  * Desconto tem duas portas: poder descontar, e poder descontar TANTO.
  * Caixa vai até 10%; acima disso exige gerente ou dono.
  */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACTIONS,
+  DELEGATABLE_PERMISSIONS,
   DISCOUNT_CEILING_PCT,
   PERMISSION_MATRIX,
   ROLES,
@@ -9,6 +10,8 @@ import {
   can,
   canApplyDiscount,
   canEditStaffRoles,
+  canOpenMenuEditor,
+  menuPermissions,
   canReleaseTable,
   isSameTenant,
   maskPhone,
@@ -264,5 +267,63 @@ describe('mascaramento de telefone (LGPD, spec §10.9)', () => {
     expect(maskPhone(null)).toBeNull();
     expect(maskPhone('')).toBeNull();
     expect(maskPhone('12')).toBe('••••');
+  });
+});
+
+describe('quem entra no editor de cardápio (spec §12)', () => {
+  it('cozinha e garçom entram — é onde eles marcam "acabou"', () => {
+    // O teste que impede alguém de "arrumar" isso trancando o editor atrás de
+    // dashboard.view. Se isso acontecer, a cozinha perde a tarefa que faz
+    // todo dia e ninguém descobre até o item esgotado continuar no ar.
+    expect(canOpenMenuEditor(actor(['kitchen']))).toBe(true);
+    expect(canOpenMenuEditor(actor(['waiter']))).toBe(true);
+    expect(canOpenMenuEditor(actor(['manager']))).toBe(true);
+    expect(canOpenMenuEditor(actor(['owner']))).toBe(true);
+  });
+
+  it('o caixa não tem nada a fazer lá', () => {
+    expect(canOpenMenuEditor(actor(['cashier']))).toBe(false);
+  });
+
+  it('mas entra se receber uma permissão delegada', () => {
+    expect(canOpenMenuEditor(actor(['cashier'], ['menu.price']))).toBe(true);
+  });
+
+  it('a cozinha só leva menu.availability, e nada mais', () => {
+    expect(menuPermissions(actor(['kitchen']))).toEqual(['menu.availability']);
+  });
+
+  it('o dono leva as seis', () => {
+    expect(menuPermissions(actor(['owner'])).sort()).toEqual(
+      [...DELEGATABLE_PERMISSIONS].sort(),
+    );
+  });
+
+  it('delegação SOMA à função, não substitui', () => {
+    const gerenteComPreco = actor(['manager'], ['menu.price']);
+    expect(menuPermissions(gerenteComPreco).sort()).toEqual(
+      ['menu.availability', 'menu.content', 'menu.price', 'menu.promotion', 'menu.structure'].sort(),
+    );
+  });
+
+  it('permissão inventada em `permissions` não vira nada', () => {
+    // O banco recusa por CHECK constraint; aqui a garantia é que `can()` só
+    // olha a lista de delegáveis, então lixo no array é inerte.
+    const comLixo = actor(['kitchen'], ['staff.manage', 'dashboard.view', '*']);
+    expect(can(comLixo, 'staff.manage')).toBe(false);
+    expect(can(comLixo, 'dashboard.view')).toBe(false);
+    expect(menuPermissions(comLixo)).toEqual(['menu.availability']);
+  });
+
+  it('funcionário desligado não entra nem com permissão delegada', () => {
+    const desligado: Actor = {
+      id: 'u-x',
+      restaurantId: RESTAURANT,
+      roles: ['manager'],
+      permissions: ['menu.price'],
+      active: false,
+    };
+    expect(canOpenMenuEditor(desligado)).toBe(false);
+    expect(menuPermissions(desligado)).toEqual([]);
   });
 });

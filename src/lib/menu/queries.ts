@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { urlPublicaDaFoto } from '@/lib/supabase/storage';
 import { createPublicClient } from '@/lib/supabase/public';
 
 import type {
@@ -95,13 +96,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
   const products = productsRes.data ?? [];
   const precos = new Map((pricesRes.data ?? []).map((p) => [p.product_id as string, p]));
 
-  // `products.image_url` guarda o CAMINHO no bucket, não a URL inteira — assim
-  // o mesmo dado serve local, staging e produção sem reescrita (migration 0015).
-  const publicUrl = (value: string | null): string | null => {
-    if (!value) return null;
-    if (/^https?:\/\//i.test(value)) return value;
-    return supabase.storage.from('product-photos').getPublicUrl(value).data.publicUrl;
-  };
+  const publicUrl = (value: string | null) => urlPublicaDaFoto(supabase, value);
 
   // --- modificadores ---------------------------------------------------------
   const optionsByGroup = new Map<string, MenuModifierGroup['options']>();

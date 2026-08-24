@@ -2153,6 +2153,10 @@ export type Database = {
         }
         Returns: Json
       }
+      archive_product: {
+        Args: { p_arquivar?: boolean; p_product_id: string }
+        Returns: undefined
+      }
       create_guest_order: {
         Args: {
           p_guest_id: string
@@ -2162,6 +2166,7 @@ export type Database = {
         }
         Returns: string
       }
+      ensure_draft_layout: { Args: never; Returns: string }
       kds_item_ready: { Args: { p_item_id: string }; Returns: undefined }
       kds_out_of_stock: {
         Args: { p_item_id: string; p_marcar_indisponivel?: boolean }
@@ -2179,6 +2184,7 @@ export type Database = {
         }
         Returns: Json
       }
+      publish_menu_layout: { Args: never; Returns: Json }
       register_payment: {
         Args: {
           p_amount_cents: number
@@ -2204,6 +2210,11 @@ export type Database = {
       }
       resolve_waiter_call: { Args: { p_call_id: string }; Returns: undefined }
       reveal_guest_phone: { Args: { p_guest_id: string }; Returns: string }
+      revert_menu_layout: { Args: { p_version: number }; Returns: Json }
+      set_menu_permissions: {
+        Args: { p_permissions: string[]; p_profile_id: string }
+        Returns: undefined
+      }
       waive_service_fee: {
         Args: { p_reason: string; p_session_id: string }
         Returns: undefined
@@ -2229,7 +2240,7 @@ export type Database = {
         | "drink_grid"
         | "spacer"
       menu_event_type: "view" | "add_to_cart" | "remove_from_cart"
-      menu_layout_status: "draft" | "published"
+      menu_layout_status: "draft" | "published" | "archived"
       order_item_status:
         | "pending"
         | "held"
@@ -2413,7 +2424,7 @@ export const Constants = {
         "spacer",
       ],
       menu_event_type: ["view", "add_to_cart", "remove_from_cart"],
-      menu_layout_status: ["draft", "published"],
+      menu_layout_status: ["draft", "published", "archived"],
       order_item_status: [
         "pending",
         "held",
