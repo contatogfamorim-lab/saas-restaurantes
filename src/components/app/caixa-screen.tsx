@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ReceiptTextIcon } from 'lucide-react';
 
@@ -29,14 +29,6 @@ export function CaixaScreen({
 }) {
   const router = useRouter();
   const [aberta, setAberta] = useState<ComandaNaLista | null>(null);
-
-  // Recarga periódica — PROVISÓRIA, trocada por Realtime na Etapa 7.
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!document.hidden) router.refresh();
-    }, 10_000);
-    return () => clearInterval(id);
-  }, [router]);
 
   const aReceber = comandas.reduce((s, c) => s + c.saldoCents, 0);
 

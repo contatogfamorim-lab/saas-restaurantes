@@ -50,7 +50,8 @@
       "Bash(mkdir -p \"src/app/app/\\(equipe\\)\")",
       "Bash(git mv *)",
       "Bash(node -e \"console.log\\(require.resolve\\('@supabase/supabase-js'\\)\\)\")",
-      "Bash(docker exec supabase_db_SaaS_RESTAURANTE psql -U postgres -d postgres -tAc ' *)"
+      "Bash(docker exec supabase_db_SaaS_RESTAURANTE psql -U postgres -d postgres -tAc ' *)",
+      "Bash(python3 -)"
     ]
   }
 }

@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { forbidden } from 'next/navigation';
 
 import { KdsBoard } from '@/components/app/kds-board';
+import { RealtimeStatus } from '@/components/app/realtime-status';
 import { exigirStaff } from '@/lib/auth/staff';
+import { TABELAS_POR_TELA } from '@/lib/realtime/canais';
 import { carregarFila, type Estacao } from '@/lib/cozinha/queries';
 import { can } from '@/lib/permissions';
 
@@ -36,10 +38,17 @@ export default async function Cozinha({
   const fila = await carregarFila(estacao);
 
   return (
-    <KdsBoard
-      fila={fila}
-      estacao={estacao}
-      podeRemoverDoCardapio={can(staff, 'menu.availability')}
-    />
+    <>
+      {/* Cenário 2 da §9: garçom aprova, aparece na cozinha imediatamente. */}
+      <RealtimeStatus
+        restaurantId={staff.restaurantId}
+        tabelas={TABELAS_POR_TELA.cozinha}
+      />
+      <KdsBoard
+        fila={fila}
+        estacao={estacao}
+        podeRemoverDoCardapio={can(staff, 'menu.availability')}
+      />
+    </>
   );
 }

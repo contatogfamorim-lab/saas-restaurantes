@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { forbidden } from 'next/navigation';
 
 import { CaixaScreen } from '@/components/app/caixa-screen';
+import { RealtimeStatus } from '@/components/app/realtime-status';
 import { exigirStaff } from '@/lib/auth/staff';
+import { TABELAS_POR_TELA } from '@/lib/realtime/canais';
 import { listarComandas } from '@/lib/caixa/queries';
 import { DISCOUNT_CEILING_PCT, can } from '@/lib/permissions';
 
@@ -29,10 +31,17 @@ export default async function Caixa() {
   );
 
   return (
-    <CaixaScreen
-      comandas={comandas}
-      podeForcar={can(staff, 'table.force_release')}
-      tetoDesconto={teto}
-    />
+    <>
+      {/* "Pediu a conta" tem que subir para o topo da fila sem refresh. */}
+      <RealtimeStatus
+        restaurantId={staff.restaurantId}
+        tabelas={TABELAS_POR_TELA.caixa}
+      />
+      <CaixaScreen
+        comandas={comandas}
+        podeForcar={can(staff, 'table.force_release')}
+        tetoDesconto={teto}
+      />
+    </>
   );
 }

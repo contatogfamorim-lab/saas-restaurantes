@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { BellIcon, BellOffIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -22,19 +21,9 @@ interface Props {
 }
 
 export function KdsBoard({ fila, estacao, podeRemoverDoCardapio }: Props) {
-  const router = useRouter();
+  // A recarga vem do Realtime (RealtimeStatus, na page). Aqui só o som.
   const [mudo, setMudo] = useState(false);
   const assinaturaAnterior = useRef<string | null>(null);
-
-  // Recarga periódica — PROVISÓRIA. A Etapa 7 troca por Realtime, que é o que a
-  // §9 manda usar aqui: "garçom aprova → aparece na cozinha imediatamente".
-  // 6s não é imediato, mas é infinitamente melhor que uma tela parada.
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!document.hidden) router.refresh();
-    }, 6000);
-    return () => clearInterval(id);
-  }, [router]);
 
   // Aviso sonoro em pedido novo (spec §6).
   //

@@ -20,7 +20,8 @@
     "test:db": "vitest run --config vitest.db.config.mts",
     "db:photos": "node --env-file=.env.local scripts/seed-photos.mts",
     "db:salao": "node --env-file=.env.local scripts/seed-salao.mts",
-    "check:routes": "node --env-file=.env.local scripts/check-routes.mts"
+    "check:routes": "node --env-file=.env.local scripts/check-routes.mts",
+    "check:realtime": "node --env-file=.env.local scripts/check-realtime.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

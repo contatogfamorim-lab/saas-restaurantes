@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-import { serverEnv } from '@/lib/env';
+import { serverEnv } from '@/lib/env.server';
 
 /**
  * Sessão de mesa do cliente (spec §10.4).

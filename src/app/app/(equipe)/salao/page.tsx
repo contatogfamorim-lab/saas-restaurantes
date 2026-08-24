@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { forbidden } from 'next/navigation';
 
-import { AutoRefresh } from '@/components/app/auto-refresh';
+import { RealtimeStatus } from '@/components/app/realtime-status';
 import { SalaoScreen } from '@/components/app/salao-screen';
 import { exigirStaff } from '@/lib/auth/staff';
+import { TABELAS_POR_TELA } from '@/lib/realtime/canais';
 import { can } from '@/lib/permissions';
 import { carregarSalao } from '@/lib/salao/queries';
 
@@ -26,7 +27,12 @@ export default async function Salao() {
 
   return (
     <>
-      <AutoRefresh segundos={8} />
+      {/* Cenários 1 e 3 da §9: pedido novo do cliente e prato pronto na
+          passagem precisam aparecer sem ninguém tocar na tela. */}
+      <RealtimeStatus
+        restaurantId={staff.restaurantId}
+        tabelas={TABELAS_POR_TELA.salao}
+      />
       <SalaoScreen
         pedidos={pedidos}
         mesas={mesas}
