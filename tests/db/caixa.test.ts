@@ -53,15 +53,36 @@ async function comoFuncionario<T>(
  * isola cada tentativa, e é o que permite testar várias entradas inválidas
  * seguidas no mesmo teste.
  */
+/**
+ * Roda um comando que DEVE falhar, e confere o motivo.
+ *
+ * O savepoint existe porque o Postgres aborta a transação inteira depois de um
+ * erro: sem ele, o primeiro `esperaFalhar` inutiliza o resto do teste.
+ *
+ * A ARMADILHA QUE ESTAVA AQUI, e que vale contar: a primeira versão lançava
+ * `esperava falha correspondendo a ${padrao}, mas passou` de DENTRO do `try`.
+ * O `catch` logo abaixo pegava esse erro e testava o padrão contra a própria
+ * mensagem — que contém o padrão, porque ele foi interpolado nela. A asserção
+ * casava consigo mesma e o helper aprovava exatamente o caso que existia para
+ * reprovar. Só apareceu quando eu soltei uma permissão de propósito e o teste
+ * continuou verde.
+ *
+ * Por isso o caminho de sucesso sai pelo `return` e o erro de "não falhou" é
+ * lançado FORA do try.
+ */
 async function esperaFalhar(c: Client, sql: string, params: unknown[], padrao: RegExp) {
   await c.query('savepoint tentativa');
+
   try {
     await c.query(sql, params as never[]);
-    throw new Error(`esperava falha correspondendo a ${padrao}, mas passou`);
   } catch (err) {
-    await c.query('rollback to savepoint tentativa');
+    await c.query('rollback to savepoint tentativa').catch(() => {});
     expect(String((err as Error).message)).toMatch(padrao);
+    return;
   }
+
+  await c.query('rollback to savepoint tentativa').catch(() => {});
+  throw new Error(`o comando PASSOU, e deveria ter falhado com ${padrao}`);
 }
 
 /** Executa fora do papel, para montar cenário que a função testada não pode criar. */

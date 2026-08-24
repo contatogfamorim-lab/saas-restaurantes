@@ -98,8 +98,6 @@ async function main() {
       and privilege_type in ('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
   `);
 
-  await client.end();
-
   const escritas = grantsAnon.filter((g) => g.privilege_type !== 'SELECT');
   const leituras = new Set(
     grantsAnon.filter((g) => g.privilege_type === 'SELECT').map((g) => g.table_name),
@@ -121,12 +119,88 @@ async function main() {
     console.error('  Sem isto o cardápio público não abre — e é o produto inteiro.');
   }
 
+  // -------------------------------------------------------------------------
+  // VIEWS: `security_invoker` e o portão de papel.
+  //
+  // View não tem RLS própria — o bloco acima não a enxerga. Com
+  // `security_invoker = off` (o PADRÃO do Postgres) ela lê as tabelas como
+  // DONA, ignorando toda a RLS abaixo: uma view assim é um buraco no formato
+  // exato do isolamento entre restaurantes, e nada aqui acusaria.
+  //
+  // As views de relatório levam uma exigência a mais: `can_view_reports()` na
+  // definição. Sem ela, a cozinha soma o faturamento da casa pelo PostgREST.
+  // -------------------------------------------------------------------------
+  const RELATORIOS = new Set([
+    'daily_sales', 'payment_mix', 'product_sales', 'kitchen_performance',
+    'rejected_items', 'promotion_performance', 'staff_money_actions',
+    'customer_directory',
+  ]);
+
+  const { rows: views } = await client.query<{
+    view_name: string;
+    invoker: boolean;
+    definicao: string;
+  }>(`
+    select
+      c.relname as view_name,
+      -- O Postgres guarda a opção com a palavra que foi escrita: quem usa
+      -- "security_invoker = on" grava "on", quem usa "= true" grava "true".
+      -- Comparar com uma só reprova view correta — e um alarme falso treina
+      -- todo mundo a ignorar este script.
+      coalesce(
+        (select option_value from pg_options_to_table(c.reloptions)
+          where option_name = 'security_invoker') in ('on', 'true'),
+        false
+      ) as invoker,
+      pg_get_viewdef(c.oid) as definicao
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'v'
+    order by c.relname
+  `);
+
+  await client.end();
+
+  const semInvoker = views.filter((v) => !v.invoker);
+  const semPortao = views.filter(
+    (v) => RELATORIOS.has(v.view_name) && !v.definicao.includes('can_view_reports'),
+  );
+  const relatoriosFaltando = [...RELATORIOS].filter(
+    (r) => !views.some((v) => v.view_name === r),
+  );
+
+  console.log('');
+  for (const v of views) {
+    const gate = RELATORIOS.has(v.view_name) ? ' + portão de papel' : '';
+    const ok = v.invoker && !semPortao.includes(v);
+    console.log(`  ${ok ? '✓' : '✗'} ${v.view_name.padEnd(28)} invoker=${v.invoker}${gate}`);
+  }
+
+  if (semInvoker.length > 0) {
+    console.error(
+      `\n✗ view SEM security_invoker: ${semInvoker.map((v) => v.view_name).join(', ')}`,
+    );
+    console.error('  Ela lê as tabelas como dona e passa por cima da RLS.');
+  }
+  if (semPortao.length > 0) {
+    console.error(
+      `\n✗ relatório SEM app.can_view_reports(): ${semPortao.map((v) => v.view_name).join(', ')}`,
+    );
+    console.error('  Sem o portão, qualquer funcionário soma o faturamento da casa.');
+  }
+  if (relatoriosFaltando.length > 0) {
+    console.error(`\n✗ view de relatório sumiu: ${relatoriosFaltando.join(', ')}`);
+    console.error('  Se foi removida de propósito, tire da lista deste script.');
+  }
+
   const falhou =
     semRls.length > 0 || semPolicy.length > 0 ||
-    escritas.length > 0 || aMais.length > 0 || aMenos.length > 0;
+    escritas.length > 0 || aMais.length > 0 || aMenos.length > 0 ||
+    semInvoker.length > 0 || semPortao.length > 0 || relatoriosFaltando.length > 0;
   if (falhou) process.exit(1);
 
   console.log(`\n✓ ${rows.length} tabelas, todas com RLS habilitada e ao menos uma policy.`);
+  console.log(`✓ ${views.length} views, todas com security_invoker; ${RELATORIOS.size} com portão de papel.`);
   console.log(`✓ anon lê exatamente as ${leituras.size} tabelas do cardápio público, e escreve em nenhuma.`);
 }
 

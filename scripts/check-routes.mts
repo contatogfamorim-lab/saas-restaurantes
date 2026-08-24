@@ -29,10 +29,29 @@ const MAX_SALTOS = 5;
 const ADMIN_EMAIL = process.env.SMOKE_EMAIL ?? 'dono@brasaburger.test';
 const ADMIN_SENHA = process.env.SMOKE_SENHA ?? 'senha-de-teste-123';
 
+/**
+ * Um segundo ator, sem `dashboard.view`.
+ *
+ * Testar o console só com o administrador prova que a porta ABRE. A pergunta
+ * que interessa é se ela FECHA — e essa só um ator sem a permissão responde.
+ */
+const GARCOM_EMAIL = process.env.SMOKE_GARCOM ?? 'garcom@brasaburger.test';
+
 interface Caso {
   caminho: string;
-  espera: 'pagina' | 'login';
-  autenticado?: boolean;
+  espera: 'pagina' | 'login' | 'proibido';
+  /** Quem faz o pedido. `undefined` = deslogado. */
+  como?: 'admin' | 'garcom';
+  /**
+   * Trecho que PRECISA estar no corpo.
+   *
+   * Sem isto, status 403 aprovaria uma página em branco — e foi o que quase
+   * aconteceu aqui: passei um bom tempo achando que o `forbidden.tsx` não
+   * renderizava porque estava olhando os primeiros caracteres do body, que no
+   * App Router são o shell de streaming. Status é barato de acertar; conteúdo
+   * é o que o funcionário lê.
+   */
+  contendo?: string;
   descricao: string;
 }
 
@@ -42,10 +61,29 @@ const CASOS: Caso[] = [
   { caminho: '/app/salao', espera: 'login', descricao: 'salão exige login' },
   { caminho: '/privacidade', espera: 'pagina', descricao: 'aviso de dados é público' },
 
+  { caminho: '/app/gestao', espera: 'login', descricao: 'gestão exige login' },
+
   // --- com sessão: é onde erro de avaliação de módulo aparece ---------------
-  { caminho: '/app/salao', espera: 'pagina', autenticado: true, descricao: 'salão renderiza logado' },
-  { caminho: '/app/cozinha', espera: 'pagina', autenticado: true, descricao: 'KDS renderiza logado' },
-  { caminho: '/app/caixa', espera: 'pagina', autenticado: true, descricao: 'caixa renderiza logado' },
+  { caminho: '/app/salao', espera: 'pagina', como: 'admin', descricao: 'salão renderiza logado' },
+  { caminho: '/app/cozinha', espera: 'pagina', como: 'admin', descricao: 'KDS renderiza logado' },
+  { caminho: '/app/caixa', espera: 'pagina', como: 'admin', descricao: 'caixa renderiza logado' },
+
+  // --- console de gestão (spec §8): as sete seções, uma a uma --------------
+  { caminho: '/app/gestao', espera: 'pagina', como: 'admin', descricao: 'vendas' },
+  { caminho: '/app/gestao/operacao', espera: 'pagina', como: 'admin', descricao: 'operação' },
+  { caminho: '/app/gestao/cardapio', espera: 'pagina', como: 'admin', descricao: 'cardápio' },
+  { caminho: '/app/gestao/promocoes', espera: 'pagina', como: 'admin', descricao: 'promoções' },
+  { caminho: '/app/gestao/equipe', espera: 'pagina', como: 'admin', descricao: 'equipe' },
+  { caminho: '/app/gestao/clientes', espera: 'pagina', como: 'admin', descricao: 'clientes' },
+  { caminho: '/app/gestao/auditoria', espera: 'pagina', como: 'admin', descricao: 'auditoria' },
+
+  // --- e a porta fechada, que é o teste que vale ---------------------------
+  { caminho: '/app/gestao', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO entra na gestão' },
+  { caminho: '/app/gestao/clientes', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO vê clientes' },
+  { caminho: '/app/gestao/auditoria', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO vê auditoria' },
 ];
 
 /**
@@ -54,7 +92,7 @@ const CASOS: Caso[] = [
  * O cofre em memória recebe exatamente o que a biblioteca escreveria no
  * browser — nome, fatiamento e codificação inclusos.
  */
-async function cookiesDeSessao(): Promise<string> {
+async function cookiesDeSessao(email: string, senha: string): Promise<string> {
   const cofre = new Map<string, string>();
 
   const supabase = createServerClient(SUPABASE_URL, ANON, {
@@ -66,12 +104,9 @@ async function cookiesDeSessao(): Promise<string> {
     },
   });
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: ADMIN_EMAIL,
-    password: ADMIN_SENHA,
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
-  if (error) throw new Error(`login de fumaça falhou: ${error.message}`);
+  if (error) throw new Error(`login de fumaça (${email}) falhou: ${error.message}`);
 
   return [...cofre].map(([n, v]) => `${n}=${v}`).join('; ');
 }
@@ -142,9 +177,10 @@ async function main() {
     process.exit(1);
   }
 
-  let cookie: string | undefined;
+  const cookies: Partial<Record<'admin' | 'garcom', string>> = {};
   try {
-    cookie = await cookiesDeSessao();
+    cookies.admin = await cookiesDeSessao(ADMIN_EMAIL, ADMIN_SENHA);
+    cookies.garcom = await cookiesDeSessao(GARCOM_EMAIL, ADMIN_SENHA);
   } catch (err) {
     console.error(`  ! sem sessão de teste: ${err instanceof Error ? err.message : err}`);
     console.error('    as rotas autenticadas serão PULADAS — não é aprovação\n');
@@ -154,12 +190,14 @@ async function main() {
   let pulados = 0;
 
   for (const caso of CASOS) {
-    if (caso.autenticado && !cookie) {
+    const cookie = caso.como ? cookies[caso.como] : undefined;
+
+    if (caso.como && !cookie) {
       pulados += 1;
       continue;
     }
 
-    const r = await seguir(caso.caminho, caso.autenticado ? cookie : undefined);
+    const r = await seguir(caso.caminho, cookie);
 
     if (r.laco) {
       console.error(
@@ -170,15 +208,22 @@ async function main() {
     }
 
     const destino = new URL(r.url).pathname;
-    const esperado = caso.espera === 'login' ? '/app/entrar' : caso.caminho;
     const erroNoCorpo = corpoTemErro(r.corpo);
-    const ok = r.status === 200 && destino === esperado && !erroNoCorpo;
 
-    const trava = caso.autenticado ? '🔒 ' : '   ';
+    // `forbidden()` do Next responde 403 e renderiza `forbidden.tsx`. Aceitar
+    // 200 aqui deixaria passar a tela abrindo para quem não pode.
+    const esperado = caso.espera === 'login' ? '/app/entrar' : caso.caminho;
+    const statusEsperado = caso.espera === 'proibido' ? 403 : 200;
+    const faltaTexto = caso.contendo && !r.corpo.includes(caso.contendo);
+    const ok =
+      r.status === statusEsperado && destino === esperado && !erroNoCorpo && !faltaTexto;
+
+    const trava = caso.espera === 'proibido' ? '🚫 ' : caso.como ? '🔒 ' : '   ';
     console[ok ? 'log' : 'error'](
-      `  ${ok ? '✓' : '✗'} ${trava}${caso.caminho.padEnd(14)} ${r.status} → ${destino}` +
+      `  ${ok ? '✓' : '✗'} ${trava}${caso.caminho.padEnd(22)} ${r.status} → ${destino}` +
         `  (${caso.descricao})` +
-        (erroNoCorpo ? `\n        ↳ ERRO RENDERIZADO NA PÁGINA: ${erroNoCorpo}` : ''),
+        (erroNoCorpo ? `\n        ↳ ERRO RENDERIZADO NA PÁGINA: ${erroNoCorpo}` : '') +
+        (faltaTexto ? `\n        ↳ CORPO NÃO CONTÉM: "${caso.contendo}"` : ''),
     );
 
     if (!ok) falhou = true;

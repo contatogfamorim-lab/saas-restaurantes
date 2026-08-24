@@ -20,6 +20,7 @@
     "test:db": "vitest run --config vitest.db.config.mts",
     "db:photos": "node --env-file=.env.local scripts/seed-photos.mts",
     "db:salao": "node --env-file=.env.local scripts/seed-salao.mts",
+    "db:historico": "node --env-file=.env.local scripts/seed-historico.mts",
     "check:routes": "node --env-file=.env.local scripts/check-routes.mts",
     "check:realtime": "node --env-file=.env.local scripts/check-realtime.mts"
   },

@@ -91,11 +91,27 @@
 
   --radius: 0.5rem;
 
-  --chart-1: var(--color-ember-500);
-  --chart-2: oklch(0.66 0.14 152);
-  --chart-3: oklch(0.70 0.13 240);
-  --chart-4: oklch(0.74 0.15 320);
-  --chart-5: oklch(0.60 0.016 62);
+  /* ---------------------------------------------------------------------
+     Cores de série dos gráficos — MEDIDAS, não escolhidas no olho.
+
+     Os valores anteriores eram os tokens do tema com a saturação bonita, e
+     falhavam em duas contas: fora da faixa de luminosidade do fundo escuro, e
+     o par magenta↔azul com ΔE 3,1 sob protanopia — ou seja, dois meios de
+     pagamento pintados de cores que um leitor daltônico não distingue.
+
+     Estes passam nos cinco testes contra o fundo #150f0b (card no escuro):
+     faixa de L, piso de croma, separação sob protan/deutan (pior par ΔE 9,4),
+     piso de visão normal (19,3) e contraste ≥ 3:1.
+
+     A ORDEM É FIXA. Série nunca recebe cor por posição no gráfico — quem sai
+     do filtro não repinta quem ficou. Da sexta série em diante não se inventa
+     matiz: vira "outros".
+     --------------------------------------------------------------------- */
+  --chart-1: #d95926; /* laranja — a cor da marca fica no primeiro lugar */
+  --chart-2: #199e70; /* aqua    */
+  --chart-3: #3987e5; /* azul    */
+  --chart-4: #c98500; /* amarelo */
+  --chart-5: #d55181; /* magenta */
 
   --sidebar: var(--color-coal-900);
   --sidebar-foreground: oklch(0.93 0.012 78);
@@ -117,6 +133,16 @@
 @media (prefers-color-scheme: light) {
   :root:not(.dark) {
     --background: oklch(0.985 0.006 85);
+    /* Passos próprios para o fundo claro, validados contra #ffffff — não é
+       o mesmo hex do escuro clareado no automático. Três deles ficam abaixo
+       de 3:1 no branco, o que obriga rótulo visível ao lado da cor; é por
+       isso que o gráfico de meios de pagamento sempre escreve o valor. */
+    --chart-1: #eb6834;
+    --chart-2: #1baf7a;
+    --chart-3: #2a78d6;
+    --chart-4: #eda100;
+    --chart-5: #e87ba4;
+
     --foreground: oklch(0.19 0.015 52);
 
     --card: oklch(1 0 0);
@@ -159,6 +185,16 @@
 
 .light {
   --background: oklch(0.985 0.006 85);
+  /* Passos próprios para o fundo claro, validados contra #ffffff — não é
+     o mesmo hex do escuro clareado no automático. Três deles ficam abaixo
+     de 3:1 no branco, o que obriga rótulo visível ao lado da cor; é por
+     isso que o gráfico de meios de pagamento sempre escreve o valor. */
+  --chart-1: #eb6834;
+  --chart-2: #1baf7a;
+  --chart-3: #2a78d6;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+
   --foreground: oklch(0.19 0.015 52);
 
   --card: oklch(1 0 0);

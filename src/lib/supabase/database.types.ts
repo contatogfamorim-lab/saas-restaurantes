@@ -250,6 +250,13 @@ export type Database = {
             foreignKeyName: "menu_events_guest_id_restaurant_id_fkey"
             columns: ["guest_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "customer_directory"
+            referencedColumns: ["guest_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "menu_events_guest_id_restaurant_id_fkey"
+            columns: ["guest_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "session_guests"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -609,6 +616,13 @@ export type Database = {
             foreignKeyName: "order_items_guest_id_restaurant_id_fkey"
             columns: ["guest_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "customer_directory"
+            referencedColumns: ["guest_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_guest_id_restaurant_id_fkey"
+            columns: ["guest_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "session_guests"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -646,6 +660,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "live_promotions"
             referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_promotion_id_restaurant_id_fkey"
+            columns: ["promotion_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_performance"
+            referencedColumns: ["promotion_id", "restaurant_id"]
           },
           {
             foreignKeyName: "order_items_promotion_id_restaurant_id_fkey"
@@ -720,6 +741,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "orders_guest_id_restaurant_id_fkey"
+            columns: ["guest_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "customer_directory"
+            referencedColumns: ["guest_id", "restaurant_id"]
           },
           {
             foreignKeyName: "orders_guest_id_restaurant_id_fkey"
@@ -1064,6 +1092,13 @@ export type Database = {
             foreignKeyName: "promotion_targets_promotion_id_restaurant_id_fkey"
             columns: ["promotion_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "promotion_performance"
+            referencedColumns: ["promotion_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "promotion_targets_promotion_id_restaurant_id_fkey"
+            columns: ["promotion_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "promotions"
             referencedColumns: ["id", "restaurant_id"]
           },
@@ -1351,6 +1386,7 @@ export type Database = {
           joined_at: string
           lgpd_consent_at: string | null
           phone: string | null
+          phone_mask: string | null
           restaurant_id: string
           session_id: string
           updated_at: string
@@ -1363,6 +1399,7 @@ export type Database = {
           joined_at?: string
           lgpd_consent_at?: string | null
           phone?: string | null
+          phone_mask?: string | null
           restaurant_id: string
           session_id: string
           updated_at?: string
@@ -1375,6 +1412,7 @@ export type Database = {
           joined_at?: string
           lgpd_consent_at?: string | null
           phone?: string | null
+          phone_mask?: string | null
           restaurant_id?: string
           session_id?: string
           updated_at?: string
@@ -1638,6 +1676,95 @@ export type Database = {
           },
         ]
       }
+      customer_directory: {
+        Row: {
+          guest_id: string | null
+          joined_at: string | null
+          lgpd_consent_at: string | null
+          nome: string | null
+          opened_at: string | null
+          restaurant_id: string | null
+          sessao_status: Database["public"]["Enums"]["session_status"] | null
+          session_id: string | null
+          telefone_mascarado: string | null
+          tem_telefone: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_guests_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_guests_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "session_guests_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "session_totals"
+            referencedColumns: ["session_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "session_guests_session_id_restaurant_id_fkey"
+            columns: ["session_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "table_sessions"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+        ]
+      }
+      daily_sales: {
+        Row: {
+          bruto_cents: number | null
+          comandas: number | null
+          desconto_manual_cents: number | null
+          desconto_promocao_cents: number | null
+          dia: string | null
+          pessoas: number | null
+          recebido_cents: number | null
+          restaurant_id: string | null
+          taxa_servico_cents: number | null
+          ticket_medio_cents: number | null
+          total_cents: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_sessions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kitchen_performance: {
+        Row: {
+          atrasados: number | null
+          dia: string | null
+          estacao: Database["public"]["Enums"]["station"] | null
+          itens: number | null
+          mediana_fila_seg: number | null
+          mediana_seg: number | null
+          p90_seg: number | null
+          restaurant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kitchen_queue: {
         Row: {
           cliente: string | null
@@ -1777,6 +1904,24 @@ export type Database = {
           },
         ]
       }
+      payment_mix: {
+        Row: {
+          dia: string | null
+          method: Database["public"]["Enums"]["payment_method"] | null
+          quantidade: number | null
+          restaurant_id: string | null
+          total_cents: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_effective_prices: {
         Row: {
           badge_color: string | null
@@ -1804,6 +1949,100 @@ export type Database = {
           },
           {
             foreignKeyName: "products_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_sales: {
+        Row: {
+          categoria: string | null
+          desconto_cents: number | null
+          dia: string | null
+          product_id: string | null
+          produto: string | null
+          quantidade: number | null
+          receita_cents: number | null
+          restaurant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_performance: {
+        Row: {
+          desconto_cents: number | null
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          itens: number | null
+          max_quantity: number | null
+          priority: number | null
+          promocao: string | null
+          promotion_id: string | null
+          receita_cents: number | null
+          restaurant_id: string | null
+          status: Database["public"]["Enums"]["promotion_status"] | null
+          unidades: number | null
+          used_quantity: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rejected_items: {
+        Row: {
+          desfecho: Database["public"]["Enums"]["order_item_status"] | null
+          dia: string | null
+          motivo: Database["public"]["Enums"]["rejection_reason"] | null
+          ocorrencias: number | null
+          product_id: string | null
+          produto: string | null
+          restaurant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1851,6 +2090,18 @@ export type Database = {
             referencedColumns: ["table_id", "restaurant_id"]
           },
         ]
+      }
+      staff_money_actions: {
+        Row: {
+          acao: string | null
+          dia: string | null
+          funcionario: string | null
+          ocorrencias: number | null
+          profile_id: string | null
+          restaurant_id: string | null
+          total_cents: number | null
+        }
+        Relationships: []
       }
       table_status: {
         Row: {
@@ -1952,6 +2203,7 @@ export type Database = {
         Returns: Json
       }
       resolve_waiter_call: { Args: { p_call_id: string }; Returns: undefined }
+      reveal_guest_phone: { Args: { p_guest_id: string }; Returns: string }
       waive_service_fee: {
         Args: { p_reason: string; p_session_id: string }
         Returns: undefined
