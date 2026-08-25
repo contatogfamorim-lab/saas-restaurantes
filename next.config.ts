@@ -8,16 +8,27 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   /**
-   * Empacota o servidor com SÓ o que ele usa.
+   * Empacota o servidor com SÓ o que ele usa — mas NÃO na Vercel.
    *
-   * Sem isto, subir o app num container ou numa VM significa carregar
-   * `node_modules` inteiro — quase 1 GB, a maior parte ferramenta de build que
-   * nunca roda em produção. Em qualquer plano gratuito isso é o que estoura
-   * primeiro: disco pequeno, build lento e imagem gorda.
+   * Em container ou VM, standalone é a diferença entre 48 MB e 2,4 GB: sem ele
+   * o deploy carrega `node_modules` inteiro, quase 1 GB de ferramenta de build
+   * que nunca roda em produção.
    *
-   * Não afeta quem faz deploy na Vercel, que já faz o recorte sozinha.
+   * Na Vercel ele QUEBRA o build. Eu tinha escrito o contrário na
+   * documentação, sem testar, e o deploy falhou assim:
+   *
+   *     Error: ENOENT: no such file or directory,
+   *       open '/vercel/path0/.next/next-server.js.nft.json'
+   *
+   * O motivo: com standalone o Next grava os arquivos de rastreamento dentro
+   * de `.next/standalone/`, e o `onBuildComplete` da Vercel os procura na raiz
+   * do `.next`. O build compila inteiro, passa no TypeScript, gera as páginas —
+   * e morre no último passo, que é o pior lugar para descobrir.
+   *
+   * `VERCEL` é definida pela própria Vercel durante o build. Fora dela, o
+   * standalone continua valendo.
    */
-  output: "standalone",
+  output: process.env.VERCEL ? undefined : "standalone",
 
   experimental: {
     // Habilita forbidden() e unauthorized() de next/navigation, que renderizam

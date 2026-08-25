@@ -16,8 +16,20 @@ apertar botão em nome próprio.
 | `packageManager: pnpm@11.22.0` | a Vercel detecta o pnpm certo sozinha |
 | `.env*` fora do git | `git check-ignore` confirma |
 
-`output: "standalone"` fica no `next.config.ts` e **não atrapalha** aqui — a
-Vercel faz o próprio recorte. Ele existe para deploy em VM ou container.
+`output: "standalone"` é **desligado na Vercel** (`process.env.VERCEL`), e isso
+não é preferência: com ele ligado o build QUEBRA no último passo —
+
+```
+Error: ENOENT: no such file or directory,
+  open '/vercel/path0/.next/next-server.js.nft.json'
+```
+
+O Next grava os arquivos de rastreamento dentro de `.next/standalone/` e o
+`onBuildComplete` da Vercel os procura na raiz do `.next`. Compila inteiro,
+passa no TypeScript, gera as páginas, e morre no fim.
+
+Fora da Vercel o standalone continua valendo — é o que faz o deploy em VM caber
+em 48 MB em vez de 2,4 GB.
 
 ---
 
@@ -76,12 +88,19 @@ comentadas em detalhe. Nada de segredo, mas é um mapa.
 
 Em **Settings → Environment Variables**, para Production e Preview:
 
-| Nome | De onde vem |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → anon / public |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → service_role · **nunca com prefixo NEXT_PUBLIC** |
-| `SESSION_COOKIE_SECRET` | `openssl rand -base64 48` |
+| Nome | Tipo na Vercel | De onde vem |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | **Config** | Supabase → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Config** | Supabase → anon / public |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | Supabase → service_role |
+| `SESSION_COOKIE_SECRET` | **Secret** | `openssl rand -base64 48` |
+
+Ao salvar as duas primeiras a Vercel avisa: *"Remove the public framework prefix
+to keep this value private"*. O aviso está certo e a resposta é **mudar o tipo
+para Config** — não tirar o prefixo. Sem `NEXT_PUBLIC_` o Next não injeta o
+valor no código do cliente, e o cardápio deixa de falar com o Supabase.
+
+As duas de baixo ficam **Secret**.
 
 `DATABASE_URL` **não** é necessária: só os scripts de verificação a usam.
 

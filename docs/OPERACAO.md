@@ -99,7 +99,9 @@ cp -r public .next/standalone/public   # se existir
 node .next/standalone/server.js
 ```
 
-Na Vercel isso não se aplica: ela faz o recorte sozinha.
+Na Vercel o standalone é DESLIGADO (`process.env.VERCEL` no
+`next.config.ts`): com ele ligado o build dela quebra procurando
+`.next/next-server.js.nft.json`, que o standalone move para outro lugar.
 
 ### Antes de apertar o botão
 

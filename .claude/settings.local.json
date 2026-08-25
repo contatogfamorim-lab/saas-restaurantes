@@ -58,7 +58,9 @@
       "Bash(grep -v \"^\\\\.\\\\.\\\\?$\")",
       "Bash(python3 -c ' *)",
       "Bash(git check-ignore *)",
-      "Bash(git count-objects *)"
+      "Bash(git count-objects *)",
+      "Bash(env -i HOME=/Users/gabrielamorim PATH=/usr/bin:/bin:/usr/sbin:/sbin bash -lc 'which pnpm node 2>/dev/null || echo \"  NÃO — nem pnpm nem node no PATH padrão\"')",
+      "Bash(env -i HOME=/Users/gabrielamorim PATH=/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin bash -lc 'which supabase && supabase --version')"
     ]
   }
 }
