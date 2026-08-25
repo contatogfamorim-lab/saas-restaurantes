@@ -131,6 +131,12 @@ e os guardas de coluna que dependem de `auth.uid()`.
 cada uma é provada, os achados que apareceram por sabotagem deliberada, e o que
 continua descoberto.
 
+## Deploy
+
+[`docs/DEPLOY-VERCEL.md`](docs/DEPLOY-VERCEL.md) — passo a passo desta aplicação
+na Vercel: o que já está pronto no repositório, as quatro variáveis, aplicar as
+migrations no Supabase, e a armadilha do projeto free que pausa em 7 dias.
+
 ## Operação e deploy
 
 [`docs/OPERACAO.md`](docs/OPERACAO.md) — variáveis de ambiente e o que cada uma

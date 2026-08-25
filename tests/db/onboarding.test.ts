@@ -155,15 +155,31 @@ describe('§14 — criar restaurante', () => {
   });
 
   it('colisão de slug ganha sufixo ALEATÓRIO, não sequencial', async () => {
-    await como(RECEM_CHEGADO, async (c) => {
-      const { rows } = await c.query(
-        `select public.create_restaurant('Brasa Burger', 'Outro') ->> 'slug' as slug`,
-      );
-      // `brasa-burger-2` contaria ao mundo que existe um `brasa-burger-1`.
-      expect(rows[0].slug).not.toBe('brasa-burger');
-      expect(rows[0].slug).not.toMatch(/^brasa-burger-\d+$/);
-      expect(rows[0].slug).toMatch(/^brasa-burger-[0-9a-f]{6}$/);
-    });
+    // `brasa-burger-2` contaria ao mundo que existe um `brasa-burger-1`.
+    //
+    // A asserção testa ALEATORIEDADE comparando duas colisões, e não o formato
+    // de uma só. A primeira versão exigia que o sufixo não fosse composto só de
+    // dígitos — mas ele é hexadecimal de 6 caracteres, e sai todo em dígitos em
+    // cerca de 6% das vezes por puro acaso. Medido: 12 em 200. Era um teste que
+    // reprovaria o código certo uma vez a cada dezesseis execuções de CI.
+    const sufixos = new Set<string>();
+
+    for (let i = 0; i < 3; i++) {
+      await como(RECEM_CHEGADO, async (c) => {
+        const { rows } = await c.query(
+          `select public.create_restaurant('Brasa Burger', 'Outro') ->> 'slug' as slug`,
+        );
+        const slug = rows[0].slug as string;
+
+        expect(slug).not.toBe('brasa-burger');
+        expect(slug).toMatch(/^brasa-burger-[0-9a-f]{6}$/);
+        sufixos.add(slug);
+      });
+    }
+
+    // Contador sequencial repetiria a mesma sequência a cada transação
+    // desfeita; aleatório, não.
+    expect(sufixos.size, 'o sufixo se repetiu — parece contador, não sorteio').toBe(3);
   });
 
   it('quem já tem restaurante não cria outro', async () => {

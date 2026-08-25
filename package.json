@@ -1,7 +1,11 @@
 {
-  "name": "mesa",
+  "name": "markello",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -60,6 +64,5 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "4.1.11"
-  },
-  "packageManager": "pnpm@11.22.0"
+  }
 }

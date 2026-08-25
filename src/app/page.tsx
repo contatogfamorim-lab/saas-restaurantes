@@ -89,62 +89,22 @@ export default async function Home() {
         <h2 className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
           As telas da equipe
         </h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          Cada função tem a sua porta e enxerga só o que é dela. Entre com
-          qualquer um destes e compare — a diferença entre eles é o produto.
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+          Cada função tem a sua porta e enxerga só o que é dela: o garçom aprova
+          pedido e leva prato, a cozinha produz e diz o que acabou, o caixa
+          fecha conta, e só o administrador vê faturamento. A diferença entre
+          elas é o produto.
         </p>
 
-        <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {[
-            {
-              papel: 'Administrador',
-              usuario: 'dono@brasaburger.test',
-              ve: 'Tudo: console de gestão, editor de cardápio, auditoria, mesas e QR',
-            },
-            {
-              papel: 'Garçom',
-              usuario: 'garcom@brasaburger.test',
-              ve: 'Salão, passagem e a fila de aprovação. Não entra na gestão',
-            },
-            {
-              papel: 'Cozinha',
-              usuario: 'cozinha@brasaburger.test',
-              ve: 'KDS e "acabou". Não vê preço, não vê faturamento',
-            },
-            {
-              papel: 'Caixa',
-              usuario: 'caixa@brasaburger.test',
-              ve: 'Comandas, divisão e pagamento. Desconto até 10%',
-            },
-          ].map((p) => (
-            <li key={p.usuario} className="p-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <span className="text-[15px] font-semibold">{p.papel}</span>
-                <code className="tabular text-[12px] text-muted-foreground">
-                  {p.usuario}
-                </code>
-              </div>
-              <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
-                {p.ve}
-              </p>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Link
-            href="/app/entrar"
-            className="flex h-11 items-center rounded-lg bg-brand px-5 text-[14px] font-bold text-background"
-          >
-            Entrar
-          </Link>
-          <p className="text-[13px] text-muted-foreground">
-            senha em todos:{' '}
-            <code className="rounded bg-secondary px-1.5 py-0.5 text-foreground">
-              senha-de-teste-123
-            </code>
-          </p>
-        </div>
+        <Link
+          href="/app/entrar"
+          className="mt-3 flex h-11 w-fit items-center rounded-lg bg-brand px-5 text-[14px] font-bold text-background"
+        >
+          Entrar
+        </Link>
+        <p className="mt-2 text-[12px] text-muted-foreground">
+          Acesso mediante credencial. Peça uma se quiser percorrer as telas.
+        </p>
       </section>
 
       {/* ---------------------------------------------------------------- */}
@@ -184,9 +144,8 @@ export default async function Home() {
       <footer className="mt-12 border-t border-border pt-5">
         <p className="text-[12px] leading-relaxed text-muted-foreground">
           <strong className="text-foreground">É uma demonstração.</strong> Os
-          dados são fictícios e as credenciais acima são públicas de propósito —
-          qualquer visitante pode alterar o cardápio e as comandas. Nada aqui
-          contém dado real de pessoa ou de estabelecimento.
+          dados são fictícios: nada aqui contém informação real de pessoa ou de
+          estabelecimento.
         </p>
       </footer>
     </main>
