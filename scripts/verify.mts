@@ -40,6 +40,8 @@ const PASSOS: Passo[] = [
   // DEPOIS do build, sempre.
   { nome: 'nenhum segredo no bundle', comando: 'pnpm', args: ['check:secrets'] },
   { nome: 'rotas e portas fechadas', comando: 'pnpm', args: ['check:routes'], comServidor: true },
+  { nome: 'CSP com nonce', comando: 'pnpm', args: ['check:csp'], comServidor: true },
+  { nome: 'força bruta freada', comando: 'pnpm', args: ['check:forca-bruta'], comServidor: true },
 ];
 
 type Servidor = ReturnType<typeof spawn>;

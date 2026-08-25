@@ -87,6 +87,24 @@ export type Database = {
           },
         ]
       }
+      auth_throttle: {
+        Row: {
+          chave: string
+          janela: string
+          tentativas: number
+        }
+        Insert: {
+          chave: string
+          janela: string
+          tentativas?: number
+        }
+        Update: {
+          chave?: string
+          janela?: string
+          tentativas?: number
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           archived_at: string | null
@@ -2220,6 +2238,14 @@ export type Database = {
         Returns: Json
       }
       kds_start_item: { Args: { p_item_id: string }; Returns: undefined }
+      liberar_freio_de_login: {
+        Args: { p_hash_conta: string }
+        Returns: undefined
+      }
+      login_permitido: {
+        Args: { p_hash_conta: string; p_hash_origem: string }
+        Returns: boolean
+      }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
       open_guest_session: {
         Args: {
@@ -2241,6 +2267,10 @@ export type Database = {
           p_tendered_cents?: number
         }
         Returns: Json
+      }
+      registrar_falha_de_login: {
+        Args: { p_hash_conta: string; p_hash_origem: string }
+        Returns: undefined
       }
       release_course: {
         Args: { p_course: number; p_session_id: string }

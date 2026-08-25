@@ -125,6 +125,12 @@ tests/db/              contra o Postgres real
 Mutação de tela de equipe **não** pode passar pelo admin: isso desligaria a RLS
 e os guardas de coluna que dependem de `auth.uid()`.
 
+## Segurança
+
+[`docs/SEGURANCA.md`](docs/SEGURANCA.md) — as doze propriedades verificadas, onde
+cada uma é provada, os achados que apareceram por sabotagem deliberada, e o que
+continua descoberto.
+
 ## Operação e deploy
 
 [`docs/OPERACAO.md`](docs/OPERACAO.md) — variáveis de ambiente e o que cada uma
@@ -141,7 +147,7 @@ uma tela para de atualizar ou o cardápio abre vazio.
 | `estatico` | tipos, lint, matriz de permissão, QR, vulnerabilidades |
 | `integracao` | migrations do zero, RLS, 221 testes contra o banco real, isolamento no Realtime, segredo no bundle, portas fechadas |
 
-Localmente, `pnpm verify` roda os mesmos nove passos, na mesma ordem, incluindo
+Localmente, `pnpm verify` roda os mesmos onze passos, na mesma ordem, incluindo
 subir o servidor de produção de verdade.
 
 Guarda que depende de alguém lembrar de rodar não é guarda.

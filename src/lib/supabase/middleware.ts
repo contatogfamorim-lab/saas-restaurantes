@@ -18,8 +18,22 @@ import { publicEnv } from '@/lib/env';
  * nas policies de RLS e nas funções do banco. Se alguém contornar este arquivo
  * inteiro, não ganha acesso a nada.
  */
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+export async function updateSession(
+  request: NextRequest,
+  /**
+   * Cabeçalhos de requisição já preparados pelo proxy (nonce e CSP).
+   *
+   * Precisam ser repassados em CADA `NextResponse.next()` daqui: o
+   * `setAll` dos cookies recria a resposta, e uma recriação que esqueça estes
+   * cabeçalhos apaga o nonce — a página renderiza sem ele e a própria CSP
+   * bloqueia os scripts do Next.
+   */
+  cabecalhos?: Headers,
+) {
+  const comCabecalhos = () =>
+    cabecalhos ? { request: { headers: cabecalhos } } : { request };
+
+  let response = NextResponse.next(comCabecalhos());
 
   const supabase = createServerClient(
     publicEnv.NEXT_PUBLIC_SUPABASE_URL,
@@ -33,7 +47,7 @@ export async function updateSession(request: NextRequest) {
           for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
           }
-          response = NextResponse.next({ request });
+          response = NextResponse.next(comCabecalhos());
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }

@@ -150,3 +150,5 @@ jobs:
             sleep 2
           done
           pnpm check:routes
+          pnpm check:csp
+          pnpm check:forca-bruta

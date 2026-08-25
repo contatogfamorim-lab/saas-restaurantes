@@ -22,7 +22,9 @@
     "db:salao": "node --env-file=.env.local scripts/seed-salao.mts",
     "db:historico": "node --env-file=.env.local scripts/seed-historico.mts",
     "check:routes": "node --env-file=.env.local scripts/check-routes.mts",
-    "check:realtime": "node --env-file=.env.local scripts/check-realtime.mts"
+    "check:realtime": "node --env-file=.env.local scripts/check-realtime.mts",
+    "check:forca-bruta": "node --env-file=.env.local scripts/check-forca-bruta.mts",
+    "check:csp": "node --env-file=.env.local scripts/check-csp.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
