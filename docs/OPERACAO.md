@@ -81,6 +81,26 @@ Isso obriga migrations **compatíveis para trás**: acrescentar coluna nullable 
 vez de renomear, criar a nova antes de largar a velha. Renomear coluna em uma
 migration só é o jeito mais rápido de derrubar o sistema entre os dois passos.
 
+### O que vai para o servidor
+
+`output: "standalone"` empacota o servidor com só o que ele usa:
+
+| | Tamanho |
+|---|---|
+| `.next/standalone` + `.next/static` | **48 MB** |
+| `node_modules` + `.next` sem standalone | ~2,4 GB |
+
+Duas pastas precisam ser copiadas À MÃO para dentro do standalone — o Next não
+as inclui, e o servidor sobe sem reclamar e serve página sem CSS:
+
+```bash
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public   # se existir
+node .next/standalone/server.js
+```
+
+Na Vercel isso não se aplica: ela faz o recorte sozinha.
+
 ### Antes de apertar o botão
 
 ```bash

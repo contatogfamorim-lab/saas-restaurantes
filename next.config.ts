@@ -7,6 +7,18 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
+  /**
+   * Empacota o servidor com SÓ o que ele usa.
+   *
+   * Sem isto, subir o app num container ou numa VM significa carregar
+   * `node_modules` inteiro — quase 1 GB, a maior parte ferramenta de build que
+   * nunca roda em produção. Em qualquer plano gratuito isso é o que estoura
+   * primeiro: disco pequeno, build lento e imagem gorda.
+   *
+   * Não afeta quem faz deploy na Vercel, que já faz o recorte sozinha.
+   */
+  output: "standalone",
+
   experimental: {
     // Habilita forbidden() e unauthorized() de next/navigation, que renderizam
     // forbidden.tsx / unauthorized.tsx com o status HTTP correto.
