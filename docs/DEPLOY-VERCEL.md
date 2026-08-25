@@ -121,7 +121,17 @@ Em **Supabase → Authentication → URL Configuration**, ponha a URL da Vercel 
 ### Criar o restaurante
 
 Abra `https://<seu-projeto>.vercel.app/comecar` e siga os três passos: conta,
-restaurante, mesas. Ao final você cai na folha de QR.
+restaurante e briefing. O briefing pergunta o tipo de cozinha, o número de
+mesas, o fuso e a taxa, e monta cardápio e mesas a partir das respostas.
+
+**Quem só quer ver o sistema** marca "começar com o restaurante em movimento":
+sai uma noite de serviço no meio — mesa esperando aprovação, prato na passagem,
+item atrasado na chapa, comanda no caixa. Some sozinho em 3 horas, junto com a
+conta.
+
+É por isso que **não há credencial publicada em lugar nenhum**. Quem quiser
+percorrer as telas cria a própria conta; login compartilhado numa página aberta
+seria uma conta real, com senha real, num sistema real.
 
 ### Conferir que subiu inteiro
 

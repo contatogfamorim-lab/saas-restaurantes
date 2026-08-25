@@ -96,14 +96,31 @@ export default async function Home() {
           elas é o produto.
         </p>
 
-        <Link
-          href="/app/entrar"
-          className="mt-3 flex h-11 w-fit items-center rounded-lg bg-brand px-5 text-[14px] font-bold text-background"
-        >
-          Entrar
-        </Link>
-        <p className="mt-2 text-[12px] text-muted-foreground">
-          Acesso mediante credencial. Peça uma se quiser percorrer as telas.
+        {/*
+          Nenhuma credencial publicada aqui, e nem precisa: quem quiser percorrer
+          as telas cria a PRÓPRIA conta e um restaurante próprio. Login
+          compartilhado numa página aberta seria uma conta real, com senha real,
+          num sistema real — exposta a quem passar.
+        */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Link
+            href="/comecar"
+            className="flex h-11 items-center rounded-lg bg-brand px-5 text-[14px] font-bold text-background"
+          >
+            Criar meu restaurante
+          </Link>
+          <Link
+            href="/app/entrar"
+            className="flex h-11 items-center rounded-lg border border-border px-5 text-[14px] font-semibold"
+          >
+            Já tenho conta
+          </Link>
+        </div>
+        <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-muted-foreground">
+          O cadastro pergunta como é a casa e monta o sistema a partir das
+          respostas. Dá para pedir um restaurante <strong>já em movimento</strong>
+          {' '}— mesa ocupada, pedido esperando o garçom, prato na passagem — que
+          se apaga sozinho em 3 horas, junto com a conta.
         </p>
       </section>
 

@@ -161,6 +161,33 @@ O console tem isso em **Gestão → Auditoria**, e o histórico de cada item apa
 na própria tela de edição — quem está prestes a mexer no preço é exatamente
 quem precisa ver que ele já mudou três vezes esta semana.
 
+### As demonstrações não estão sumindo
+
+A limpeza é **oportunista**: `app.limpar_demos_vencidas()` roda de dentro de
+`gerar_demonstracao`, disparada pelo próximo visitante. Não há cron. O custo é
+proporcional ao movimento — banco parado não acumula, banco movimentado se
+limpa sozinho — mas o corolário é que uma demo vencida FICA no banco enquanto
+ninguém gerar a próxima.
+
+Para forçar:
+
+```sql
+select app.limpar_demos_vencidas();
+```
+
+O que sobrou, e há quanto tempo:
+
+```sql
+select name, expires_at, now() - expires_at as vencida_ha
+  from restaurants where expires_at is not null order by expires_at;
+```
+
+A limpeza apaga o restaurante, os pedidos, as mesas **e a conta de login de quem
+gerou** — que é a conta real da pessoa, criada com o e-mail dela. A tela avisa
+isso em vermelho antes de gerar. Se alguém reclamar que "a conta sumiu", é este
+o comportamento, e é o desenhado: conta viva com restaurante morto entra num
+sistema sem perfil, sem mesa e sem cardápio.
+
 ### O QR de uma mesa parou de funcionar
 
 O `short_code` é aleatório de 10 caracteres e **não muda** quando a mesa é

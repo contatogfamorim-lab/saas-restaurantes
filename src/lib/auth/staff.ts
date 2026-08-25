@@ -33,6 +33,16 @@ export interface StaffSession extends Actor {
   active: boolean;
   restaurantName: string;
   restaurantBrandColor: string;
+  /**
+   * O briefing (§14) ainda não foi respondido — restaurante recém-criado, sem
+   * cardápio, sem fuso e sem taxa definida.
+   *
+   * Lido de `restaurants.briefing_at`, que é PERMANENTE, e não da existência da
+   * linha em `restaurant_briefing`, que expira em 3 horas de propósito. Usar a
+   * linha aqui faria o restaurante ser barrado na porta toda madrugada,
+   * perguntando de novo o que ele já respondeu.
+   */
+  briefingPendente: boolean;
 }
 
 /** A equipe logada, ou `null`. Não redireciona — use em layout compartilhado. */
@@ -49,7 +59,7 @@ export async function getStaff(): Promise<StaffSession | null> {
 
   const { data: perfil } = await supabase
     .from('profiles')
-    .select('id, restaurant_id, name, roles, permissions, active, restaurants(name, brand_color)')
+    .select('id, restaurant_id, name, roles, permissions, active, restaurants(name, brand_color, briefing_at)')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -60,6 +70,7 @@ export async function getStaff(): Promise<StaffSession | null> {
   const restaurante = perfil.restaurants as unknown as {
     name: string;
     brand_color: string;
+    briefing_at: string | null;
   } | null;
 
   return {
@@ -71,13 +82,26 @@ export async function getStaff(): Promise<StaffSession | null> {
     active: true,
     restaurantName: restaurante?.name ?? '',
     restaurantBrandColor: restaurante?.brand_color ?? '#D97A28',
+    briefingPendente: restaurante != null && restaurante.briefing_at == null,
   };
 }
 
-/** Exige alguém logado. Redireciona para o login quando não há. */
+/**
+ * Exige alguém logado E com o briefing respondido.
+ *
+ * O briefing é obrigatório na primeira entrada, e o lugar de cobrar isso é
+ * aqui: toda tela protegida e toda Server Action já passam por este funil. Pôr
+ * a checagem num layout deixaria as Server Actions de fora — e Server Action é
+ * endpoint HTTP público (§10.3), alcançável sem abrir tela nenhuma.
+ *
+ * Quem responde o briefing NÃO pode usar esta função, pela razão óbvia:
+ * `responderBriefing` seria barrada pelo portão que ela existe para abrir. Ela
+ * chama `getStaff()` direto.
+ */
 export async function exigirStaff(): Promise<StaffSession> {
   const staff = await getStaff();
   if (!staff) redirect('/app/entrar');
+  if (staff.briefingPendente) redirect('/comecar');
   return staff;
 }
 

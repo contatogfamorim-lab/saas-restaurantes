@@ -75,6 +75,16 @@ export default async function Entrar({
           Entrar
         </button>
       </form>
+
+      {/* A porta de entrada de quem AINDA não tem conta. Ela existia desde a
+          §14, em /comecar, e não era linkada de lugar nenhum — só chegava lá
+          quem digitasse o endereço. */}
+      <p className="mt-6 text-center text-[13px] text-muted-foreground">
+        Ainda não tem restaurante aqui?{' '}
+        <a href="/comecar" className="font-semibold text-foreground underline">
+          Criar o meu
+        </a>
+      </p>
     </main>
   );
 }

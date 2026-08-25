@@ -1232,6 +1232,35 @@ export type Database = {
           },
         ]
       }
+      restaurant_briefing: {
+        Row: {
+          created_at: string
+          expires_at: string
+          respostas: Json
+          restaurant_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          respostas: Json
+          restaurant_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          respostas?: Json
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_briefing_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: true
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_tables: {
         Row: {
           active: boolean
@@ -1283,8 +1312,10 @@ export type Database = {
         Row: {
           active: boolean
           brand_color: string
+          briefing_at: string | null
           created_at: string
           currency: string
+          expires_at: string | null
           id: string
           logo_url: string | null
           name: string
@@ -1298,8 +1329,10 @@ export type Database = {
         Insert: {
           active?: boolean
           brand_color?: string
+          briefing_at?: string | null
           created_at?: string
           currency?: string
+          expires_at?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -1313,8 +1346,10 @@ export type Database = {
         Update: {
           active?: boolean
           brand_color?: string
+          briefing_at?: string | null
           created_at?: string
           currency?: string
+          expires_at?: string | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -2188,6 +2223,7 @@ export type Database = {
       }
     }
     Functions: {
+      aplicar_briefing: { Args: { p_respostas: Json }; Returns: Json }
       apply_discount: {
         Args: {
           p_amount_cents?: number
@@ -2232,6 +2268,7 @@ export type Database = {
         Returns: number
       }
       ensure_draft_layout: { Args: never; Returns: string }
+      gerar_demonstracao: { Args: never; Returns: Json }
       kds_item_ready: { Args: { p_item_id: string }; Returns: undefined }
       kds_out_of_stock: {
         Args: { p_item_id: string; p_marcar_indisponivel?: boolean }

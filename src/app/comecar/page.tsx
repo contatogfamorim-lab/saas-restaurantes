@@ -18,14 +18,19 @@ export const dynamic = 'force-dynamic';
  * Três passos, e o passo em que a pessoa está é decidido pelo ESTADO REAL, não
  * por um parâmetro na URL:
  *
- *   sem conta            → criar conta
- *   conta sem perfil     → criar restaurante
- *   perfil sem mesa      → criar mesas
- *   tudo pronto          → sai daqui
+ *   sem conta               → criar conta
+ *   conta sem perfil        → criar restaurante
+ *   sem briefing respondido → o briefing (obrigatório na primeira entrada)
+ *   perfil sem mesa         → criar mesas
+ *   tudo pronto             → sai daqui
  *
  * Ler o estado em vez de guardar um passo evita a tela que todo wizard tem: a
  * pessoa fecha o navegador no meio, volta, e o sistema pergunta de novo uma
  * coisa que ela já respondeu — ou pior, tenta criar de novo.
+ *
+ * O passo "criar mesas" ficou como EXCEÇÃO, não como caminho normal: o briefing
+ * já pergunta quantas mesas e as cria. Ele sobra para restaurante que nasceu
+ * antes do briefing existir e não tem mesa nenhuma.
  */
 export default async function Comecar() {
   const supabase = await createClient();
@@ -37,6 +42,16 @@ export default async function Comecar() {
 
   const staff = await getStaff();
   if (!staff) return <Onboarding passo="restaurante" email={user.email ?? null} />;
+
+  if (staff.briefingPendente) {
+    return (
+      <Onboarding
+        passo="briefing"
+        email={user.email ?? null}
+        restaurante={staff.restaurantName}
+      />
+    );
+  }
 
   const { count } = await supabase
     .from('restaurant_tables')

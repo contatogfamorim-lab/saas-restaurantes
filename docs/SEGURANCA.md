@@ -21,7 +21,7 @@ executá-la não verifica nada.
 | 2 | **O servidor não confia no cliente.** Preço, total e desconto nunca vêm do navegador. | `tests/db/orders.test.ts` | Injetar `unit_price_cents: 1` pelo HTTP real: o item entra a 700, que é o preço do catálogo |
 | 3 | **`session_id` só do cookie assinado.** Nunca do corpo, da query ou de header. | `tests/db/orders.test.ts` | Forjar `sessionId` no corpo produz **zero** pedidos na sessão forjada |
 | 4 | **Ninguém edita os próprios papéis.** Nem o administrador. | `tests/db/schema.test.ts`, `tests/permissions.test.ts` | Trigger `forbid_self_role_escalation` + `canEditStaffRoles` |
-| 5 | **`audit_log` é imutável.** Insere; não atualiza, não apaga. | `tests/db/schema.test.ts` | UPDATE e DELETE recusados para todo papel, incluindo `owner` |
+| 5 | **`audit_log` é imutável.** Insere; não atualiza, não apaga. Uma exceção, [descrita abaixo](#a-única-exceção-na-imutabilidade-do-audit_log). | `tests/db/schema.test.ts`, `tests/db/briefing.test.ts` | UPDATE e DELETE recusados para todo papel, incluindo `owner` e `postgres`. A exceção tem quatro casos negativos próprios |
 | 6 | **Chave de servidor nunca no bundle.** | `pnpm check:secrets` | Varre `.next/static` **depois** do build. Validado plantando uma chave real num Client Component |
 | 7 | **RLS em todas as tabelas**, e o anônimo lendo exatamente as 5 do cardápio. | `pnpm db:check-rls` | Confere nas duas direções — nem mais, nem menos. A versão que só checava "não escreve" passava por vacuidade |
 | 8 | **Realtime escopado por restaurante.** | `pnpm check:realtime` | Assina os canais de verdade: o garçom de A leva `CHANNEL_ERROR: Unauthorized` no canal de B, e zero eventos |
@@ -56,6 +56,40 @@ Achados encontrados por sabotagem, não por revisão:
 | "Qual cardápio está no ar" era sorteio entre versões | Um teste instável investigado em vez de reexecutado |
 | Login sem freio nenhum | Medir que o GoTrue não vê o IP do cliente quando o login é Server Action |
 | O cardápio do cliente — a página mais exposta — sem CSP | Incluí-la no `check:csp` e ver o `✗` |
+| A limpeza da demonstração **não funcionava** e derrubava a geração seguinte | Um teste novo esbarrando na imutabilidade do `audit_log` |
+| A demonstração ocupava a mesa 10 no lugar da 4 (`order by label` é alfabético) | Abrir o mapa do salão e contar |
+
+---
+
+## A única exceção na imutabilidade do `audit_log`
+
+Vale escrever por extenso, porque mexe numa regra declarada como inegociável.
+
+A demonstração (§14) expira em 3 horas e apaga o restaurante inteiro. Ela
+esbarrava em duas paredes ao mesmo tempo: `audit_log` tem trigger que barra
+DELETE, e a FK dele para `restaurants` é `on delete restrict`. O efeito não era
+"a demo fica guardada" — era pior: a exceção subia de dentro de
+`gerar_demonstracao`, e o **próximo visitante** não conseguia gerar demo nenhuma.
+O recurso morria três horas depois de entrar no ar.
+
+`app.audit_log_is_append_only` passou a liberar o DELETE em um caso só, e a
+condição é avaliada dentro do banco, sem confiar em quem chama:
+
+1. é `DELETE` — `UPDATE` segue proibido sem condição nenhuma;
+2. a linha pertence a um restaurante com `expires_at` preenchido, ou seja, uma
+   demonstração;
+3. e esse prazo **já venceu**.
+
+O que a imutabilidade protege continua intocado: ninguém apaga a prova de que
+mexeu num preço, nem o dono, nem o `postgres`. Restaurante de verdade tem
+`expires_at` nulo e nunca satisfaz a condição — e a única coisa no sistema que
+escreve nessa coluna é `gerar_demonstracao`.
+
+Os quatro casos negativos em `tests/db/briefing.test.ts` existem para a fresta
+continuar do tamanho em que foi aberta: o dono não apaga, o `postgres` não
+apaga, demo **dentro** do prazo não apaga, e `UPDATE` não passa nem em demo
+vencida. Sabotei a condição nas duas direções — tirando o prazo e tirando o
+`expires_at` — e as três primeiras ficaram vermelhas.
 
 ---
 

@@ -3,7 +3,8 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-import { exigirStaff } from '@/lib/auth/staff';
+import { exigirStaff, getStaff } from '@/lib/auth/staff';
+import { COZINHAS, FUSOS } from '@/lib/onboarding/briefing';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -138,6 +139,110 @@ export async function criarMesas(formData: FormData): Promise<ResultadoOnboardin
   if (error) return { ok: false, erro: error.message };
 
   return { ok: true };
+}
+
+const briefing = z.object({
+  tipoCozinha: z.enum(COZINHAS.map((c) => c.valor) as [string, ...string[]]),
+  cidade: z.string().trim().max(80),
+  timezone: z.enum(FUSOS.map((f) => f.valor) as [string, ...string[]]),
+  mesas: z.coerce.number().int().min(1, 'No mínimo 1').max(200, 'No máximo 200'),
+  // Percentual, não centavos: é uma taxa, não um valor. A conversão para
+  // dinheiro acontece no fechamento, sobre o total já congelado.
+  taxaServico: z.coerce.number().min(0).max(30),
+  pedirTelefone: z.coerce.boolean(),
+  gerarDemo: z.coerce.boolean(),
+});
+
+export interface ResultadoBriefing extends ResultadoOnboarding {
+  produtosCriados?: number;
+  mesasCriadas?: number;
+  /** Só na demonstração: quando aquele restaurante inteiro deixa de existir. */
+  expiraEm?: string;
+}
+
+/**
+ * Responde o briefing e monta o restaurante a partir das respostas.
+ *
+ * Duas chamadas RPC, nesta ordem e por um motivo: `aplicar_briefing` cria o
+ * cardápio SEM preço e fora do ar, que é o correto para uma casa de verdade;
+ * `gerar_demonstracao` só depois põe preço e movimento em cima do que já existe.
+ * A demo é uma camada sobre o briefing, nunca um caminho paralelo — assim não
+ * há dois geradores de restaurante para manter em pé.
+ *
+ * Nada aqui confia no cliente: o percentual da taxa é reapertado dentro da
+ * função do banco (`least(greatest(v_taxa, 0), 30)`), a contagem de mesas
+ * também, e as duas funções cobram o papel `owner` na entrada. O Zod acima é
+ * para a mensagem sair legível (§10.3: Server Action é endpoint público).
+ */
+export async function responderBriefing(formData: FormData): Promise<ResultadoBriefing> {
+  const parsed = briefing.safeParse({
+    tipoCozinha: formData.get('tipoCozinha'),
+    cidade: formData.get('cidade') ?? '',
+    timezone: formData.get('timezone'),
+    mesas: formData.get('mesas'),
+    taxaServico: formData.get('taxaServico'),
+    pedirTelefone: formData.get('pedirTelefone') === 'on',
+    gerarDemo: formData.get('gerarDemo') === 'on',
+  });
+
+  if (!parsed.success) {
+    return { ok: false, erro: parsed.error.issues[0]?.message ?? 'Dados inválidos' };
+  }
+
+  // `getStaff()` e não `exigirStaff()`: esta é a ação que ABRE o portão do
+  // briefing, e o portão mora dentro de `exigirStaff`. Chamá-lo aqui seria a
+  // ação se redirecionando para a tela que a chamou.
+  //
+  // Isto não afrouxa nada. A autorização de verdade está em `aplicar_briefing`,
+  // que cobra o papel `owner` dentro do banco, sob RLS — esta linha só faz o
+  // erro sair legível quando não há ninguém logado (§10.3).
+  if (!(await getStaff())) return { ok: false, erro: 'Faça login de novo' };
+
+  const supabase = await createClient();
+
+  const { data: aplicado, error } = await supabase.rpc('aplicar_briefing', {
+    p_respostas: {
+      tipo_cozinha: parsed.data.tipoCozinha,
+      cidade: parsed.data.cidade,
+      timezone: parsed.data.timezone,
+      mesas: parsed.data.mesas,
+      taxa_servico: parsed.data.taxaServico,
+      pedir_telefone: parsed.data.pedirTelefone,
+    },
+  });
+
+  if (error) return { ok: false, erro: error.message };
+
+  const resumo = (aplicado ?? {}) as { mesas_criadas?: number; produtos_criados?: number };
+
+  if (!parsed.data.gerarDemo) {
+    return {
+      ok: true,
+      mesasCriadas: resumo.mesas_criadas ?? 0,
+      produtosCriados: resumo.produtos_criados ?? 0,
+    };
+  }
+
+  const { data: demo, error: erroDemo } = await supabase.rpc('gerar_demonstracao');
+
+  // O briefing já foi aplicado quando isto falha, e o restaurante está de pé
+  // com cardápio. Dizer "não deu certo" e deixar a pessoa achar que precisa
+  // recomeçar seria mentir sobre o estado do banco.
+  if (erroDemo) {
+    return {
+      ok: true,
+      erro: `O restaurante foi criado, mas a demonstração falhou: ${erroDemo.message}`,
+      mesasCriadas: resumo.mesas_criadas ?? 0,
+      produtosCriados: resumo.produtos_criados ?? 0,
+    };
+  }
+
+  return {
+    ok: true,
+    mesasCriadas: resumo.mesas_criadas ?? 0,
+    produtosCriados: resumo.produtos_criados ?? 0,
+    expiraEm: (demo as { expira_em?: string } | null)?.expira_em,
+  };
 }
 
 /** Termina o onboarding no editor de cardápio, que é o próximo trabalho real. */

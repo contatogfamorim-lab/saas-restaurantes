@@ -5,14 +5,20 @@ import { useRouter } from 'next/navigation';
 import { CheckIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { criarConta, criarMesas, criarRestaurante } from '@/app/comecar/actions';
+import { COZINHAS, FUSOS } from '@/lib/onboarding/briefing';
+import {
+  criarConta,
+  criarMesas,
+  criarRestaurante,
+  responderBriefing,
+} from '@/app/comecar/actions';
 
-type Passo = 'conta' | 'restaurante' | 'mesas';
+type Passo = 'conta' | 'restaurante' | 'briefing' | 'mesas';
 
 const PASSOS: { chave: Passo; rotulo: string }[] = [
   { chave: 'conta', rotulo: 'Sua conta' },
   { chave: 'restaurante', rotulo: 'O restaurante' },
-  { chave: 'mesas', rotulo: 'As mesas' },
+  { chave: 'briefing', rotulo: 'Como é a casa' },
 ];
 
 /**
@@ -31,7 +37,10 @@ export function Onboarding({
   email?: string | null;
   restaurante?: string;
 }) {
-  const indice = PASSOS.findIndex((p) => p.chave === passo);
+  // `mesas` não tem barra própria: é o caminho de exceção, para restaurante que
+  // já existia antes do briefing existir e ficou sem mesa. Ocupa a terceira
+  // casa em vez de devolver -1, que apagaria a barra inteira.
+  const indice = passo === 'mesas' ? 2 : PASSOS.findIndex((p) => p.chave === passo);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
@@ -66,6 +75,7 @@ export function Onboarding({
 
       {passo === 'conta' && <PassoConta />}
       {passo === 'restaurante' && <PassoRestaurante email={email} />}
+      {passo === 'briefing' && <PassoBriefing restaurante={restaurante ?? ''} />}
       {passo === 'mesas' && <PassoMesas restaurante={restaurante ?? ''} />}
     </main>
   );
@@ -284,5 +294,275 @@ function PassoMesas({ restaurante }: { restaurante: string }) {
         {pendente ? 'Criando…' : 'Criar mesas'}
       </button>
     </form>
+  );
+}
+
+/**
+ * O briefing (§14, terceiro passo).
+ *
+ * As respostas viram categoria, produto, mesa, fuso e taxa de serviço dentro de
+ * UMA transação no banco (`aplicar_briefing`). O formulário não sabe montar
+ * cardápio nenhum: ele coleta seis campos e entrega.
+ *
+ * Os produtos gerados nascem SEM PREÇO e fora do ar, e a tela diz isso antes de
+ * a pessoa apertar o botão. O sistema conhece os pratos que uma pizzaria
+ * costuma ter; não conhece quanto ELA cobra, e chutar seria o sistema afirmando
+ * um valor sobre o negócio de outra pessoa.
+ */
+function PassoBriefing({ restaurante }: { restaurante: string }) {
+  const router = useRouter();
+  const [pendente, iniciar] = useTransition();
+  const [erro, setErro] = useState<string | null>(null);
+  const [demo, setDemo] = useState(false);
+  const [pronto, setPronto] = useState<{
+    produtos: number;
+    mesas: number;
+    expiraEm?: string;
+    aviso?: string;
+  } | null>(null);
+
+  function enviar(formData: FormData) {
+    setErro(null);
+    iniciar(async () => {
+      const r = await responderBriefing(formData);
+      if (!r.ok) {
+        setErro(r.erro ?? 'Não deu certo');
+        return;
+      }
+      setPronto({
+        produtos: r.produtosCriados ?? 0,
+        mesas: r.mesasCriadas ?? 0,
+        expiraEm: r.expiraEm,
+        // `ok: true` COM erro é o caso em que o restaurante subiu e só a demo
+        // falhou. Tratar como falha mandaria a pessoa recomeçar um cadastro
+        // que já está no banco.
+        aviso: r.erro,
+      });
+    });
+  }
+
+  if (pronto) return <BriefingPronto {...pronto} router={router} />;
+
+  return (
+    <form action={enviar} className="space-y-3">
+      <p className="text-[13px]">
+        <strong>{restaurante}</strong> está criado. Agora conte como a casa
+        funciona — o sistema monta o resto a partir daqui.
+      </p>
+
+      <label className="block">
+        <span className="text-[12px] font-semibold text-muted-foreground">
+          Que tipo de comida vocês vendem?
+        </span>
+        <select name="tipoCozinha" required autoFocus defaultValue="" className={CAMPO}>
+          <option value="" disabled>
+            Escolha…
+          </option>
+          {COZINHAS.map((c) => (
+            <option key={c.valor} value={c.valor}>
+              {c.rotulo}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1 block text-[11px] text-muted-foreground">
+          Gera as categorias e uma lista de pratos comuns do tipo, para você
+          editar. <strong>Sem preço e fora do ar</strong> — o preço é seu, o
+          sistema não inventa.
+        </span>
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block">
+          <span className="text-[12px] font-semibold text-muted-foreground">
+            Quantas mesas?
+          </span>
+          <input
+            name="mesas"
+            type="number"
+            min={1}
+            max={200}
+            defaultValue={10}
+            required
+            className={cn(CAMPO, 'tabular')}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-[12px] font-semibold text-muted-foreground">
+            Taxa de serviço
+          </span>
+          <div className="relative">
+            <input
+              name="taxaServico"
+              type="number"
+              min={0}
+              max={30}
+              step={0.5}
+              defaultValue={10}
+              required
+              className={cn(CAMPO, 'tabular pr-8')}
+            />
+            <span className="pointer-events-none absolute right-3 bottom-3.5 text-[13px] text-muted-foreground">
+              %
+            </span>
+          </div>
+        </label>
+      </div>
+
+      <label className="block">
+        <span className="text-[12px] font-semibold text-muted-foreground">Cidade</span>
+        <input name="cidade" maxLength={80} className={CAMPO} />
+      </label>
+
+      <label className="block">
+        <span className="text-[12px] font-semibold text-muted-foreground">Fuso horário</span>
+        <select name="timezone" defaultValue="America/Sao_Paulo" className={CAMPO}>
+          {FUSOS.map((f) => (
+            <option key={f.valor} value={f.valor}>
+              {f.rotulo}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1 block text-[11px] text-muted-foreground">
+          É o que decide em que dia cai cada fechamento de caixa.
+        </span>
+      </label>
+
+      <label className="flex items-start gap-3 rounded-md border border-border bg-card px-3 py-3">
+        <input
+          name="pedirTelefone"
+          type="checkbox"
+          className="mt-0.5 size-4 accent-[var(--color-brand)]"
+        />
+        <span className="text-[13px] leading-snug">
+          Pedir o telefone do cliente ao abrir a mesa
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+            Fica mascarado nas telas da equipe; revelar é registrado na
+            auditoria.
+          </span>
+        </span>
+      </label>
+
+      <label
+        className={cn(
+          'flex items-start gap-3 rounded-md border px-3 py-3 transition-colors',
+          demo ? 'border-brand bg-brand/5' : 'border-border bg-card',
+        )}
+      >
+        <input
+          name="gerarDemo"
+          type="checkbox"
+          checked={demo}
+          onChange={(e) => setDemo(e.target.checked)}
+          className="mt-0.5 size-4 accent-[var(--color-brand)]"
+        />
+        <span className="text-[13px] leading-snug">
+          Começar com o restaurante em movimento
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+            Preenche preços e fabrica uma noite de serviço no meio: mesa
+            ocupada, pedido esperando aprovação, prato pronto na passagem,
+            comanda no caixa. Para ver o sistema cheio em vez de vazio.
+          </span>
+        </span>
+      </label>
+
+      {/*
+        O aviso aparece só quando a caixa está marcada, e antes do botão. É
+        destrutivo de verdade: a limpeza apaga o restaurante E a conta de login
+        junto — não é um "modo demo" que se desliga depois.
+      */}
+      {demo && (
+        <p className="rounded-md bg-alert-critical/10 px-3 py-2 text-[12px] leading-snug text-alert-critical">
+          <strong>Isto expira em 3 horas.</strong> O restaurante, os pedidos e{' '}
+          <strong>a conta que você acabou de criar</strong> são apagados. Para
+          uma casa de verdade, deixe desmarcado — dá para gerar uma demonstração
+          depois, em outra conta.
+        </p>
+      )}
+
+      <Erro>{erro}</Erro>
+
+      <button type="submit" disabled={pendente} className={BOTAO}>
+        {pendente ? 'Montando…' : demo ? 'Gerar demonstração' : 'Montar meu sistema'}
+      </button>
+    </form>
+  );
+}
+
+function BriefingPronto({
+  produtos,
+  mesas,
+  expiraEm,
+  aviso,
+  router,
+}: {
+  produtos: number;
+  mesas: number;
+  expiraEm?: string;
+  aviso?: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const hora = expiraEm
+    ? new Date(expiraEm).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Sao_Paulo',
+      })
+    : null;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[15px] font-semibold">Pronto.</p>
+
+      <ul className="space-y-1 text-[13px] text-muted-foreground">
+        <li>
+          <strong className="tabular text-foreground">{produtos}</strong> itens
+          no cardápio
+        </li>
+        <li>
+          <strong className="tabular text-foreground">{mesas}</strong> mesas
+          novas, cada uma com o código próprio
+        </li>
+      </ul>
+
+      {aviso && <Erro>{aviso}</Erro>}
+
+      {hora ? (
+        <>
+          <p className="rounded-md bg-alert-critical/10 px-3 py-2 text-[12px] leading-snug text-alert-critical">
+            A demonstração some às <strong className="tabular">{hora}</strong>,
+            com a conta junto.
+          </p>
+          <button
+            onClick={() => router.push('/app/salao')}
+            className="h-12 w-full rounded-md bg-brand text-[15px] font-bold text-background"
+          >
+            Ver o salão em movimento
+          </button>
+          <p className="text-center text-[12px] text-muted-foreground">
+            Comece pelo salão: é lá que a mesa esperando aprovação aparece.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="rounded-md bg-secondary px-3 py-2 text-[12px] leading-snug">
+            Os itens estão <strong>fora do ar até você pôr o preço</strong>. O
+            cliente não vê nenhum deles ainda — é o próximo passo, no editor.
+          </p>
+          <button
+            onClick={() => router.push('/app/cardapio')}
+            className="h-12 w-full rounded-md bg-brand text-[15px] font-bold text-background"
+          >
+            Abrir o editor de cardápio
+          </button>
+          <button
+            onClick={() => router.push('/app/gestao/mesas')}
+            className="h-12 w-full rounded-md bg-secondary text-[14px] font-semibold"
+          >
+            Imprimir os códigos das mesas
+          </button>
+        </>
+      )}
+    </div>
   );
 }

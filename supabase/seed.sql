@@ -18,11 +18,20 @@
 -- Credenciais de desenvolvimento. Não reaproveitar em lugar nenhum.
 -- =============================================================================
 
+-- `briefing_at` preenchido: o Brasa Burger nasce aqui com cardápio, mesas e
+-- equipe prontos, e o briefing (§14) existe justamente para o restaurante que
+-- nasce vazio. Sem esta coluna, o portão de `exigirStaff` manda TODA tela
+-- logada para /comecar — foi o que o `check:routes` acusou, em quinze rotas de
+-- uma vez, no primeiro `pnpm verify` depois do portão entrar.
+--
+-- O backfill da migration 0034 não alcança esta linha: ele roda quando a
+-- migration é aplicada, e o seed insere depois.
 insert into public.restaurants
-  (id, name, slug, brand_color, service_fee_pct, require_phone, timezone)
+  (id, name, slug, brand_color, service_fee_pct, require_phone, timezone,
+   briefing_at)
 values
   ('11111111-1111-4111-8111-111111111111', 'Brasa Burger', 'brasa-burger',
-   '#D97A28', 10, false, 'America/Sao_Paulo');
+   '#D97A28', 10, false, 'America/Sao_Paulo', now());
 
 -- -----------------------------------------------------------------------------
 -- Equipe — auth.users + identities + profiles
