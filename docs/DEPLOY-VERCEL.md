@@ -126,8 +126,14 @@ mesas, o fuso e a taxa, e monta cardápio e mesas a partir das respostas.
 
 **Quem só quer ver o sistema** marca "começar com o restaurante em movimento":
 sai uma noite de serviço no meio — mesa esperando aprovação, prato na passagem,
-item atrasado na chapa, comanda no caixa. Some sozinho em 3 horas, junto com a
-conta.
+item atrasado na chapa, comanda no caixa. Some sozinho em 3 horas — o login fica, e serve para montar
+o restaurante de verdade depois.
+
+**A confirmação de e-mail fica LIGADA** (é o padrão do Supabase hospedado). Quem
+se cadastra recebe um link e precisa clicar antes de seguir. Custa um
+ida-e-volta na caixa de entrada, e foi decisão deliberada: os cadastros serão de
+gente real. Em *Authentication → URL Configuration*, a *Site URL* precisa ser a
+da Vercel — senão o link do e-mail aponta para `localhost`.
 
 É por isso que **não há credencial publicada em lugar nenhum**. Quem quiser
 percorrer as telas cria a própria conta; login compartilhado numa página aberta

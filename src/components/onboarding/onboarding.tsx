@@ -468,15 +468,18 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
 
       {/*
         O aviso aparece só quando a caixa está marcada, e antes do botão. É
-        destrutivo de verdade: a limpeza apaga o restaurante E a conta de login
-        junto — não é um "modo demo" que se desliga depois.
+        destrutivo de verdade — não é um "modo demo" que se desliga depois — e
+        precisa ser exato sobre o que some e o que fica: some o restaurante,
+        fica o login. Dizer que a conta some seria assustar à toa; omitir que o
+        restaurante some seria a mentira oposta.
       */}
       {demo && (
         <p className="rounded-md bg-alert-critical/10 px-3 py-2 text-[12px] leading-snug text-alert-critical">
-          <strong>Isto expira em 3 horas.</strong> O restaurante, os pedidos e{' '}
-          <strong>a conta que você acabou de criar</strong> são apagados. Para
-          uma casa de verdade, deixe desmarcado — dá para gerar uma demonstração
-          depois, em outra conta.
+          <strong>Isto expira em 3 horas.</strong> O restaurante, o cardápio e
+          os pedidos são apagados, e não dá para recuperar.{' '}
+          <strong>Seu login continua valendo</strong> — depois você monta o
+          restaurante de verdade com a mesma conta. Para uma casa que já vai
+          entrar em operação, deixe desmarcado.
         </p>
       )}
 
@@ -530,8 +533,9 @@ function BriefingPronto({
       {hora ? (
         <>
           <p className="rounded-md bg-alert-critical/10 px-3 py-2 text-[12px] leading-snug text-alert-critical">
-            A demonstração some às <strong className="tabular">{hora}</strong>,
-            com a conta junto.
+            A demonstração some às <strong className="tabular">{hora}</strong>.
+            Seu login continua — é só voltar em <span className="font-mono">/comecar</span>{' '}
+            para montar o restaurante de verdade.
           </p>
           <button
             onClick={() => router.push('/app/salao')}

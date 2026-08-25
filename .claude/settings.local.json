@@ -66,7 +66,11 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
       "Bash(curl -s http://localhost:3000/)",
       "Bash(curl -s -D- -o /dev/null http://localhost:3000/app/entrar)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(echo \"=== a aba de cadastro está no ar? ===\")",
+      "Bash(curl -s -m 30 https://saas-restaurantes-contatogfamorim-8775.vercel.app/)"
     ]
   }
 }

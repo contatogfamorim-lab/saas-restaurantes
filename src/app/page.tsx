@@ -120,7 +120,8 @@ export default async function Home() {
           O cadastro pergunta como é a casa e monta o sistema a partir das
           respostas. Dá para pedir um restaurante <strong>já em movimento</strong>
           {' '}— mesa ocupada, pedido esperando o garçom, prato na passagem — que
-          se apaga sozinho em 3 horas, junto com a conta.
+          se apaga sozinho em 3 horas. O login fica: depois é só voltar e montar
+          o restaurante de verdade com a mesma conta.
         </p>
       </section>
 

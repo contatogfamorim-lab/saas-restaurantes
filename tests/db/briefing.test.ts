@@ -424,6 +424,18 @@ describe('0035 — a demonstração', () => {
       expect(rows[0].mesas).toBe(0);
       expect(rows[0].real_viva).toBe(1);
       expect(rows[0].real_cardapio).toBeGreaterThan(0);
+
+      // O PERFIL sai, a CONTA DE LOGIN fica. A primeira versão apagava
+      // `auth.users` junto — e com a confirmação de e-mail ligada isso cobra um
+      // segundo ida-e-volta na caixa de entrada de quem gostou do sistema e
+      // voltou para montar o restaurante de verdade.
+      const { rows: conta } = await c.query(
+        `select (select count(*)::int from public.profiles where id = $1) as perfil,
+                (select count(*)::int from auth.users where id = $1) as login`,
+        [DONO],
+      );
+      expect(conta[0].perfil).toBe(0);
+      expect(conta[0].login).toBe(1);
     });
   });
 

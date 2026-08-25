@@ -182,11 +182,15 @@ select name, expires_at, now() - expires_at as vencida_ha
   from restaurants where expires_at is not null order by expires_at;
 ```
 
-A limpeza apaga o restaurante, os pedidos, as mesas **e a conta de login de quem
-gerou** — que é a conta real da pessoa, criada com o e-mail dela. A tela avisa
-isso em vermelho antes de gerar. Se alguém reclamar que "a conta sumiu", é este
-o comportamento, e é o desenhado: conta viva com restaurante morto entra num
-sistema sem perfil, sem mesa e sem cardápio.
+A limpeza apaga o restaurante, os pedidos, as mesas e o **perfil** — mas não a
+conta de login. Foi decidido assim depois que a confirmação de e-mail entrou:
+quem gera a demonstração gera na própria conta, com o e-mail dela já confirmado,
+e apagá-la cobraria um segundo ida-e-volta na caixa de entrada de quem gostou do
+sistema e voltou para montar o restaurante real.
+
+O estado que sobra é o desejado: `getStaff()` devolve nulo e `/comecar` põe a
+pessoa no passo "criar restaurante". Se alguém reclamar que "o restaurante
+sumiu mas o login funciona", é este o comportamento.
 
 ### O QR de uma mesa parou de funcionar
 
