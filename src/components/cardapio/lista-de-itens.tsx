@@ -94,7 +94,7 @@ export function ListaDeItens({
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar item"
             aria-label="Buscar item"
-            className="h-10 w-full rounded-md border border-border bg-card pl-8.5 pr-3 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+            className="h-10 w-full rounded-md border border-border bg-card pl-8.5 pr-3 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
           />
         </div>
 
@@ -102,7 +102,7 @@ export function ListaDeItens({
           <button
             type="button"
             onClick={() => setCriando(true)}
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-[--brand] px-3 text-[13px] font-bold text-background"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-brand px-3 text-[13px] font-bold text-background"
           >
             <PlusIcon className="size-4" />
             Novo item

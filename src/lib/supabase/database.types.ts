@@ -2201,6 +2201,18 @@ export type Database = {
         }
         Returns: string
       }
+      create_restaurant: {
+        Args: {
+          p_nome: string
+          p_nome_do_administrador: string
+          p_timezone?: string
+        }
+        Returns: Json
+      }
+      create_tables: {
+        Args: { p_area?: string; p_prefixo?: string; p_quantidade: number }
+        Returns: number
+      }
       ensure_draft_layout: { Args: never; Returns: string }
       kds_item_ready: { Args: { p_item_id: string }; Returns: undefined }
       kds_out_of_stock: {
@@ -2250,6 +2262,7 @@ export type Database = {
         Args: { p_permissions: string[]; p_profile_id: string }
         Returns: undefined
       }
+      unaccent_simples: { Args: { p_texto: string }; Returns: string }
       waive_service_fee: {
         Args: { p_reason: string; p_session_id: string }
         Returns: undefined

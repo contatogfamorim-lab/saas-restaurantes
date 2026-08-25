@@ -65,6 +65,10 @@ export function MenuScreen({ menu, shortCode }: Props) {
    */
   const chaveEnvio = useRef<string | null>(null);
 
+  // Nenhuma categoria com produto: restaurante novo, ou tudo fora da janela de
+  // serviço. Nos dois casos não há o que filtrar.
+  const semCardapio = menu.categories.every((c) => c.products.length === 0);
+
   const isFiltering = query.trim().length > 0 || diets.length > 0 || onlyPromos;
   const needle = query.trim().toLowerCase();
 
@@ -227,6 +231,22 @@ export function MenuScreen({ menu, shortCode }: Props) {
         </p>
       )}
 
+      {/* Restaurante recém-criado ainda não tem produto, e a tela sem esta
+          mensagem mostrava busca e filtros sobre o nada — a primeira coisa que
+          o dono vê ao escanear o próprio QR para testar. Dizer o que está
+          acontecendo custa uma frase. */}
+      {semCardapio ? (
+        <main className="px-6 py-16 text-center">
+          <p className="font-display text-xl leading-tight">
+            Cardápio a caminho
+          </p>
+          <p className="mx-auto mt-2 max-w-70 text-[14px] leading-relaxed text-muted-foreground">
+            Este restaurante ainda está montando o cardápio. Chame quem está
+            atendendo — o pedido pode ser feito na mesa do mesmo jeito.
+          </p>
+        </main>
+      ) : (
+      <>
       {!isFiltering && <PromoRail products={menu.promoted} onOpen={openProduct} />}
 
       <FilterBar
@@ -307,6 +327,8 @@ export function MenuScreen({ menu, shortCode }: Props) {
           </div>
         )}
       </main>
+      </>
+      )}
 
       <MarkelloBadge />
 

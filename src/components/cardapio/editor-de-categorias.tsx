@@ -22,7 +22,7 @@ export function EditorDeCategorias({ categorias }: { categorias: CategoriaDoEdit
         <button
           type="button"
           onClick={() => setEditando('nova')}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-[--brand] px-3 text-[13px] font-bold text-background"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-brand px-3 text-[13px] font-bold text-background"
         >
           <PlusIcon className="size-4" />
           Nova
@@ -125,7 +125,7 @@ function FormularioDeCategoria({
               required
               maxLength={80}
               autoFocus={!categoria}
-              className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+              className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
             />
           </label>
 
@@ -138,7 +138,7 @@ function FormularioDeCategoria({
                 min={0}
                 max={999}
                 defaultValue={categoria?.ordem ?? 0}
-                className="tabular mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+                className="tabular mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
               />
             </label>
 
@@ -147,7 +147,7 @@ function FormularioDeCategoria({
               <select
                 name="estacao"
                 defaultValue={categoria?.estacao ?? 'cozinha'}
-                className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+                className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <option value="cozinha">Cozinha</option>
                 <option value="bar">Bar</option>
@@ -210,7 +210,7 @@ function FormularioDeCategoria({
             <button
               type="submit"
               disabled={pendente}
-              className="h-11 flex-1 rounded-md bg-[--brand] text-[14px] font-bold text-background disabled:opacity-50"
+              className="h-11 flex-1 rounded-md bg-brand text-[14px] font-bold text-background disabled:opacity-50"
             >
               {pendente ? 'Salvando…' : 'Salvar'}
             </button>

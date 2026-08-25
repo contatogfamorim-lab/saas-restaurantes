@@ -170,7 +170,7 @@ export function EditorDeItem({
                 'h-11 shrink-0 rounded-md px-4 text-[13px] font-bold disabled:opacity-50',
                 produto.disponivel
                   ? 'bg-alert-critical text-background'
-                  : 'bg-[--brand] text-background',
+                  : 'bg-brand text-background',
               )}
             >
               {produto.disponivel ? 'Acabou' : 'Voltar ao ar'}
@@ -317,7 +317,7 @@ export function EditorDeItem({
           <button
             type="submit"
             disabled={pendente || !sujo}
-            className="h-11 w-full rounded-md bg-[--brand] text-[14px] font-bold text-background disabled:opacity-40"
+            className="h-11 w-full rounded-md bg-brand text-[14px] font-bold text-background disabled:opacity-40"
           >
             {pendente ? 'Salvando…' : sujo ? 'Salvar alterações' : 'Nada para salvar'}
           </button>
@@ -372,7 +372,7 @@ function entrada(liberado: boolean) {
   return cn(
     'mt-1 h-11 w-full rounded-md border px-3 text-[15px] outline-none',
     liberado
-      ? 'border-border bg-card focus-visible:ring-2 focus-visible:ring-[--brand]'
+      ? 'border-border bg-card focus-visible:ring-2 focus-visible:ring-brand'
       : 'border-transparent bg-secondary text-muted-foreground',
   );
 }

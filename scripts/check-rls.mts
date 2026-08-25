@@ -83,7 +83,9 @@ async function main() {
   // menos, e escrita tem que ser zero.
   // ---------------------------------------------------------------------------
   const ANON_SELECT_ESPERADO = new Set([
-    'restaurants',
+    // `restaurants` NÃO entra: o cardápio público resolve mesa e restaurante no
+    // servidor, com o client de admin. Enquanto o anônimo lia a tabela, ele
+    // listava os clientes da plataforma inteira (migration 0032).
     'categories',
     'products',
     'modifier_groups',

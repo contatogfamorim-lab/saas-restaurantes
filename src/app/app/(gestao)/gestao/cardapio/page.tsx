@@ -72,7 +72,7 @@ export default async function Cardapio({
           cardápio está vendendo. Para mudar preço, foto ou disponibilidade, abra o
           editor — ou clique num item da tabela.
         </p>
-        {/* `bg-[--brand]` sairia INVISÍVEL aqui: a variável é definida pelo
+        {/* `bg-brand` sairia INVISÍVEL aqui: a variável é definida pelo
             layout da EQUIPE, e o console tem casca própria, sem ela. Um botão
             que some sem erro nenhum é o tipo de coisa que só aparece olhando a
             tela. O console usa `accent` para destaque — ver console-nav. */}

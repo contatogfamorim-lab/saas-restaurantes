@@ -75,7 +75,7 @@ export function PainelDeDisponibilidade({
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar item"
             aria-label="Buscar item"
-            className="h-12 w-full rounded-lg border-2 border-border bg-card pl-10 pr-3 text-[16px] outline-none focus-visible:border-[--brand]"
+            className="h-12 w-full rounded-lg border-2 border-border bg-card pl-10 pr-3 text-[16px] outline-none focus-visible:border-brand"
           />
         </div>
 

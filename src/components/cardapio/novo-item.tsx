@@ -59,7 +59,7 @@ export function NovoItem({
               required
               maxLength={120}
               autoFocus
-              className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+              className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
             />
           </label>
 
@@ -68,7 +68,7 @@ export function NovoItem({
             <select
               name="categoriaId"
               required
-              className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+              className="mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               {disponiveis.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -88,7 +88,7 @@ export function NovoItem({
                 inputMode="decimal"
                 placeholder="0,00"
                 defaultValue="0"
-                className="tabular mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[--brand]"
+                className="tabular mt-1 h-11 w-full rounded-md border border-border bg-card px-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
               />
             </label>
           ) : (
@@ -119,7 +119,7 @@ export function NovoItem({
             <button
               type="submit"
               disabled={pendente}
-              className="h-11 flex-1 rounded-md bg-[--brand] text-[14px] font-bold text-background disabled:opacity-50"
+              className="h-11 flex-1 rounded-md bg-brand text-[14px] font-bold text-background disabled:opacity-50"
             >
               {pendente ? 'Criando…' : 'Criar'}
             </button>
