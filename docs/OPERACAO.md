@@ -107,7 +107,7 @@ Na Vercel isso não se aplica: ela faz o recorte sozinha.
 pnpm verify
 ```
 
-Roda os mesmos nove passos da CI, na mesma ordem, incluindo o servidor de
+Roda os mesmos onze passos da CI, na mesma ordem, incluindo o servidor de
 produção de verdade. Se passar aqui e falhar lá, é diferença de ambiente e vale
 investigar — não repetir.
 
@@ -180,9 +180,8 @@ a câmera não lê — tela rachada, lente suja, luz baixa. Alguém digita.
   ter — e "temos backup" sem restauração testada é uma frase, não uma garantia.
 - **Monitoramento e alerta.** Não há nada configurado. Hoje se descobre que
   quebrou porque alguém avisa.
-- **Rate limiting na borda.** `create_guest_order` limita 6 pedidos/minuto por
-  sessão, no banco. Não há limite por IP em nenhuma camada — é assunto da
-  Etapa 12.
-- **CSP.** Os outros cabeçalhos de segurança estão no `next.config.ts`; a CSP
-  ficou de fora de propósito, porque mal calibrada ela apaga a tela da cozinha
-  no meio do serviço. Também Etapa 12.
+- **Rate limiting nas portas públicas.** O login tem freio
+  (`pnpm check:forca-bruta`) e `create_guest_order` limita 6 pedidos/minuto por
+  sessão. Abrir cardápio e abrir sessão de mesa continuam sem limite nenhum.
+- **Segurança em geral.** O que É verificado, e o que não é, está em
+  [`SEGURANCA.md`](SEGURANCA.md).
