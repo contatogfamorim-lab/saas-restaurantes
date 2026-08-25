@@ -54,7 +54,9 @@
       "Bash(python3 -)",
       "Bash(awk 'NR>=117 && NR<=210 && /chart-/' src/app/globals.css)",
       "Bash(python3 - /private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/11c984a9-c7a8-4bc2-abd8-852fc3d79d67/scratchpad/gestao.html)",
-      "Bash(zsh /private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/11c984a9-c7a8-4bc2-abd8-852fc3d79d67/scratchpad/sabotar-cardapio.sh)"
+      "Bash(zsh /private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/11c984a9-c7a8-4bc2-abd8-852fc3d79d67/scratchpad/sabotar-cardapio.sh)",
+      "Bash(grep -v \"^\\\\.\\\\.\\\\?$\")",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

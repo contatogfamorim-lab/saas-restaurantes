@@ -16,7 +16,7 @@
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "db:check-rls": "node --env-file-if-exists=.env.local scripts/check-rls.mts",
     "check:secrets": "node --env-file-if-exists=.env.local scripts/check-bundle-secrets.mts",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm db:check-rls && pnpm test:db",
+    "verify": "node --env-file-if-exists=.env.local scripts/verify.mts",
     "test:db": "vitest run --config vitest.db.config.mts",
     "db:photos": "node --env-file=.env.local scripts/seed-photos.mts",
     "db:salao": "node --env-file=.env.local scripts/seed-salao.mts",

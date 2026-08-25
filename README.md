@@ -124,3 +124,24 @@ tests/db/              contra o Postgres real
 
 Mutação de tela de equipe **não** pode passar pelo admin: isso desligaria a RLS
 e os guardas de coluna que dependem de `auth.uid()`.
+
+## Operação e deploy
+
+[`docs/OPERACAO.md`](docs/OPERACAO.md) — variáveis de ambiente e o que cada uma
+entrega se vazar, os dois tetos do plano (conexões de Realtime e egress de
+foto), a ordem do deploy e por que ela não pode inverter, e o que olhar quando
+uma tela para de atualizar ou o cardápio abre vazio.
+
+## CI
+
+`.github/workflows/ci.yml` roda as mesmas guardas em todo push e pull request:
+
+| Job | O que mede |
+|---|---|
+| `estatico` | tipos, lint, matriz de permissão, QR, vulnerabilidades |
+| `integracao` | migrations do zero, RLS, 221 testes contra o banco real, isolamento no Realtime, segredo no bundle, portas fechadas |
+
+Localmente, `pnpm verify` roda os mesmos nove passos, na mesma ordem, incluindo
+subir o servidor de produção de verdade.
+
+Guarda que depende de alguém lembrar de rodar não é guarda.

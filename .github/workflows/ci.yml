@@ -1,0 +1,152 @@
+name: CI
+
+# =============================================================================
+# As guardas deste projeto só valem se rodarem sozinhas.
+#
+# Até aqui, `check-rls`, `check-secrets`, `check-realtime` e `check-routes` eram
+# scripts que alguém precisava LEMBRAR de rodar. Guarda que depende de memória
+# não é guarda: é documentação com sintaxe de shell. A spec §10.10 pede
+# explicitamente que a CI derrube o build quando existir tabela sem RLS — e é
+# esse o pedaço que não existia.
+#
+# Dois jobs, por tempo de resposta e não por organização:
+#
+#   `estatico`   — segundos, sem banco. Pega erro de tipo, de lint e de regra
+#                  de permissão antes de a pessoa trocar de contexto.
+#   `integracao` — minutos, sobe o Supabase inteiro. É onde a RLS, o isolamento
+#                  entre restaurantes e o vazamento de segredo são medidos de
+#                  verdade.
+#
+# Separados porque um typo não precisa esperar o Postgres subir para ser
+# reportado.
+# =============================================================================
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Empurrar de novo cancela a execução anterior do MESMO branch: revisar CI de
+# um commit que já foi substituído é gastar minuto e atenção à toa.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  estatico:
+    name: Tipos, lint e regras
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Do .nvmrc, para a CI e a máquina de quem desenvolve nunca
+          # divergirem de versão sem alguém decidir isso.
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Testes de unidade
+        # A matriz de permissão (§10.3) e o QR da mesa moram aqui. Nenhum
+        # precisa de banco, e os dois quebram coisa cara quando erram.
+        run: pnpm test
+
+      - name: Vulnerabilidades conhecidas
+        run: pnpm audit --audit-level moderate
+
+  integracao:
+    name: Banco, RLS e bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      # Chaves DEMO do stack local do Supabase: são fixas, públicas e
+      # documentadas — o mesmo valor em toda máquina que roda `supabase start`.
+      # Não são segredo e não podem virar um: colocá-las em `secrets` daria a
+      # impressão de que existe algo a proteger aqui.
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      SESSION_COOKIE_SECRET: ci-nao-e-segredo-de-producao-apenas-32-mais-caracteres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Sobe o Supabase
+        # As migrations aplicam DO ZERO, na ordem, num banco vazio. Se alguma
+        # depender de estado que só existe na máquina de quem a escreveu, é
+        # aqui que aparece — e não no primeiro deploy.
+        run: supabase start -x studio,edge-runtime,logflare,vector,supavisor,imgproxy,mailpit
+
+      - name: Migrations reaplicam limpo
+        run: supabase db reset
+
+      - name: Os tipos gerados estão em dia
+        # `database.types.ts` é gerado a partir do schema. Se alguém acrescentar
+        # uma migration e esquecer de rodar `pnpm db:types`, o arquivo passa a
+        # descrever um banco que não existe mais — e o typecheck continua verde,
+        # mentindo com convicção.
+        run: |
+          pnpm db:types
+          if ! git diff --quiet src/lib/supabase/database.types.ts; then
+            echo "::error::database.types.ts está desatualizado. Rode 'pnpm db:types' e commite."
+            git diff --stat src/lib/supabase/database.types.ts
+            exit 1
+          fi
+
+      - name: RLS em todas as tabelas
+        # §10.10: nenhuma tabela sem RLS, nenhuma sem policy, e o anônimo lendo
+        # EXATAMENTE as tabelas do cardápio público — nem mais, nem menos.
+        run: pnpm db:check-rls
+
+      - name: Testes contra o banco real
+        run: pnpm test:db
+
+      - name: Isolamento no Realtime
+        # §10.2, pelo caminho real: assina os canais de verdade e conta o que
+        # chega. A policy pode estar certa e o servidor Realtime entregar assim
+        # mesmo — são processos diferentes.
+        run: pnpm check:realtime
+
+      - name: Build de produção
+        run: pnpm build
+
+      - name: Nenhum segredo no bundle
+        # DEPOIS do build, de propósito: o script varre `.next/static`. Rodar
+        # antes passaria por vacuidade, sem nada para varrer.
+        run: pnpm check:secrets
+
+      - name: Rotas respondem e as portas fechadas continuam fechadas
+        run: |
+          pnpm start &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/ >/dev/null && break
+            sleep 2
+          done
+          pnpm check:routes
