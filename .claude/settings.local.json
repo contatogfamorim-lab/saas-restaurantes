@@ -70,7 +70,8 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(echo \"=== a aba de cadastro está no ar? ===\")",
-      "Bash(curl -s -m 30 https://saas-restaurantes-contatogfamorim-8775.vercel.app/)"
+      "Bash(curl -s -m 30 https://saas-restaurantes-contatogfamorim-8775.vercel.app/)",
+      "Bash(git checkout *)"
     ]
   }
 }

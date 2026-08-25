@@ -414,22 +414,20 @@ begin
   delete from public.restaurant_briefing  where restaurant_id = any(v_ids);
   delete from public.audit_log            where restaurant_id = any(v_ids);
 
-  -- O PERFIL sai. A CONTA DE LOGIN fica.
+  -- Os perfis e as contas de auth saem junto — e é preciso ser exato sobre o
+  -- que isto significa: a conta apagada é a que a PESSOA criou, com o e-mail
+  -- dela. Quem gera a demonstração gera em cima da própria conta; não existe
+  -- usuário `@demo.markello` nenhum.
   --
-  -- A primeira versão apagava `auth.users` junto, e o raciocínio era que conta
-  -- viva com restaurante morto entra num sistema sem perfil e sem cardápio.
-  -- Está errado, e o que revelou o erro foi o projeto ligar a confirmação de
-  -- e-mail: quem gera a demonstração gera em cima da PRÓPRIA conta, com o
-  -- e-mail dela, já confirmado. Apagá-la cobra um segundo ida-e-volta na caixa
-  -- de entrada exatamente de quem gostou do sistema e voltou para montar o
-  -- restaurante de verdade.
+  -- Apagar é a escolha certa mesmo assim. Deixar a conta viva com o restaurante
+  -- morto dá login que entra num sistema sem perfil, sem mesa e sem cardápio —
+  -- e o wizard de onboarding recomeçaria do meio. Some inteiro, e a pessoa se
+  -- cadastra de novo em quinze segundos.
   --
-  -- Sem o perfil, o estado que sobra é coerente e é o desejado: `getStaff()`
-  -- devolve nulo, e `/comecar` põe a pessoa no passo "criar restaurante" — o
-  -- lugar certo para quem já tem login e ainda não tem casa.
-  --
-  -- Não acumula: linha de `auth.users` não custa quota, e conta que não loga
-  -- não conta como usuário ativo no plano free.
+  -- Por isso a tela do briefing avisa, com todas as letras, ANTES de gerar.
+  delete from auth.users where id in (
+    select id from public.profiles where restaurant_id = any(v_ids)
+  );
   delete from public.profiles where restaurant_id = any(v_ids);
 
   delete from public.restaurants where id = any(v_ids);
