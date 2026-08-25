@@ -58,6 +58,32 @@ Achados encontrados por sabotagem, não por revisão:
 | O cardápio do cliente — a página mais exposta — sem CSP | Incluí-la no `check:csp` e ver o `✗` |
 | A limpeza da demonstração **não funcionava** e derrubava a geração seguinte | Um teste novo esbarrando na imutabilidade do `audit_log` |
 | A demonstração ocupava a mesa 10 no lugar da 4 (`order by label` é alfabético) | Abrir o mapa do salão e contar |
+| **Laço infinito entre `/app` e `/app/entrar`** para quem confirmava o e-mail e logava: tela preta, sem erro | O usuário abriu o sistema e mandou a captura |
+
+### O laço, por extenso
+
+Vale registrar porque a causa é estrutural, não um descuido pontual.
+
+`exigirStaff()` mandava para `/app/entrar` todo mundo sem staff, e o `proxy.ts`
+devolve para `/app` quem chega na porta COM sessão válida. Duas regras
+discordando — o middleware supondo que ter sessão é poder usar o app, e o funil
+mandando para a porta gente cuja sessão é perfeitamente válida. Quem tem conta e
+ainda não tem perfil cai entre as duas e roda para sempre.
+
+Pior: **três layouts tinham a própria cópia da regra**, chamando `getStaff()` e
+redirecionando por conta própria. Corrigir só o funil não bastou — o layout
+renderiza antes da página e era ele quem disparava o laço. Os três passaram a
+chamar `exigirStaff()`, que agora distingue os três motivos de não haver staff:
+sem sessão vai para a porta, sem perfil vai para o wizard, e desligado é
+**deslogado** antes de ir para a porta (senão o cookie válido reabriria o mesmo
+laço por outro caminho).
+
+O bug existia antes deste trabalho e era inalcançável, porque `/comecar` não era
+linkado de lugar nenhum. Linkar o cadastro o pôs no caminho principal.
+
+O `check:routes` já dizia "nenhuma em laço" — e passava, porque testava as rotas
+autenticadas só com perfil pronto. Agora o seed traz uma conta confirmada e sem
+perfil, e dois casos percorrem `/app` e `/app/salao` com ela.
 
 ---
 

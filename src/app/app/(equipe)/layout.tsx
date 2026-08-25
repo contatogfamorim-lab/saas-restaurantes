@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation';
-
-import { getStaff, telasVisiveis } from '@/lib/auth/staff';
+import { exigirStaff, telasVisiveis } from '@/lib/auth/staff';
 import { StaffNav } from '@/components/app/staff-nav';
 
 /**
@@ -14,11 +12,17 @@ import { StaffNav } from '@/components/app/staff-nav';
  * permissão por conta própria (spec §10.3).
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const staff = await getStaff();
-
-  // O middleware já redireciona, mas ele não é fronteira de segurança
-  // (CVE-2025-29927). Esta é a checagem que vale.
-  if (!staff) redirect('/app/entrar');
+  // `exigirStaff()` e NÃO `getStaff()` + redirect próprio.
+  //
+  // A regra de para onde mandar quem não tem staff é sutil demais para viver em
+  // cópia: quem está logado e sem perfil precisa ir para `/comecar`, e mandá-lo
+  // para a porta faz o `proxy.ts` devolvê-lo para `/app` — laço infinito, tela
+  // preta, nenhum erro. Este layout tinha a própria cópia da regra e era ELE
+  // quem disparava o laço, antes mesmo de a página rodar.
+  //
+  // A checagem continua valendo o que valia: o middleware não é fronteira
+  // (CVE-2025-29927), e esta é a que conta.
+  const staff = await exigirStaff();
 
   const telas = telasVisiveis(staff);
 

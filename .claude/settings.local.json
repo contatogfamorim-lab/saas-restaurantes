@@ -71,7 +71,10 @@
       "Bash(git push *)",
       "Bash(echo \"=== a aba de cadastro está no ar? ===\")",
       "Bash(curl -s -m 30 https://saas-restaurantes-contatogfamorim-8775.vercel.app/)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(curl -s -m 25 \"https://fpgkaqdzgtcvhegzaixa.supabase.co/auth/v1/settings\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -o /dev/null -w \"servidor: %{http_code}\\\\n\" -m 10 http://localhost:3000/app/entrar)"
     ]
   }
 }

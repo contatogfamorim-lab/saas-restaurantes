@@ -87,7 +87,39 @@ export async function getStaff(): Promise<StaffSession | null> {
 }
 
 /**
- * Exige alguém logado E com o briefing respondido.
+ * Por que `getStaff()` devolveu `null`.
+ *
+ * Os três motivos exigem destinos DIFERENTES, e tratá-los como um só produziu
+ * um laço infinito entre `/app` e `/app/entrar` — tela preta, sem erro nenhum.
+ *
+ * O mecanismo: `exigirStaff` mandava todo mundo para a porta, e o `proxy.ts`
+ * devolve para `/app` quem chega na porta COM sessão válida
+ * (`lib/supabase/middleware.ts`). Duas regras discordando — o middleware
+ * supondo que ter sessão é poder usar o app, e esta função mandando para a
+ * porta gente cuja sessão é perfeitamente válida.
+ */
+type MotivoSemStaff = 'sem-sessao' | 'sem-perfil' | 'desativado';
+
+async function porQueNaoTemStaff(): Promise<MotivoSemStaff> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return 'sem-sessao';
+
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('active')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!perfil) return 'sem-perfil';
+  return 'desativado';
+}
+
+/**
+ * Exige alguém logado, com perfil ativo E com o briefing respondido.
  *
  * O briefing é obrigatório na primeira entrada, e o lugar de cobrar isso é
  * aqui: toda tela protegida e toda Server Action já passam por este funil. Pôr
@@ -97,12 +129,41 @@ export async function getStaff(): Promise<StaffSession | null> {
  * Quem responde o briefing NÃO pode usar esta função, pela razão óbvia:
  * `responderBriefing` seria barrada pelo portão que ela existe para abrir. Ela
  * chama `getStaff()` direto.
+ *
+ * REGRA QUE NÃO PODE SER QUEBRADA: nunca mandar para `/app/entrar` alguém que
+ * TEM sessão. O `proxy.ts` devolve essa pessoa para `/app` na mesma hora, e o
+ * resultado é laço até o navegador desistir e pintar a tela de preto.
  */
 export async function exigirStaff(): Promise<StaffSession> {
   const staff = await getStaff();
-  if (!staff) redirect('/app/entrar');
-  if (staff.briefingPendente) redirect('/comecar');
-  return staff;
+
+  if (staff) {
+    if (staff.briefingPendente) redirect('/comecar');
+    return staff;
+  }
+
+  // A consulta extra só acontece no caminho que já termina em redirecionamento,
+  // então não custa nada em uso normal — e é o que evita o laço.
+  switch (await porQueNaoTemStaff()) {
+    case 'sem-sessao':
+      redirect('/app/entrar');
+
+    // Logado e sem perfil: é quem acabou de confirmar o e-mail, ou quem teve o
+    // restaurante apagado junto com uma demonstração vencida. Não é falta de
+    // autenticação, é onboarding pela metade — e o lugar dele é o wizard, que
+    // vai pôr a pessoa no passo "criar restaurante".
+    case 'sem-perfil':
+      redirect('/comecar');
+
+    // Desligado: o acesso foi revogado, então a sessão precisa acabar de fato.
+    // Só redirecionar deixaria o cookie válido, e o middleware o devolveria
+    // para `/app` — o mesmo laço, por outra porta.
+    case 'desativado': {
+      const supabase = await createClient();
+      await supabase.auth.signOut();
+      redirect('/app/entrar?erro=1');
+    }
+  }
 }
 
 /**

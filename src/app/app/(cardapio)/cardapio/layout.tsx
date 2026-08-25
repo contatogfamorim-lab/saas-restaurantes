@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { forbidden, redirect } from 'next/navigation';
+import { forbidden } from 'next/navigation';
 import { ArrowLeftIcon } from 'lucide-react';
 
-import { getStaff } from '@/lib/auth/staff';
+import { exigirStaff } from '@/lib/auth/staff';
 import { canOpenMenuEditor, menuPermissions } from '@/lib/permissions';
 import { CardapioNav } from '@/components/cardapio/cardapio-nav';
 
@@ -25,12 +25,17 @@ import { sair } from '../../entrar/actions';
  * alguém e essa pessoa entra (spec §12.9).
  */
 export default async function CardapioLayout({ children }: { children: React.ReactNode }) {
-  const staff = await getStaff();
-
-  // O middleware redireciona, mas não é fronteira de segurança
-  // (CVE-2025-29927). Esta é a checagem que vale — e cada página repete a sua,
-  // porque layout não protege rota filha por si só.
-  if (!staff) redirect('/app/entrar');
+  // `exigirStaff()` e NÃO `getStaff()` + redirect próprio.
+  //
+  // A regra de para onde mandar quem não tem staff é sutil demais para viver em
+  // cópia: quem está logado e sem perfil precisa ir para `/comecar`, e mandá-lo
+  // para a porta faz o `proxy.ts` devolvê-lo para `/app` — laço infinito, tela
+  // preta, nenhum erro. Este layout tinha a própria cópia da regra e era ELE
+  // quem disparava o laço, antes mesmo de a página rodar.
+  //
+  // A checagem continua valendo o que valia: o middleware não é fronteira
+  // (CVE-2025-29927), e esta é a que conta.
+  const staff = await exigirStaff();
   if (!canOpenMenuEditor(staff)) forbidden();
 
   const permissoes = menuPermissions(staff);

@@ -37,11 +37,21 @@ const ADMIN_SENHA = process.env.SMOKE_SENHA ?? 'senha-de-teste-123';
  */
 const GARCOM_EMAIL = process.env.SMOKE_GARCOM ?? 'garcom@brasaburger.test';
 
+/**
+ * Um TERCEIRO ator: conta confirmada, sem perfil nenhum.
+ *
+ * É quem acabou de se cadastrar e confirmar o e-mail, e é o estado que
+ * escondia um laço infinito entre `/app` e `/app/entrar` — a pessoa logava e
+ * levava uma tela preta, sem mensagem. As rotas autenticadas eram todas
+ * testadas com perfil pronto, então o laço passava despercebido.
+ */
+const SEM_PERFIL_EMAIL = process.env.SMOKE_SEM_PERFIL ?? 'sem-perfil@brasaburger.test';
+
 interface Caso {
   caminho: string;
-  espera: 'pagina' | 'login' | 'proibido';
+  espera: 'pagina' | 'login' | 'proibido' | 'onboarding';
   /** Quem faz o pedido. `undefined` = deslogado. */
-  como?: 'admin' | 'garcom';
+  como?: 'admin' | 'garcom' | 'semPerfil';
   /**
    * Trecho que PRECISA estar no corpo.
    *
@@ -62,6 +72,21 @@ const CASOS: Caso[] = [
   { caminho: '/privacidade', espera: 'pagina', descricao: 'aviso de dados é público' },
 
   { caminho: '/app/gestao', espera: 'login', descricao: 'gestão exige login' },
+
+  // --- logado e SEM perfil: o estado que escondia o laço --------------------
+  {
+    caminho: '/app',
+    espera: 'onboarding',
+    como: 'semPerfil',
+    contendo: 'Nome do restaurante',
+    descricao: 'quem confirmou o e-mail cai no wizard, e NÃO em laço',
+  },
+  {
+    caminho: '/app/salao',
+    espera: 'onboarding',
+    como: 'semPerfil',
+    descricao: 'qualquer tela da equipe leva o mesmo caminho',
+  },
 
   // --- com sessão: é onde erro de avaliação de módulo aparece ---------------
   { caminho: '/app/salao', espera: 'pagina', como: 'admin', descricao: 'salão renderiza logado' },
@@ -190,10 +215,11 @@ async function main() {
     process.exit(1);
   }
 
-  const cookies: Partial<Record<'admin' | 'garcom', string>> = {};
+  const cookies: Partial<Record<'admin' | 'garcom' | 'semPerfil', string>> = {};
   try {
     cookies.admin = await cookiesDeSessao(ADMIN_EMAIL, ADMIN_SENHA);
     cookies.garcom = await cookiesDeSessao(GARCOM_EMAIL, ADMIN_SENHA);
+    cookies.semPerfil = await cookiesDeSessao(SEM_PERFIL_EMAIL, ADMIN_SENHA);
   } catch (err) {
     console.error(`  ! sem sessão de teste: ${err instanceof Error ? err.message : err}`);
     console.error('    as rotas autenticadas serão PULADAS — não é aprovação\n');
@@ -225,13 +251,19 @@ async function main() {
 
     // `forbidden()` do Next responde 403 e renderiza `forbidden.tsx`. Aceitar
     // 200 aqui deixaria passar a tela abrindo para quem não pode.
-    const esperado = caso.espera === 'login' ? '/app/entrar' : caso.caminho;
+    const esperado =
+      caso.espera === 'login'
+        ? '/app/entrar'
+        : caso.espera === 'onboarding'
+          ? '/comecar'
+          : caso.caminho;
     const statusEsperado = caso.espera === 'proibido' ? 403 : 200;
     const faltaTexto = caso.contendo && !r.corpo.includes(caso.contendo);
     const ok =
       r.status === statusEsperado && destino === esperado && !erroNoCorpo && !faltaTexto;
 
-    const trava = caso.espera === 'proibido' ? '🚫 ' : caso.como ? '🔒 ' : '   ';
+    const trava =
+      caso.espera === 'proibido' ? '🚫 ' : caso.espera === 'onboarding' ? '🧭 ' : caso.como ? '🔒 ' : '   ';
     console[ok ? 'log' : 'error'](
       `  ${ok ? '✓' : '✗'} ${trava}${caso.caminho.padEnd(22)} ${r.status} → ${destino}` +
         `  (${caso.descricao})` +

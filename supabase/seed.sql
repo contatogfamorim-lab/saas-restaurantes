@@ -34,6 +34,36 @@ values
    '#D97A28', 10, false, 'America/Sao_Paulo', now());
 
 -- -----------------------------------------------------------------------------
+-- Uma conta confirmada e SEM PERFIL, de propósito.
+--
+-- É o estado de quem se cadastra, confirma o e-mail e ainda não criou
+-- restaurante — e o `check:routes` precisa dele para provar que `/app` não
+-- entra em laço. Ficou um laço infinito escondido aí: `exigirStaff` mandava
+-- essa pessoa para `/app/entrar`, e o `proxy.ts` devolve para `/app` quem
+-- chega na porta COM sessão. Tela preta, sem erro nenhum.
+--
+-- Sem perfil, esta conta não enxerga nada: não pertence a restaurante algum, e
+-- toda policy do sistema é ancorada em `app.current_restaurant_id()`.
+-- -----------------------------------------------------------------------------
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  'eeeeeeee-0000-4000-8000-000000000001', 'authenticated', 'authenticated',
+  'sem-perfil@brasaburger.test',
+  extensions.crypt('senha-de-teste-123', extensions.gen_salt('bf')),
+  now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
+  now(), now(), '', '', '', '', ''
+);
+
+-- A identity NÃO vai aqui: o bloco da equipe, mais abaixo, insere identity
+-- para TODA linha de `auth.users` (`from auth.users u`) e já cobre esta conta.
+-- Inserir aqui também violaria a unicidade de (provider, provider_id).
+
+-- -----------------------------------------------------------------------------
 -- Equipe — auth.users + identities + profiles
 -- -----------------------------------------------------------------------------
 -- Os campos de token vão como '' e não NULL de propósito: o GoTrue trata NULL

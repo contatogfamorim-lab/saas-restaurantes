@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { forbidden, redirect } from 'next/navigation';
+import { forbidden } from 'next/navigation';
 import { LogOutIcon } from 'lucide-react';
 
 import { ConsoleNav } from '@/components/gestao/console-nav';
-import { getStaff } from '@/lib/auth/staff';
+import { exigirStaff } from '@/lib/auth/staff';
 import { can } from '@/lib/permissions';
 
 import { sair } from '../../entrar/actions';
@@ -22,12 +22,17 @@ import { sair } from '../../entrar/actions';
  * vê "Gestão", e quem está aqui volta pelo endereço.
  */
 export default async function GestaoLayout({ children }: { children: React.ReactNode }) {
-  const staff = await getStaff();
-
-  // O middleware redireciona, mas não é fronteira de segurança
-  // (CVE-2025-29927). Esta é a checagem que vale — e ela se repete em cada
-  // página, porque layout não protege rota filha por si só.
-  if (!staff) redirect('/app/entrar');
+  // `exigirStaff()` e NÃO `getStaff()` + redirect próprio.
+  //
+  // A regra de para onde mandar quem não tem staff é sutil demais para viver em
+  // cópia: quem está logado e sem perfil precisa ir para `/comecar`, e mandá-lo
+  // para a porta faz o `proxy.ts` devolvê-lo para `/app` — laço infinito, tela
+  // preta, nenhum erro. Este layout tinha a própria cópia da regra e era ELE
+  // quem disparava o laço, antes mesmo de a página rodar.
+  //
+  // A checagem continua valendo o que valia: o middleware não é fronteira
+  // (CVE-2025-29927), e esta é a que conta.
+  const staff = await exigirStaff();
   if (!can(staff, 'dashboard.view')) forbidden();
 
   return (
