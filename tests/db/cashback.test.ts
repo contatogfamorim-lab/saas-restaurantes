@@ -620,3 +620,38 @@ describe('configurações da casa (0041)', () => {
     });
   });
 });
+
+// ===========================================================================
+describe('a faxina não derruba a demonstração (0042)', () => {
+  it('demo é gerada mesmo com a limpeza quebrada', async () => {
+    // Este é o caso que só existe em PRODUÇÃO: no banco local nunca há demo
+    // vencida acumulada, então a limpeza não faz nada e não tem como falhar.
+    // Aqui ela é sabotada de propósito, e a demonstração precisa nascer assim
+    // mesmo — arrumar a casa é tarefa secundária, e falhar nela não pode
+    // impedir alguém de entrar.
+    await comoPostgres(async (c) => {
+      await c.query(`
+        create or replace function app.limpar_demos_vencidas() returns int
+        language plpgsql security definer set search_path='' as $x$
+        begin
+          raise exception 'faxina quebrada de proposito';
+        end $x$;`);
+
+      await c.query(
+        `select set_config('request.jwt.claims',
+           json_build_object('sub', $1::text, 'role','authenticated')::text, true)`,
+        [DONO],
+      );
+      await c.query(`update public.products set price_cents = 0, is_available = false
+                      where restaurant_id = $1`, [RESTAURANTE]);
+
+      const { rows } = await c.query(`select public.gerar_demonstracao() as r`);
+      expect(rows[0].r.mesas_ocupadas).toBe(4);
+
+      expect((await c.query(
+        `select count(*)::int as n from public.products
+          where restaurant_id = $1 and price_cents = 0`, [RESTAURANTE],
+      )).rows[0].n).toBe(0);
+    });
+  });
+});

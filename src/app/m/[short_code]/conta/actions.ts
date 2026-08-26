@@ -26,6 +26,8 @@ import { readTableSession } from '@/lib/session/cookie';
 interface Resultado {
   ok: boolean;
   erro?: string;
+  /** Nome de quem entrou — a folha de pedido usa para não perguntar de novo. */
+  nome?: string;
 }
 
 /** Descobre a casa a partir do código da mesa — jamais do formulário. */
@@ -90,7 +92,7 @@ export async function criarConta(shortCode: string, formData: FormData): Promise
   await vincularNaMesa(data as string);
 
   revalidatePath(`/m/${shortCode}/conta`);
-  return { ok: true };
+  return { ok: true, nome: parsed.data.nome };
 }
 
 export async function entrarNaConta(shortCode: string, formData: FormData): Promise<Resultado> {
@@ -145,7 +147,7 @@ export async function entrarNaConta(shortCode: string, formData: FormData): Prom
   await vincularNaMesa(clienteId as string);
 
   revalidatePath(`/m/${shortCode}/conta`);
-  return { ok: true };
+  return { ok: true, nome: cliente?.name ?? 'Cliente' };
 }
 
 export async function sairDaConta(shortCode: string): Promise<Resultado> {

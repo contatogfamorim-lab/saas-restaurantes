@@ -47,7 +47,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
 
   const { data: restaurant } = await admin
     .from('restaurants')
-    .select('id, name, logo_url, brand_color, require_phone, timezone, active')
+    .select('id, name, logo_url, brand_color, require_phone, timezone, active, cashback_pct')
     .eq('id', table.restaurant_id)
     .maybeSingle();
 
@@ -179,6 +179,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       logoUrl: restaurant.logo_url,
       brandColor: restaurant.brand_color ?? '#D97A28',
       requirePhone: Boolean(restaurant.require_phone),
+      cashbackPct: Number(restaurant.cashback_pct ?? 0),
     },
     table: {
       id: table.id,

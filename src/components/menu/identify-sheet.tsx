@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { criarConta, entrarNaConta } from '@/app/m/[short_code]/conta/actions';
 
 /**
  * Identificação do cliente — pedida no PRIMEIRO envio, nunca antes (spec §4).
@@ -14,6 +15,17 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
  * O consentimento LGPD é registrado com timestamp no banco, e só existe se a
  * pessoa marcar. Sem marcar, o telefone é descartado no servidor — não fica
  * "guardado por precaução", que é exatamente o que gera multa.
+ *
+ * DOIS MODOS, quando a casa dá cashback
+ *
+ * O cadastro precisa ser oferecido AQUI, no instante em que a pessoa se
+ * identifica para pedir. Foi o erro da primeira versão: a conta existia numa
+ * página à parte, atrás de um botão discreto no cabeçalho, e quem senta, se
+ * identifica e pede nunca esbarrava nela. Uma oferta que só aparece para quem
+ * já foi procurá-la não é uma oferta.
+ *
+ * Visitante continua sendo o padrão e a primeira aba: quem só quer comer não
+ * deveria ter de decidir nada.
  */
 interface Props {
   open: boolean;
@@ -22,6 +34,9 @@ interface Props {
   requirePhone: boolean;
   enviando: boolean;
   erro: string | null;
+  /** 0 esconde o cadastro por completo: não há o que oferecer. */
+  cashbackPct: number;
+  shortCode: string;
   onConfirm: (dados: { nome: string; telefone?: string; consentimento: boolean }) => void;
 }
 
@@ -32,8 +47,11 @@ export function IdentifySheet({
   requirePhone,
   enviando,
   erro,
+  cashbackPct,
+  shortCode,
   onConfirm,
 }: Props) {
+  const [modo, setModo] = useState<'visitante' | 'conta'>('visitante');
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [consentimento, setConsentimento] = useState(false);
@@ -72,6 +90,29 @@ export function IdentifySheet({
             O garçom precisa saber de quem é o pedido.
           </p>
 
+          {/* A ESCOLHA, e só quando há o que escolher. Com cashback em zero as
+              abas somem inteiras e a tela volta a ser o que sempre foi. */}
+          {cashbackPct > 0 && (
+            <div className="mt-4 flex gap-2" role="tablist">
+              {(['visitante', 'conta'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="tab"
+                  aria-selected={modo === m}
+                  onClick={() => setModo(m)}
+                  className={`h-10 flex-1 rounded-lg px-2 text-[13px] font-semibold ${
+                    modo === m ? 'bg-primary text-primary-foreground' : 'bg-secondary'
+                  }`}
+                >
+                  {m === 'visitante' ? 'Só pedir' : `Entrar e ganhar ${formatPct(cashbackPct)}`}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {modo === 'visitante' && (
+          <>
           <label htmlFor="nome" className="mt-5 block text-sm font-medium">
             Seu nome
           </label>
@@ -145,8 +186,189 @@ export function IdentifySheet({
           <p className="mt-3 text-center text-[12px] text-muted-foreground">
             Sem cadastro, sem senha. Só o nome.
           </p>
+          </>
+          )}
+
+          {modo === 'conta' && (
+            <ComConta
+              shortCode={shortCode}
+              restaurantName={restaurantName}
+              cashbackPct={cashbackPct}
+              enviando={enviando}
+              erroDoPedido={erro}
+              onPronto={(nomeDaConta) =>
+                onConfirm({ nome: nomeDaConta, consentimento: false })
+              }
+            />
+          )}
         </form>
       </SheetContent>
     </Sheet>
   );
+}
+
+/**
+ * O caminho da conta, dentro da folha de identificação.
+ *
+ * Entra ou cria, e só então dispara o pedido. O nome que vai para a cozinha é o
+ * da conta — perguntar de novo seria pedir duas vezes a mesma coisa.
+ *
+ * O vínculo entre a conta e a mesa NÃO acontece aqui: acontece no servidor,
+ * quando a comanda nasce (`/api/mesa/[short_code]/entrar`). Neste instante ainda
+ * não há mesa aberta, e tentar ligar agora cairia no vazio em silêncio.
+ */
+function ComConta({
+  shortCode,
+  restaurantName,
+  cashbackPct,
+  enviando,
+  erroDoPedido,
+  onPronto,
+}: {
+  shortCode: string;
+  restaurantName: string;
+  cashbackPct: number;
+  enviando: boolean;
+  erroDoPedido: string | null;
+  onPronto: (nome: string) => void;
+}) {
+  const [aba, setAba] = useState<'entrar' | 'criar'>('entrar');
+  const [pendente, iniciar] = useTransition();
+  const [erro, setErro] = useState<string | null>(null);
+  const [cpf, setCpf] = useState('');
+  const [senha, setSenha] = useState('');
+  const [nome, setNome] = useState('');
+
+  const ocupado = pendente || enviando;
+  const podeEnviar =
+    cpf.replace(/\D/g, '').length === 11 &&
+    senha.length >= 8 &&
+    (aba === 'entrar' || nome.trim().length >= 2);
+
+  function enviar() {
+    setErro(null);
+    const fd = new FormData();
+    fd.set('cpf', cpf);
+    fd.set('senha', senha);
+    if (aba === 'criar') fd.set('nome', nome.trim());
+
+    iniciar(async () => {
+      const r = aba === 'criar'
+        ? await criarConta(shortCode, fd)
+        : await entrarNaConta(shortCode, fd);
+
+      if (!r.ok) {
+        setErro(r.erro ?? 'Não deu certo');
+        return;
+      }
+      // Entrou. Agora o pedido segue, e o servidor liga a conta à mesa que
+      // acabou de nascer.
+      onPronto(aba === 'criar' ? nome.trim() : (r.nome ?? 'Cliente'));
+    });
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex gap-2">
+        {(['entrar', 'criar'] as const).map((a) => (
+          <button
+            key={a}
+            type="button"
+            onClick={() => { setAba(a); setErro(null); }}
+            className={`h-9 flex-1 rounded-lg text-[13px] font-semibold ${
+              aba === a ? 'bg-secondary text-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            {a === 'entrar' ? 'Já tenho conta' : 'Criar agora'}
+          </button>
+        ))}
+      </div>
+
+      <p className="mt-3 rounded-lg bg-secondary/60 px-3 py-2 text-[12px] leading-snug text-muted-foreground">
+        {formatPct(cashbackPct)} do que você consumir vira saldo em{' '}
+        {restaurantName}. Libera em 24 h e vale nas próximas visitas.
+      </p>
+
+      {aba === 'criar' && (
+        <>
+          <label htmlFor="conta-nome" className="mt-4 block text-sm font-medium">
+            Seu nome
+          </label>
+          <input
+            id="conta-nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            maxLength={60}
+            autoComplete="name"
+            className={CAMPO}
+          />
+        </>
+      )}
+
+      <label htmlFor="conta-cpf" className="mt-4 block text-sm font-medium">
+        CPF
+      </label>
+      <input
+        id="conta-cpf"
+        value={cpf}
+        onChange={(e) => setCpf(e.target.value)}
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={14}
+        placeholder="000.000.000-00"
+        className={CAMPO}
+      />
+
+      <label htmlFor="conta-senha" className="mt-4 block text-sm font-medium">
+        Senha
+      </label>
+      <input
+        id="conta-senha"
+        value={senha}
+        onChange={(e) => setSenha(e.target.value)}
+        type="password"
+        minLength={8}
+        autoComplete={aba === 'criar' ? 'new-password' : 'current-password'}
+        className={CAMPO}
+      />
+      {aba === 'criar' && (
+        <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+          Pelo menos 8 caracteres. Guarde bem: ainda não há recuperação de senha.
+        </span>
+      )}
+
+      {(erro || erroDoPedido) && (
+        <p role="alert" className="mt-4 text-[13px] text-destructive">
+          {erro ?? erroDoPedido}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={enviar}
+        disabled={!podeEnviar || ocupado}
+        className="mt-5 h-12 w-full rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground disabled:opacity-40"
+      >
+        {ocupado
+          ? 'Um momento…'
+          : aba === 'criar'
+            ? 'Criar conta e enviar pedido'
+            : 'Entrar e enviar pedido'}
+      </button>
+
+      <p className="mt-3 text-center text-[12px] text-muted-foreground">
+        Não quer conta?{' '}
+        <span className="text-foreground">Volte em “Só pedir”</span> — dá para
+        pedir sem nada disso.
+      </p>
+    </div>
+  );
+}
+
+const CAMPO =
+  'mt-1.5 h-12 w-full rounded-lg border border-input bg-transparent px-3 text-[16px] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
+
+/** "8%" e não "8,00%" — percentual inteiro é o caso normal. */
+function formatPct(v: number): string {
+  return `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
 }

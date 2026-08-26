@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { mapOrderError } from '@/lib/orders/errors';
 import { issueTableSession, readOrCreateDeviceHash } from '@/lib/session/cookie';
+import { lerContaDoCliente } from '@/lib/session/cliente';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
@@ -96,6 +97,25 @@ export async function POST(
     restaurantId: sessao.restaurant_id,
     tableId: sessao.table_id,
   });
+
+  // A CONTA DO CLIENTE É LIGADA AQUI, e só aqui.
+  //
+  // É o único instante em que a comanda existe e o convidado acabou de nascer.
+  // Tentar ligar antes — na hora de entrar na conta — não funciona: naquele
+  // momento ainda não há mesa aberta, e o vínculo cairia no vazio em silêncio.
+  //
+  // Os DOIS lados vêm de cookie assinado: a mesa do `issueTableSession` acima, e
+  // o cliente de `lerContaDoCliente`, que ainda confere se o cookie é desta
+  // casa. Nada disso vem do corpo da requisição (§10.4).
+  //
+  // Sem conta, nada acontece — o visitante segue sendo o caminho padrão.
+  const conta = await lerContaDoCliente(sessao.restaurant_id);
+  if (conta) {
+    await admin
+      .from('session_guests')
+      .update({ customer_id: conta.clienteId })
+      .eq('id', sessao.guest_id);
+  }
 
   // Devolve o MÍNIMO. session_id não sai daqui: ele vive no cookie assinado, e
   // o cliente não tem o que fazer com ele.

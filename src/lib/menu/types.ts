@@ -76,6 +76,8 @@ export interface MenuRestaurant {
   logoUrl: string | null;
   brandColor: string;
   requirePhone: boolean;
+  /** 0 = a casa não dá cashback, e a oferta some do fluxo de pedido. */
+  cashbackPct: number;
 }
 
 export interface MenuTable {

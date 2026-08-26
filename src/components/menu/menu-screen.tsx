@@ -374,6 +374,8 @@ export function MenuScreen({ menu, shortCode }: Props) {
         open={identifyOpen}
         onOpenChange={setIdentifyOpen}
         restaurantName={menu.restaurant.name}
+        cashbackPct={menu.restaurant.cashbackPct}
+        shortCode={shortCode}
         requirePhone={menu.restaurant.requirePhone}
         enviando={enviando}
         erro={erro}
