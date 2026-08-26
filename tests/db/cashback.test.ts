@@ -655,3 +655,64 @@ describe('a faxina não derruba a demonstração (0042)', () => {
     });
   });
 });
+
+// ===========================================================================
+describe('o telefone na hora do pedido', () => {
+  it('a casa que exige telefone recusa a mesa sem ele — venha de onde vier', async () => {
+    // A aba da conta, na primeira versão, pedia só CPF, nome e senha. Quem
+    // entrasse por ali abriria a comanda sem telefone, e a exigência da casa
+    // seria contornada pela tela.
+    //
+    // Não era buraco de segurança: o servidor recusa, e este teste é o que
+    // garante que ele continue recusando. A tela agora pede o campo antes, para
+    // a pessoa não levar um erro de banco na cara.
+    await comoPostgres(async (c) => {
+      await c.query(
+        `update public.restaurants set require_phone = true where id = $1`, [RESTAURANTE],
+      );
+      const { rows: mesa } = await c.query(
+        `select short_code from public.restaurant_tables
+          where restaurant_id = $1 and id not in (
+            select table_id from public.table_sessions where status = 'open')
+          limit 1`,
+        [RESTAURANTE],
+      );
+
+      await esperaFalhar(
+        c,
+        `select public.open_guest_session($1, 'Sem Telefone', '', 'hash-x', false)`,
+        [mesa[0].short_code],
+        /pede telefone/i,
+      );
+    });
+  });
+
+  it('e o telefone só é guardado com consentimento', async () => {
+    // Mesma regra nos dois caminhos: ter conta não é base legal para guardar
+    // telefone de ninguém. Sem consentir, o número é descartado no servidor.
+    await comoPostgres(async (c) => {
+      await c.query(
+        `update public.restaurants set require_phone = false where id = $1`, [RESTAURANTE],
+      );
+      const { rows: mesa } = await c.query(
+        `select short_code from public.restaurant_tables
+          where restaurant_id = $1 and id not in (
+            select table_id from public.table_sessions where status = 'open')
+          limit 1`,
+        [RESTAURANTE],
+      );
+
+      const { rows } = await c.query(
+        `select public.open_guest_session($1, 'Sem Consentir', '31988887777', 'h', false) as r`,
+        [mesa[0].short_code],
+      );
+
+      const { rows: g } = await c.query(
+        `select phone, lgpd_consent_at from public.session_guests where id = $1`,
+        [rows[0].r.guest_id],
+      );
+      expect(g[0].phone).toBeNull();
+      expect(g[0].lgpd_consent_at).toBeNull();
+    });
+  });
+});

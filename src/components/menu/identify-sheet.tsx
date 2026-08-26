@@ -194,11 +194,10 @@ export function IdentifySheet({
               shortCode={shortCode}
               restaurantName={restaurantName}
               cashbackPct={cashbackPct}
+              requirePhone={requirePhone}
               enviando={enviando}
               erroDoPedido={erro}
-              onPronto={(nomeDaConta) =>
-                onConfirm({ nome: nomeDaConta, consentimento: false })
-              }
+              onPronto={onConfirm}
             />
           )}
         </form>
@@ -221,6 +220,7 @@ function ComConta({
   shortCode,
   restaurantName,
   cashbackPct,
+  requirePhone,
   enviando,
   erroDoPedido,
   onPronto,
@@ -228,9 +228,10 @@ function ComConta({
   shortCode: string;
   restaurantName: string;
   cashbackPct: number;
+  requirePhone: boolean;
   enviando: boolean;
   erroDoPedido: string | null;
-  onPronto: (nome: string) => void;
+  onPronto: (dados: { nome: string; telefone?: string; consentimento: boolean }) => void;
 }) {
   const [aba, setAba] = useState<'entrar' | 'criar'>('entrar');
   const [pendente, iniciar] = useTransition();
@@ -238,19 +239,34 @@ function ComConta({
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [nome, setNome] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [email, setEmail] = useState('');
+  const [consentimento, setConsentimento] = useState(false);
+
+  const telefoneLimpo = telefone.replace(/\D/g, '');
+  const telefoneValido = telefoneLimpo.length === 0 || telefoneLimpo.length >= 10;
 
   const ocupado = pendente || enviando;
   const podeEnviar =
     cpf.replace(/\D/g, '').length === 11 &&
     senha.length >= 8 &&
-    (aba === 'entrar' || nome.trim().length >= 2);
+    (aba === 'entrar' || nome.trim().length >= 2) &&
+    telefoneValido &&
+    (!requirePhone || telefoneLimpo.length >= 10) &&
+    // Telefone só sai daqui com consentimento marcado — a mesma regra da aba do
+    // visitante. Ter conta não é base legal para guardar telefone; consentir é.
+    (telefoneLimpo.length === 0 || consentimento);
 
   function enviar() {
     setErro(null);
     const fd = new FormData();
     fd.set('cpf', cpf);
     fd.set('senha', senha);
-    if (aba === 'criar') fd.set('nome', nome.trim());
+    if (aba === 'criar') {
+      fd.set('nome', nome.trim());
+      fd.set('telefone', telefoneLimpo);
+      fd.set('email', email.trim());
+    }
 
     iniciar(async () => {
       const r = aba === 'criar'
@@ -261,9 +277,14 @@ function ComConta({
         setErro(r.erro ?? 'Não deu certo');
         return;
       }
-      // Entrou. Agora o pedido segue, e o servidor liga a conta à mesa que
-      // acabou de nascer.
-      onPronto(aba === 'criar' ? nome.trim() : (r.nome ?? 'Cliente'));
+      // Entrou. O pedido segue, e o servidor liga a conta à mesa que acabou de
+      // nascer. O telefone vai junto para a COMANDA — é outro registro que não
+      // o da conta, e é o que o garçom usa se precisar ligar.
+      onPronto({
+        nome: aba === 'criar' ? nome.trim() : (r.nome ?? 'Cliente'),
+        telefone: telefoneLimpo || undefined,
+        consentimento,
+      });
     });
   }
 
@@ -318,6 +339,75 @@ function ComConta({
         placeholder="000.000.000-00"
         className={CAMPO}
       />
+
+      {/*
+        TELEFONE, e ele estava faltando aqui.
+        
+        A primeira versão desta aba pedia só CPF, nome e senha — e com isso
+        furava duas coisas: o `require_phone` da casa era ignorado por quem
+        entrasse por aqui, e a comanda nascia sem telefone nenhum, que é o que o
+        garçom usa quando precisa ligar.
+        
+        O consentimento é o MESMO da aba do visitante, e não uma regra mais
+        frouxa: ter conta não é base legal para guardar telefone de ninguém.
+      */}
+      <label htmlFor="conta-tel" className="mt-4 block text-sm font-medium">
+        Telefone{' '}
+        <span className="font-normal text-muted-foreground">
+          {requirePhone ? '(obrigatório aqui)' : '(opcional)'}
+        </span>
+      </label>
+      <input
+        id="conta-tel"
+        value={telefone}
+        onChange={(e) => setTelefone(e.target.value)}
+        type="tel"
+        inputMode="tel"
+        maxLength={24}
+        autoComplete="tel"
+        placeholder="(11) 90000-0000"
+        className={CAMPO}
+      />
+
+      {telefoneLimpo.length > 0 && (
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={consentimento}
+            onChange={(e) => setConsentimento(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span className="text-[13px] leading-snug text-muted-foreground">
+            Autorizo {restaurantName} a guardar meu telefone para contato sobre
+            este pedido.{' '}
+            <a
+              href="/privacidade"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2"
+            >
+              Como usamos seus dados
+            </a>
+          </span>
+        </label>
+      )}
+
+      {aba === 'criar' && (
+        <>
+          <label htmlFor="conta-email" className="mt-4 block text-sm font-medium">
+            E-mail <span className="font-normal text-muted-foreground">(opcional)</span>
+          </label>
+          <input
+            id="conta-email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            className={CAMPO}
+          />
+        </>
+      )}
 
       <label htmlFor="conta-senha" className="mt-4 block text-sm font-medium">
         Senha
