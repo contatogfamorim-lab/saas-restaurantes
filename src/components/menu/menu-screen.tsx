@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ReceiptTextIcon } from 'lucide-react';
+import { ReceiptTextIcon, WalletIcon } from 'lucide-react';
 
 import { brandStyle } from '@/lib/brand';
 import { addLine, setLineQty } from '@/lib/menu/cart';
@@ -210,16 +210,30 @@ export function MenuScreen({ menu, shortCode }: Props) {
           </h1>
         </div>
 
-        {temPedidoEmAndamento && (
-          <button
-            type="button"
-            onClick={() => setTrackerOpen(true)}
-            className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full border border-input px-3 py-1.5 text-[12px] font-medium active:bg-accent"
+        <div className="mt-1 flex shrink-0 items-center gap-2">
+          {temPedidoEmAndamento && (
+            <button
+              type="button"
+              onClick={() => setTrackerOpen(true)}
+              className="flex items-center gap-1.5 rounded-full border border-input px-3 py-1.5 text-[12px] font-medium active:bg-accent"
+            >
+              <ReceiptTextIcon className="size-3.5" />
+              Meu pedido
+            </button>
+          )}
+
+          {/* A porta da conta. Aparece SEMPRE que a casa dá cashback, mesmo para
+              quem não tem conta — é lá dentro que a oferta é explicada. Escondê-la
+              de quem ainda não se cadastrou seria escondê-la de todo mundo que
+              importa. */}
+          <a
+            href={`/m/${shortCode}/conta`}
+            className="flex items-center gap-1.5 rounded-full border border-input px-3 py-1.5 text-[12px] font-medium active:bg-accent"
           >
-            <ReceiptTextIcon className="size-3.5" />
-            Meu pedido
-          </button>
-        )}
+            <WalletIcon className="size-3.5" />
+            Minha conta
+          </a>
+        </div>
       </header>
 
       {status.encerrada && (

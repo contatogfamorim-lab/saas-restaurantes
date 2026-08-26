@@ -165,6 +165,145 @@ export type Database = {
           },
         ]
       }
+      customer_cashback_ledger: {
+        Row: {
+          amount_cents: number
+          available_at: string
+          base_cents: number | null
+          created_at: string
+          customer_id: string
+          id: string
+          kind: Database["public"]["Enums"]["cashback_kind"]
+          pct: number | null
+          restaurant_id: string
+          session_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          available_at?: string
+          base_cents?: number | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          kind: Database["public"]["Enums"]["cashback_kind"]
+          pct?: number | null
+          restaurant_id: string
+          session_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          available_at?: string
+          base_cents?: number | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["cashback_kind"]
+          pct?: number | null
+          restaurant_id?: string
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_cashback_ledger_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_cashback_ledger_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_cashback_ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "open_bills"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "customer_cashback_ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ready_pass"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "customer_cashback_ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "session_totals"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "customer_cashback_ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "table_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_cashback_ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "table_status"
+            referencedColumns: ["session_id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          cpf: string
+          cpf_mask: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          password_hash: string
+          phone: string | null
+          phone_mask: string | null
+          restaurant_id: string
+          updated_at: string
+        }
+        Insert: {
+          cpf: string
+          cpf_mask?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          password_hash: string
+          phone?: string | null
+          phone_mask?: string | null
+          restaurant_id: string
+          updated_at?: string
+        }
+        Update: {
+          cpf?: string
+          cpf_mask?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          password_hash?: string
+          phone?: string | null
+          phone_mask?: string | null
+          restaurant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_blocks: {
         Row: {
           config: Json
@@ -1313,6 +1452,7 @@ export type Database = {
           active: boolean
           brand_color: string
           briefing_at: string | null
+          cashback_pct: number
           created_at: string
           currency: string
           expires_at: string | null
@@ -1330,6 +1470,7 @@ export type Database = {
           active?: boolean
           brand_color?: string
           briefing_at?: string | null
+          cashback_pct?: number
           created_at?: string
           currency?: string
           expires_at?: string | null
@@ -1347,6 +1488,7 @@ export type Database = {
           active?: boolean
           brand_color?: string
           briefing_at?: string | null
+          cashback_pct?: number
           created_at?: string
           currency?: string
           expires_at?: string | null
@@ -1366,7 +1508,7 @@ export type Database = {
         Row: {
           amount_cents: number
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           percent: number | null
           reason: string
@@ -1378,7 +1520,7 @@ export type Database = {
         Insert: {
           amount_cents?: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           id?: string
           percent?: number | null
           reason: string
@@ -1390,7 +1532,7 @@ export type Database = {
         Update: {
           amount_cents?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           percent?: number | null
           reason?: string
@@ -1440,6 +1582,7 @@ export type Database = {
       session_guests: {
         Row: {
           created_at: string
+          customer_id: string | null
           device_hash: string | null
           display_name: string
           id: string
@@ -1453,6 +1596,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_id?: string | null
           device_hash?: string | null
           display_name: string
           id?: string
@@ -1466,6 +1610,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_id?: string | null
           device_hash?: string | null
           display_name?: string
           id?: string
@@ -1478,6 +1623,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "session_guests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "session_guests_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -2141,6 +2293,7 @@ export type Database = {
       session_totals: {
         Row: {
           balance_cents: number | null
+          cashback_cents: number | null
           discount_cents: number | null
           paid_cents: number | null
           pending_cents: number | null
@@ -2246,6 +2399,21 @@ export type Database = {
         Args: { p_arquivar?: boolean; p_product_id: string }
         Returns: undefined
       }
+      autenticar_cliente: {
+        Args: { p_cpf: string; p_restaurante: string; p_senha: string }
+        Returns: string
+      }
+      cadastrar_cliente: {
+        Args: {
+          p_cpf: string
+          p_email?: string
+          p_nome: string
+          p_restaurante: string
+          p_senha: string
+          p_telefone?: string
+        }
+        Returns: string
+      }
       create_guest_order: {
         Args: {
           p_guest_id: string
@@ -2266,6 +2434,10 @@ export type Database = {
       create_tables: {
         Args: { p_area?: string; p_prefixo?: string; p_quantidade: number }
         Returns: number
+      }
+      desfazer_resgate: {
+        Args: { p_cliente: string; p_sessao: string }
+        Returns: Json
       }
       ensure_draft_layout: { Args: never; Returns: string }
       gerar_demonstracao: { Args: never; Returns: Json }
@@ -2322,12 +2494,28 @@ export type Database = {
         }
         Returns: Json
       }
+      resgatar_cashback: {
+        Args: { p_cliente: string; p_sessao: string }
+        Returns: Json
+      }
       resolve_waiter_call: { Args: { p_call_id: string }; Returns: undefined }
       reveal_guest_phone: { Args: { p_guest_id: string }; Returns: string }
       revert_menu_layout: { Args: { p_version: number }; Returns: Json }
+      saldo_disponivel_do_cliente: {
+        Args: { p_cliente: string }
+        Returns: number
+      }
+      saldo_em_carencia_do_cliente: {
+        Args: { p_cliente: string }
+        Returns: number
+      }
       set_menu_permissions: {
         Args: { p_permissions: string[]; p_profile_id: string }
         Returns: undefined
+      }
+      teto_de_resgate_do_cliente: {
+        Args: { p_cliente: string; p_sessao: string }
+        Returns: number
       }
       unaccent_simples: { Args: { p_texto: string }; Returns: string }
       waive_service_fee: {
@@ -2336,8 +2524,9 @@ export type Database = {
       }
     }
     Enums: {
-      adjustment_type: "discount" | "service_fee_waiver"
+      adjustment_type: "discount" | "service_fee_waiver" | "cashback"
       audit_actor_type: "staff" | "guest" | "system"
+      cashback_kind: "credito" | "resgate"
       diet_tag:
         | "vegetariano"
         | "vegano"
@@ -2518,8 +2707,9 @@ export const Constants = {
   },
   public: {
     Enums: {
-      adjustment_type: ["discount", "service_fee_waiver"],
+      adjustment_type: ["discount", "service_fee_waiver", "cashback"],
       audit_actor_type: ["staff", "guest", "system"],
+      cashback_kind: ["credito", "resgate"],
       diet_tag: [
         "vegetariano",
         "vegano",

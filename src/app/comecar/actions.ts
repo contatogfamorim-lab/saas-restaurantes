@@ -151,6 +151,10 @@ const briefing = z.object({
   taxaServico: z.coerce.number().min(0).max(30),
   pedirTelefone: z.coerce.boolean(),
   gerarDemo: z.coerce.boolean(),
+  // Percentual devolvido ao cliente cadastrado. 0 = sem cashback, e é o padrão.
+  // O teto de 20 é reapertado dentro de `aplicar_briefing` — este é só a
+  // mensagem legível (§10.3).
+  cashback: z.coerce.number().min(0).max(20),
 });
 
 export interface ResultadoBriefing extends ResultadoOnboarding {
@@ -183,6 +187,7 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
     taxaServico: formData.get('taxaServico'),
     pedirTelefone: formData.get('pedirTelefone') === 'on',
     gerarDemo: formData.get('gerarDemo') === 'on',
+    cashback: formData.get('cashback') ?? 0,
   });
 
   if (!parsed.success) {
@@ -208,6 +213,7 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
       mesas: parsed.data.mesas,
       taxa_servico: parsed.data.taxaServico,
       pedir_telefone: parsed.data.pedirTelefone,
+      cashback: parsed.data.cashback,
     },
   });
 

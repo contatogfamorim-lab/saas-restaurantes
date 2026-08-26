@@ -414,6 +414,38 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
         <input name="cidade" maxLength={80} className={CAMPO} />
       </label>
 
+      {/*
+        CASHBACK, e o padrão é ZERO.
+        
+        Ligado por omissão seria o sistema decidindo, pela casa, devolver
+        dinheiro a cada conta fechada — que é a decisão comercial mais cara que
+        esta tela toca. Quem quiser, digita.
+      */}
+      <label className="block">
+        <span className="text-[12px] font-semibold text-muted-foreground">
+          Cashback para clientes cadastrados
+        </span>
+        <div className="relative">
+          <input
+            name="cashback"
+            type="number"
+            min={0}
+            max={20}
+            step={0.5}
+            defaultValue={0}
+            className={cn(CAMPO, 'tabular pr-8')}
+          />
+          <span className="pointer-events-none absolute right-3 bottom-3.5 text-[13px] text-muted-foreground">
+            %
+          </span>
+        </div>
+        <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+          <strong>0 desliga o recurso.</strong> Acima de zero, quem se cadastrar
+          com CPF ganha essa fatia do que consumiu, liberada em 24 h. No resgate,
+          o abatimento vai até 30% da conta.
+        </span>
+      </label>
+
       <label className="block">
         <span className="text-[12px] font-semibold text-muted-foreground">Fuso horário</span>
         <select name="timezone" defaultValue="America/Sao_Paulo" className={CAMPO}>

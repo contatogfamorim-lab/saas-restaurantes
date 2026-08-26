@@ -192,6 +192,28 @@ O estado que sobra é o desejado: `getStaff()` devolve nulo e `/comecar` põe a
 pessoa no passo "criar restaurante". Se alguém reclamar que "o restaurante
 sumiu mas o login funciona", é este o comportamento.
 
+### Um cliente diz que o saldo está errado
+
+Saldo é **soma de extrato**, nunca um número guardado. Dá para reconstruir:
+
+```sql
+select kind, amount_cents, available_at, base_cents, pct, created_at
+  from customer_cashback_ledger
+ where customer_id = '...' order by created_at;
+```
+
+As regras, para conferir à mão:
+
+- crédito = `piso(subtotal − desconto − resgate) × cashback_pct / 100`, **sem** a
+  taxa de serviço, que é da equipe e não receita da casa;
+- o crédito só entra no saldo **24 h** depois — antes disso aparece em
+  `app.saldo_em_carencia`;
+- o resgate nunca passa de **30% da conta**, e por isso o saldo inteiro só é
+  gasto numa conta 3,333× maior que ele;
+- **um crédito por comanda**, garantido por índice único.
+
+O percentual é `restaurants.cashback_pct`; zero desliga o recurso inteiro.
+
 ### O QR de uma mesa parou de funcionar
 
 O `short_code` é aleatório de 10 caracteres e **não muda** quando a mesa é

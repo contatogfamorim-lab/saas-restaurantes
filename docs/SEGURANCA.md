@@ -29,6 +29,9 @@ executá-la não verifica nada.
 | 10 | **Porta fechada continua fechada.** Cada tela recusa quem não é dela. | `pnpm check:routes` | Login real e requisição real: garçom leva 403 em gestão, clientes, auditoria e editor de cardápio |
 | 11 | **Força bruta freada.** | `pnpm check:forca-bruta` | Doze chutes pelo formulário real: bloqueia a partir do nono, e nem a senha certa passa com o balde cheio |
 | 12 | **CSP com nonce nas duas superfícies.** | `pnpm check:csp` | Nonce presente, `unsafe-inline`/`unsafe-eval` ausentes, nonce diferente a cada requisição |
+| 13 | **Saldo do cliente não vem do navegador.** O celular manda "quero usar"; o valor é do banco. | `tests/db/cashback.test.ts` | Teto de 30% conferido no centavo; chamada repetida recalcula em vez de somar |
+| 14 | **Cookie válido não gasta saldo em mesa alheia.** | `tests/db/cashback.test.ts` | `resgatar_cashback` exige que o cliente esteja SENTADO naquela sessão |
+| 15 | **CPF e senha do cliente não saem por GRANT nenhum.** | `tests/db/cashback.test.ts` | Colunas cruas fora do GRANT, como o telefone desde a 0009; `anon` sem acesso à tabela |
 
 ---
 
@@ -58,6 +61,8 @@ Achados encontrados por sabotagem, não por revisão:
 | O cardápio do cliente — a página mais exposta — sem CSP | Incluí-la no `check:csp` e ver o `✗` |
 | A limpeza da demonstração **não funcionava** e derrubava a geração seguinte | Um teste novo esbarrando na imutabilidade do `audit_log` |
 | A demonstração ocupava a mesa 10 no lugar da 4 (`order by label` é alfabético) | Abrir o mapa do salão e contar |
+| **Todo pagamento que quitasse uma conta falharia**: `register_payment` roda com o papel do caixa, e eu revoguei dele a função de crédito | Os testes de caixa que já existiam |
+| A tela do cliente dizia "nada por aqui ainda" com o saldo certo ao lado — faltava GRANT e a consulta era negada em silêncio | Abrir a tela e comparar com o banco |
 | **Laço infinito entre `/app` e `/app/entrar`** para quem confirmava o e-mail e logava: tela preta, sem erro | O usuário abriu o sistema e mandou a captura |
 
 ### O laço, por extenso
