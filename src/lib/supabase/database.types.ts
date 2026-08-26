@@ -2399,6 +2399,7 @@ export type Database = {
         Args: { p_arquivar?: boolean; p_product_id: string }
         Returns: undefined
       }
+      atualizar_configuracoes: { Args: { p_valores: Json }; Returns: Json }
       autenticar_cliente: {
         Args: { p_cpf: string; p_restaurante: string; p_senha: string }
         Returns: string

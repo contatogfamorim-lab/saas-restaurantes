@@ -22,6 +22,7 @@ const DATABASE_URL =
 
 const RESTAURANTE = '11111111-1111-4111-8111-111111111111';
 const DONO = 'aaaaaaaa-0000-4000-8000-000000000001';
+const GARCOM_A = 'aaaaaaaa-0000-4000-8000-000000000002';
 
 let pool: Pool;
 
@@ -519,6 +520,103 @@ describe('as portas fechadas', () => {
         [RESTAURANTE, sessao],
         /ajuste_da_equipe_tem_responsavel/i,
       );
+    });
+  });
+});
+
+// ===========================================================================
+describe('configurações da casa (0041)', () => {
+  it('o dono liga e desliga o cashback, e fica registrado', async () => {
+    await como(DONO, async (c) => {
+      await c.query(`update public.restaurants set cashback_pct = 0 where id = $1`, [RESTAURANTE]);
+
+      await c.query(`select public.atualizar_configuracoes('{"cashback": 7.5}'::jsonb)`);
+      expect((await c.query(
+        `select cashback_pct::float8 as v from public.restaurants where id = $1`, [RESTAURANTE],
+      )).rows[0].v).toBe(7.5);
+
+      // A auditoria guarda o antes E o depois — é o que responde "quem mudou a
+      // taxa?" no dia em que alguém perguntar.
+      const { rows } = await c.query(
+        `select before, after from public.audit_log
+          where restaurant_id = $1 and action = 'restaurant.settings_changed'
+          order by created_at desc limit 1`,
+        [RESTAURANTE],
+      );
+      expect(Number(rows[0].before.cashback)).toBe(0);
+      expect(Number(rows[0].after.cashback)).toBe(7.5);
+
+      await c.query(`select public.atualizar_configuracoes('{"cashback": 0}'::jsonb)`);
+      expect((await c.query(
+        `select cashback_pct::float8 as v from public.restaurants where id = $1`, [RESTAURANTE],
+      )).rows[0].v).toBe(0);
+    });
+  });
+
+  it('desligar o cashback NÃO apaga o saldo já acumulado', async () => {
+    // A tela promete isso com todas as letras. Se o saldo sumisse, a casa
+    // estaria confiscando dinheiro que já tinha prometido.
+    await comoPostgres(async (c) => {
+      const cli = await novoCliente(c, '12345678909');
+      await comSaldo(c, cli, 3000);
+      await c.query(`update public.restaurants set cashback_pct = 0 where id = $1`, [RESTAURANTE]);
+      expect((await c.query(`select app.saldo_disponivel($1) as s`, [cli])).rows[0].s).toBe(3000);
+    });
+  });
+
+  it('campo ausente é campo NÃO alterado', async () => {
+    // A tela pode mandar só o que mexeu. Uma tela futura que esqueça um campo
+    // não pode zerá-lo por omissão.
+    await como(DONO, async (c) => {
+      await c.query(`select public.atualizar_configuracoes(
+        '{"cashback": 9, "taxa_servico": 12}'::jsonb)`);
+      await c.query(`select public.atualizar_configuracoes('{"nome": "Outro Nome"}'::jsonb)`);
+
+      const { rows } = await c.query(
+        `select name, cashback_pct::float8 as cb, service_fee_pct::float8 as taxa
+           from public.restaurants where id = $1`, [RESTAURANTE],
+      );
+      expect(rows[0].name).toBe('Outro Nome');
+      expect(rows[0].cb).toBe(9);
+      expect(rows[0].taxa).toBe(12);
+    });
+  });
+
+  it('os tetos são apertados no servidor: 200% vira 20%', async () => {
+    await como(DONO, async (c) => {
+      await c.query(`select public.atualizar_configuracoes(
+        '{"cashback": 200, "taxa_servico": 900}'::jsonb)`);
+      const { rows } = await c.query(
+        `select cashback_pct::float8 as cb, service_fee_pct::float8 as taxa
+           from public.restaurants where id = $1`, [RESTAURANTE],
+      );
+      expect(rows[0].cb).toBe(20);
+      expect(rows[0].taxa).toBe(30);
+    });
+  });
+
+  it('quem não administra não muda configuração nenhuma', async () => {
+    await como(GARCOM_A, async (c) => {
+      await esperaFalhar(
+        c,
+        `select public.atualizar_configuracoes('{"cashback": 20}'::jsonb)`,
+        [],
+        /administra muda as configurações/i,
+      );
+    });
+  });
+
+  it('cor inválida é ignorada, e não quebra a casca das telas', async () => {
+    await como(DONO, async (c) => {
+      const antes = (await c.query(
+        `select brand_color from public.restaurants where id = $1`, [RESTAURANTE],
+      )).rows[0].brand_color;
+
+      await c.query(`select public.atualizar_configuracoes('{"cor": "laranja"}'::jsonb)`);
+
+      expect((await c.query(
+        `select brand_color from public.restaurants where id = $1`, [RESTAURANTE],
+      )).rows[0].brand_color).toBe(antes);
     });
   });
 });

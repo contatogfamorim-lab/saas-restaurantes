@@ -7,7 +7,7 @@ import {
   ClipboardListIcon,
   FlameIcon,
   QrCodeIcon,
-  ScrollTextIcon,
+  ScrollTextIcon, SettingsIcon,
   TagIcon,
   UsersIcon,
   UtensilsCrossedIcon,
@@ -36,6 +36,7 @@ const SECOES = [
   { href: '/app/gestao/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/app/gestao/clientes', rotulo: 'Clientes', icone: ClipboardListIcon },
   { href: '/app/gestao/auditoria', rotulo: 'Auditoria', icone: ScrollTextIcon },
+  { href: '/app/gestao/configuracoes', rotulo: 'Configurações', icone: SettingsIcon },
 ] as const;
 
 export function ConsoleNav() {

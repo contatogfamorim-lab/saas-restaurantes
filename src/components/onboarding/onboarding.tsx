@@ -314,6 +314,7 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
   const [pendente, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [demo, setDemo] = useState(false);
+  const [cashback, setCashback] = useState(false);
   const [pronto, setPronto] = useState<{
     produtos: number;
     mesas: number;
@@ -414,38 +415,6 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
         <input name="cidade" maxLength={80} className={CAMPO} />
       </label>
 
-      {/*
-        CASHBACK, e o padrão é ZERO.
-        
-        Ligado por omissão seria o sistema decidindo, pela casa, devolver
-        dinheiro a cada conta fechada — que é a decisão comercial mais cara que
-        esta tela toca. Quem quiser, digita.
-      */}
-      <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">
-          Cashback para clientes cadastrados
-        </span>
-        <div className="relative">
-          <input
-            name="cashback"
-            type="number"
-            min={0}
-            max={20}
-            step={0.5}
-            defaultValue={0}
-            className={cn(CAMPO, 'tabular pr-8')}
-          />
-          <span className="pointer-events-none absolute right-3 bottom-3.5 text-[13px] text-muted-foreground">
-            %
-          </span>
-        </div>
-        <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
-          <strong>0 desliga o recurso.</strong> Acima de zero, quem se cadastrar
-          com CPF ganha essa fatia do que consumiu, liberada em 24 h. No resgate,
-          o abatimento vai até 30% da conta.
-        </span>
-      </label>
-
       <label className="block">
         <span className="text-[12px] font-semibold text-muted-foreground">Fuso horário</span>
         <select name="timezone" defaultValue="America/Sao_Paulo" className={CAMPO}>
@@ -459,6 +428,66 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
           É o que decide em que dia cai cada fechamento de caixa.
         </span>
       </label>
+
+      {/*
+        CASHBACK: ligado ou desligado, explicitamente.
+
+        A primeira versão era só um campo numérico com zero por padrão — e "0"
+        numa caixa de número não comunica "desligado", comunica "ainda não
+        digitei". Quem passou pelo cadastro não percebeu que a pergunta existia.
+        Agora a decisão é uma caixa, e o percentual só aparece depois dela.
+      */}
+      <div
+        className={cn(
+          'rounded-md border px-3 py-3 transition-colors',
+          cashback ? 'border-brand bg-brand/5' : 'border-border bg-card',
+        )}
+      >
+        <label className="flex items-start gap-3">
+          <input
+            name="cashbackLigado"
+            type="checkbox"
+            checked={cashback}
+            onChange={(e) => setCashback(e.target.checked)}
+            className="mt-0.5 size-4 accent-[var(--color-brand)]"
+          />
+          <span className="text-[13px] font-semibold leading-snug">
+            Dar cashback a clientes cadastrados
+            <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+              Quem se cadastrar com CPF ganha uma fatia do que consumiu, liberada
+              em 24 h. Dá para ligar depois, em Gestão → Configurações.
+            </span>
+          </span>
+        </label>
+
+        {cashback && (
+          <div className="mt-3 border-t border-border pt-3">
+            <label className="block">
+              <span className="text-[12px] font-semibold text-muted-foreground">
+                Quanto volta para o cliente
+              </span>
+              <div className="relative">
+                <input
+                  name="cashback"
+                  type="number"
+                  min={0.5}
+                  max={20}
+                  step={0.5}
+                  defaultValue={5}
+                  className={cn(CAMPO, 'tabular pr-8')}
+                />
+                <span className="pointer-events-none absolute right-3 bottom-3.5 text-[13px] text-muted-foreground">
+                  %
+                </span>
+              </div>
+              <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                Incide sobre os itens, sem a taxa de serviço. No resgate, o
+                abatimento vai até 30% da conta.
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
 
       <label className="flex items-start gap-3 rounded-md border border-border bg-card px-3 py-3">
         <input

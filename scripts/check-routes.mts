@@ -101,6 +101,13 @@ const CASOS: Caso[] = [
   { caminho: '/app/gestao/equipe', espera: 'pagina', como: 'admin', descricao: 'equipe' },
   { caminho: '/app/gestao/clientes', espera: 'pagina', como: 'admin', descricao: 'clientes' },
   { caminho: '/app/gestao/auditoria', espera: 'pagina', como: 'admin', descricao: 'auditoria' },
+  {
+    caminho: '/app/gestao/configuracoes',
+    espera: 'pagina',
+    como: 'admin',
+    contendo: 'Dar cashback',
+    descricao: 'configurações da casa',
+  },
 
   // --- editor de cardápio (spec §12): porta PRÓPRIA, não é seção da gestão --
   { caminho: '/app/cardapio', espera: 'pagina', como: 'admin', descricao: 'editor de cardápio' },
@@ -122,6 +129,8 @@ const CASOS: Caso[] = [
     contendo: 'Área da gestão', descricao: 'garçom NÃO vê clientes' },
   { caminho: '/app/gestao/auditoria', espera: 'proibido', como: 'garcom',
     contendo: 'Área da gestão', descricao: 'garçom NÃO vê auditoria' },
+  { caminho: '/app/gestao/configuracoes', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO mexe em taxa nem cashback' },
 ];
 
 /**

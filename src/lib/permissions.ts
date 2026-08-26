@@ -49,6 +49,7 @@ export const ACTIONS = [
   'customer.export',
   'staff.manage',
   'audit.view',
+  'restaurant.settings',
   // cardápio (delegáveis)
   ...DELEGATABLE_PERMISSIONS,
 ] as const;
@@ -85,6 +86,8 @@ export const PERMISSION_MATRIX: Readonly<Record<Action, readonly Role[]>> = {
   'customer.export':          ['owner'],
   'staff.manage':             ['owner'],
   'audit.view':               ['manager', 'owner'],
+  // Taxa de serviço e cashback saem do bolso da casa; nem gerente mexe.
+  'restaurant.settings':      ['owner'],
 
   'menu.availability':        ['kitchen', 'waiter', 'manager', 'owner'],
   'menu.content':             ['manager', 'owner'],

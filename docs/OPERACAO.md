@@ -212,7 +212,18 @@ As regras, para conferir à mão:
   gasto numa conta 3,333× maior que ele;
 - **um crédito por comanda**, garantido por índice único.
 
-O percentual é `restaurants.cashback_pct`; zero desliga o recurso inteiro.
+O percentual é `restaurants.cashback_pct`; zero desliga o recurso inteiro. A
+casa liga, desliga e muda em **Gestão → Configurações**, e toda alteração vai
+para o `audit_log` com o antes e o depois:
+
+```sql
+select created_at, actor_id, before, after
+  from audit_log where action = 'restaurant.settings_changed'
+ order by created_at desc;
+```
+
+Desligar **não apaga** saldo já acumulado — o cliente continua podendo gastar o
+que ganhou. Só para de crescer.
 
 ### O QR de uma mesa parou de funcionar
 

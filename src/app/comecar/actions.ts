@@ -187,7 +187,9 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
     taxaServico: formData.get('taxaServico'),
     pedirTelefone: formData.get('pedirTelefone') === 'on',
     gerarDemo: formData.get('gerarDemo') === 'on',
-    cashback: formData.get('cashback') ?? 0,
+    // Caixa desmarcada não vem no FormData, e a ausência É o zero. Ler
+    // `cashback` direto deixaria o campo escondido mandar o valor antigo.
+    cashback: formData.get('cashbackLigado') === 'on' ? (formData.get('cashback') ?? 0) : 0,
   });
 
   if (!parsed.success) {
