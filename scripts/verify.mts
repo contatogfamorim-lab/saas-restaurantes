@@ -32,6 +32,9 @@ interface Passo {
 const PASSOS: Passo[] = [
   { nome: 'tipos', comando: 'pnpm', args: ['typecheck'] },
   { nome: 'lint', comando: 'pnpm', args: ['lint'] },
+  // Estático e instantâneo, então roda cedo: não faz sentido esperar o build
+  // inteiro para descobrir um `<img>` que a CSP vai bloquear em silêncio.
+  { nome: 'imagens dentro da CSP', comando: 'pnpm', args: ['check:imagens'] },
   { nome: 'testes de unidade', comando: 'pnpm', args: ['test'] },
   { nome: 'RLS em todas as tabelas', comando: 'pnpm', args: ['db:check-rls'] },
   { nome: 'testes contra o banco', comando: 'pnpm', args: ['test:db'] },

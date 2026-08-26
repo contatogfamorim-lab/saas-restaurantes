@@ -109,7 +109,7 @@ Na Vercel o standalone é DESLIGADO (`process.env.VERCEL` no
 pnpm verify
 ```
 
-Roda os mesmos onze passos da CI, na mesma ordem, incluindo o servidor de
+Roda os mesmos doze passos da CI, na mesma ordem, incluindo o servidor de
 produção de verdade. Se passar aqui e falhar lá, é diferença de ambiente e vale
 investigar — não repetir.
 

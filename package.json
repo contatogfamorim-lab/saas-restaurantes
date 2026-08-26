@@ -28,6 +28,7 @@
     "check:routes": "node --env-file=.env.local scripts/check-routes.mts",
     "check:realtime": "node --env-file=.env.local scripts/check-realtime.mts",
     "check:forca-bruta": "node --env-file=.env.local scripts/check-forca-bruta.mts",
+    "check:imagens": "node scripts/check-imagens.mts",
     "check:csp": "node --env-file=.env.local scripts/check-csp.mts"
   },
   "dependencies": {

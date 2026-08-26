@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { formatCents } from '@/lib/money';
 import { DIET_LABELS, PRODUCT_BADGE_LABELS, servesLabel } from '@/lib/menu/labels';
 import type { DietTag, ProductBadge } from '@/lib/menu/types';
@@ -107,15 +108,47 @@ export function PreviewDoCelular({
 
             <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-secondary">
               {fotoUrl ? (
-                // <img> e não next/image: a URL pode ser um blob local do
-                // arquivo que a pessoa acabou de escolher, e o otimizador do
-                // Next não sabe buscar blob.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={fotoUrl}
-                  alt=""
-                  className={`size-full object-cover ${disponivel ? '' : 'grayscale'}`}
-                />
+                /*
+                  DUAS naturezas de URL na mesma caixa, e cada uma exige um
+                  elemento diferente:
+
+                  blob: — o arquivo que a pessoa acabou de escolher, ainda não
+                  salvo. O otimizador do Next não sabe buscar blob, então tem de
+                  ser <img> cru.
+
+                  https: — a foto já salva no Storage. Aqui <img> cru NÃO
+                  funciona: a CSP deste projeto é `img-src 'self' blob: data:`,
+                  e o endereço do Supabase não é 'self'. A imagem era bloqueada
+                  em silêncio — `complete: true` com `naturalWidth: 0`, sem erro
+                  visível na página.
+
+                  O sintoma enganava: logo depois de subir a foto tudo parecia
+                  certo (era o blob), e só quebrava ao voltar e avançar no
+                  navegador, quando o componente remontava sem o blob e caía na
+                  URL do Storage.
+
+                  `next/image` resolve porque serve por `/_next/image`, que é
+                  mesma origem — sem afrouxar a CSP, que é o que o resto do
+                  projeto pagou caro para manter estreita.
+                */
+                fotoUrl.startsWith('blob:') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={fotoUrl}
+                    alt=""
+                    className={`size-full object-cover ${disponivel ? '' : 'grayscale'}`}
+                  />
+                ) : (
+                  <Image
+                    src={fotoUrl}
+                    alt=""
+                    fill
+                    // A caixa tem 96 px (size-24). Sem isto o next/image pede a
+                    // largura da viewport inteira.
+                    sizes="96px"
+                    className={`object-cover ${disponivel ? '' : 'grayscale'}`}
+                  />
+                )
               ) : (
                 <div className="flex size-full items-center justify-center px-2 text-center text-[10px] leading-tight text-muted-foreground">
                   sem foto

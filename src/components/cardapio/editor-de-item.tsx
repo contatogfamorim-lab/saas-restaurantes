@@ -300,27 +300,54 @@ export function EditorDeItem({
             campo="dietTags"
           />
 
-          {erro && (
-            <p
-              role="alert"
-              className="rounded-md bg-alert-critical/10 px-3 py-2 text-[13px] text-alert-critical"
-            >
-              {erro}
-            </p>
-          )}
-          {salvo && !erro && !sujo && (
-            <p role="status" className="text-[13px] text-muted-foreground">
-              Salvo.
-            </p>
-          )}
+          {/*
+            A BARRA DE SALVAR É FIXA, e isso não é enfeite.
 
-          <button
-            type="submit"
-            disabled={pendente || !sujo}
-            className="h-11 w-full rounded-md bg-brand text-[14px] font-bold text-background disabled:opacity-40"
-          >
-            {pendente ? 'Salvando…' : sujo ? 'Salvar alterações' : 'Nada para salvar'}
-          </button>
+            O formulário tem dez campos e mede ~1400 px. O botão ficava no fim,
+            390 px abaixo da dobra numa janela de 720 px, desabilitado a 40% de
+            opacidade e escrito "Nada para salvar" — que foi como a pessoa o viu
+            da última vez, antes de começar a editar. Você mexia no preço lá em
+            cima e não havia nada na tela dizendo que existia algo para salvar,
+            nem onde. Foi reportado como "falta um botão de salvar", que é
+            exatamente o que a tela comunicava.
+
+            Fixa embaixo, a barra responde à edição no mesmo instante: muda de
+            rótulo, acende e passa a mostrar o erro ou o "Salvo" ao lado — tudo
+            sem tirar os olhos do campo que está sendo mexido.
+          */}
+          <div className="sticky bottom-0 -mx-1 border-t border-border bg-background/95 px-1 py-3 backdrop-blur">
+            {erro && (
+              <p
+                role="alert"
+                className="mb-2 rounded-md bg-alert-critical/10 px-3 py-2 text-[13px] text-alert-critical"
+              >
+                {erro}
+              </p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={pendente || !sujo}
+                className="h-11 flex-1 rounded-md bg-brand text-[14px] font-bold text-background disabled:opacity-40"
+              >
+                {pendente ? 'Salvando…' : sujo ? 'Salvar alterações' : 'Nada para salvar'}
+              </button>
+
+              {/* O estado ao LADO do botão, não acima: é para onde o olho já
+                  está indo quando termina de editar. */}
+              {sujo && !pendente && (
+                <p className="shrink-0 text-[12px] text-alert-warning">
+                  Alterações não salvas
+                </p>
+              )}
+              {salvo && !erro && !sujo && (
+                <p role="status" className="shrink-0 text-[12px] text-muted-foreground">
+                  Salvo.
+                </p>
+              )}
+            </div>
+          </div>
         </form>
 
         {podeEstrutura && (

@@ -58,6 +58,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Imagens dentro da CSP
+        # `img-src 'self' blob: data:`. Um <img> cru apontando para o Storage é
+        # bloqueado EM SILÊNCIO — sem buraco na página, sem ícone quebrado.
+        run: pnpm check:imagens
+
       - name: Testes de unidade
         # A matriz de permissão (§10.3) e o QR da mesa moram aqui. Nenhum
         # precisa de banco, e os dois quebram coisa cara quando erram.
