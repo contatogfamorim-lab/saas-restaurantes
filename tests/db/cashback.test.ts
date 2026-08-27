@@ -758,6 +758,70 @@ describe('a faxina acompanha o esquema sozinha (0044)', () => {
     });
   });
 
+  it('erro que NÃO é de chave estrangeira também não derruba a faxina', async () => {
+    // O que produção produziu e o banco local nunca produziu sozinho:
+    //
+    //   null value in column "restaurant_id" of relation "table_sessions"
+    //   CONTEXT: UPDATE ... SET "released_by" = NULL, "restaurant_id" = NULL
+    //            SQL statement "delete from public.profiles ..."
+    //
+    // FK COMPOSTA com `on delete set null` anula TODAS as colunas da chave, e
+    // uma delas é `not null`. Isso é `not_null_violation` (23502), não violação
+    // de FK — e o laço da 0044 só capturava FK, então abortava a faxina inteira.
+    //
+    // DUAS TENTATIVAS ANTERIORES DESTE TESTE PASSAVAM COM A SABOTAGEM APLICADA.
+    // Reproduzir a estrutura da FK composta não bastou: a ordem alfabética faz
+    // `profiles` falhar antes por OUTRA chave estrangeira, que É capturada, e a
+    // segunda rodada resolve. O teste dependia de sorte, e a sorte estava do
+    // lado errado.
+    //
+    // Aqui a propriedade é testada direto: uma tabela que ordena PRIMEIRO levanta
+    // um erro 23502 enquanto outra ainda tem linhas. Com `when others` ela é
+    // adiada e a faxina termina; capturando só FK, a faxina morre ali.
+    await comoPostgres(async (c) => {
+      await c.query(`
+        create table public.aaa_teimosa (
+          id uuid primary key default gen_random_uuid(),
+          restaurant_id uuid not null
+        )`);
+
+      await c.query(`
+        create function app.teimosa_reclama() returns trigger
+        language plpgsql as $x$
+        begin
+          -- Enquanto houver produto, recusa com um erro que NÃO é de FK.
+          if exists (select 1 from public.products
+                      where restaurant_id = old.restaurant_id) then
+            raise exception 'ainda nao' using errcode = '23502';
+          end if;
+          return old;
+        end $x$`);
+
+      await c.query(`
+        create trigger aaa_teimosa_reclama before delete on public.aaa_teimosa
+        for each row execute function app.teimosa_reclama()`);
+
+      await c.query(
+        `insert into public.aaa_teimosa (restaurant_id) values ($1)`, [RESTAURANTE],
+      );
+
+      await c.query(
+        `update public.restaurants set expires_at = now() - interval '1 minute'
+          where id = $1`, [RESTAURANTE],
+      );
+
+      const { rows } = await c.query(`select app.limpar_demos_vencidas() as n`);
+      expect(rows[0].n).toBe(1);
+
+      expect((await c.query(
+        `select count(*)::int as n from public.aaa_teimosa`,
+      )).rows[0].n, 'a tabela teimosa precisa ter saído na segunda rodada').toBe(0);
+      expect((await c.query(
+        `select count(*)::int as n from public.restaurants where id = $1`, [RESTAURANTE],
+      )).rows[0].n).toBe(0);
+    });
+  });
+
   it('selo do sistema continua protegido em restaurante de verdade', async () => {
     // A faxina precisou de uma fresta para apagar selo interno. Ela vale só
     // para demonstração vencida — este teste é o que a mantém desse tamanho.
