@@ -10,7 +10,7 @@ import { formatCents } from '@/lib/money';
 import { can, DISCOUNT_CEILING_PCT, type Role } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Equipe · Markello',
+  title: 'Equipe · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

@@ -55,6 +55,10 @@ export function IdentifySheet({
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [consentimento, setConsentimento] = useState(false);
+  // Começa DESMARCADO, e não é isso que trava o botão. Caixa pré-marcada não é
+  // consentimento — é o padrão que a LGPD chama de não-manifestação, e o único
+  // efeito prático seria uma lista grande de gente que não escolheu nada.
+  const [marketing, setMarketing] = useState(false);
 
   const telefoneLimpo = telefone.replace(/\D/g, '');
   const telefoneValido = telefoneLimpo.length === 0 || telefoneLimpo.length >= 10;
@@ -242,6 +246,10 @@ function ComConta({
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [consentimento, setConsentimento] = useState(false);
+  // Começa DESMARCADO, e não é isso que trava o botão. Caixa pré-marcada não é
+  // consentimento — é o padrão que a LGPD chama de não-manifestação, e o único
+  // efeito prático seria uma lista grande de gente que não escolheu nada.
+  const [marketing, setMarketing] = useState(false);
 
   const telefoneLimpo = telefone.replace(/\D/g, '');
   const telefoneValido = telefoneLimpo.length === 0 || telefoneLimpo.length >= 10;
@@ -266,6 +274,7 @@ function ComConta({
       fd.set('nome', nome.trim());
       fd.set('telefone', telefoneLimpo);
       fd.set('email', email.trim());
+      fd.set('marketing', marketing && telefoneLimpo.length > 0 ? 'sim' : '');
     }
 
     iniciar(async () => {
@@ -388,6 +397,42 @@ function ComConta({
             >
               Como usamos seus dados
             </a>
+          </span>
+        </label>
+      )}
+
+      {/*
+        A SEGUNDA caixa, e o motivo de ela não estar junto com a primeira.
+
+        A de cima autoriza guardar o número para ESTE pedido. Esta autoriza
+        mandar mensagem depois. São finalidades diferentes, e a LGPD trata
+        finalidade como o eixo de tudo: consentimento dado para uma não vale
+        para a outra.
+
+        Juntar as duas numa caixa só daria uma lista maior hoje e uma base
+        indefensável para sempre — porque a frase aceita falaria de "contato
+        sobre este pedido", e seria ela que apareceria como prova.
+
+        Fica só na aba de criar conta: é lá que existe um cliente com id para
+        carregar o aceite. Quem entra numa conta que já existe não precisa
+        reafirmar nada, e quem pede como visitante não tem cadastro para marcar.
+      */}
+      {aba === 'criar' && telefoneLimpo.length > 0 && consentimento && (
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg bg-secondary/50 p-3">
+          <input
+            type="checkbox"
+            checked={marketing}
+            onChange={(e) => setMarketing(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span className="text-[13px] leading-snug">
+            <span className="font-medium text-foreground">
+              Quero avisos de saldo e promoções no WhatsApp
+            </span>
+            <span className="mt-0.5 block text-muted-foreground">
+              É como você fica sabendo que seu cashback liberou. Dá para sair
+              pelo link no fim de qualquer mensagem.
+            </span>
           </span>
         </label>
       )}

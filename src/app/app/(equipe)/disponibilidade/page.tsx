@@ -7,7 +7,7 @@ import { carregarCategorias, carregarProdutos } from '@/lib/cardapio/queries';
 import { canMarkOutOfStock } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Zerou · Markello',
+  title: 'Zerou · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

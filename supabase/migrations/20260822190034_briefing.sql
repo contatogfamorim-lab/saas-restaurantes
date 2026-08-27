@@ -417,7 +417,7 @@ begin
   -- Os perfis e as contas de auth saem junto — e é preciso ser exato sobre o
   -- que isto significa: a conta apagada é a que a PESSOA criou, com o e-mail
   -- dela. Quem gera a demonstração gera em cima da própria conta; não existe
-  -- usuário `@demo.markello` nenhum.
+  -- usuário `@demo.pedidos.ia` nenhum.
   --
   -- Apagar é a escolha certa mesmo assim. Deixar a conta viva com o restaurante
   -- morto dá login que entra num sistema sem perfil, sem mesa e sem cardápio —

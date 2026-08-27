@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { entrar } from './actions';
 
 export const metadata: Metadata = {
-  title: 'Entrar · Markello',
+  title: 'Entrar · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 
@@ -26,7 +26,7 @@ export default async function Entrar({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
-      <h1 className="font-display text-3xl leading-tight">Markello</h1>
+      <h1 className="font-display text-3xl leading-tight">Pedidos.IA</h1>
       <p className="mt-1 text-sm text-muted-foreground">Acesso da equipe</p>
 
       <form action={entrar} className="mt-8">

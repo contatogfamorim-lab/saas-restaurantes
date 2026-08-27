@@ -65,13 +65,13 @@ repositório, então:
 Com o `gh` instalado:
 
 ```bash
-gh repo create markello --private --source=. --push
+gh repo create pedidos-ia --private --source=. --push
 ```
 
 Sem ele — que é o caso desta máquina — crie o repositório vazio pela web e:
 
 ```bash
-git remote add origin git@github.com:<voce>/markello.git
+git remote add origin git@github.com:<voce>/pedidos-ia.git
 git push -u origin main
 ```
 

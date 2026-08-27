@@ -2,9 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "markello",
+      "name": "pedidos-ia",
       "runtimeExecutable": "/Users/gabrielamorim/.nvm/versions/node/v24.19.0/bin/node",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "runtimeArgs": [
+        "node_modules/next/dist/bin/next",
+        "dev"
+      ],
       "port": 3000
     }
   ]

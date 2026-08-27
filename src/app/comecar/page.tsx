@@ -6,7 +6,7 @@ import { getStaff } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
-  title: 'Criar meu restaurante · Markello',
+  title: 'Criar meu restaurante · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

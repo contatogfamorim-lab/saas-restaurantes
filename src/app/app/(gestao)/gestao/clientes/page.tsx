@@ -5,12 +5,12 @@ import { Cabecalho } from '@/components/gestao/cabecalho';
 import { Cartao, Celula, Linha, Numero, Tabela, Vazio } from '@/components/gestao/painel';
 import { Telefone } from '@/components/gestao/telefone';
 import { exigirStaff } from '@/lib/auth/staff';
-import { carregarClientes } from '@/lib/gestao/queries';
+import { carregarClientes, contarPublicoDeMarketing } from '@/lib/gestao/queries';
 import { normalizarPeriodo } from '@/lib/gestao/periodo';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Clientes · Markello',
+  title: 'Clientes · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 
@@ -36,7 +36,10 @@ export default async function Clientes({
   if (!can(staff, 'dashboard.view')) forbidden();
 
   const periodo = normalizarPeriodo((await searchParams).periodo);
-  const clientes = await carregarClientes(periodo);
+  const [clientes, publicoDeMarketing] = await Promise.all([
+    carregarClientes(periodo),
+    contarPublicoDeMarketing(),
+  ]);
 
   const comTelefone = clientes.filter((c) => c.temTelefone);
   const podeRevelar = can(staff, 'customer.view_full_phone');
@@ -47,6 +50,34 @@ export default async function Clientes({
         titulo="Clientes"
         descricao={`Quem passou pela casa nos últimos ${periodo} dias`}
       />
+
+      {/*
+        O público de marketing fica ACIMA da lista e fora do recorte de período,
+        porque responde outra pergunta: não "quem veio esta semana", e sim
+        "quem eu posso chamar de volta".
+      */}
+      <div className="mb-4 rounded-xl border border-border bg-card p-4">
+        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          Podem receber mensagem
+        </p>
+        <p className="font-display mt-1 text-3xl leading-none">{publicoDeMarketing}</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+          {publicoDeMarketing === 0 ? (
+            <>
+              Ninguém ainda — e isso é o esperado. O aceite de mensagens é uma
+              autorização NOVA, que nasceu agora e só é marcada por quem cria
+              conta daqui para frente. Quem já estava cadastrado autorizou
+              guardar o telefone para o pedido, que é outra coisa.
+            </>
+          ) : (
+            <>
+              Pessoas que marcaram, no cadastro, que aceitam receber avisos de
+              cashback e promoções. Cada uma tem um link próprio para sair, e
+              sair é definitivo até ela mesma voltar a aceitar.
+            </>
+          )}
+        </p>
+      </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <Numero rotulo="Pessoas" valor={String(clientes.length)} detalhe="identificadas na mesa" />

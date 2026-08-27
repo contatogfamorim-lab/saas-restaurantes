@@ -7,7 +7,7 @@ import { can } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
-  title: 'Selos · Markello',
+  title: 'Selos · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

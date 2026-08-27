@@ -51,6 +51,17 @@ const cadastro = z.object({
   senha: z.string().min(8, 'A senha precisa de pelo menos 8 caracteres').max(200),
   telefone: z.string().transform((v) => v.replace(/\D/g, '')).optional(),
   email: z.string().trim().max(160).optional(),
+  /**
+   * Aceite de MARKETING — separado do consentimento de guardar o telefone.
+   *
+   * São duas permissões diferentes e é por isso que são dois campos. Guardar o
+   * número para o garçom ligar sobre este pedido não autoriza mandar promoção
+   * na semana que vem, e juntar as duas coisas numa caixa só seria pedir uma e
+   * usar a outra.
+   *
+   * Chega como string porque vem de FormData; ausente = não aceitou.
+   */
+  marketing: z.string().optional(),
 });
 
 export async function criarConta(shortCode: string, formData: FormData): Promise<Resultado> {
@@ -60,6 +71,7 @@ export async function criarConta(shortCode: string, formData: FormData): Promise
     senha: formData.get('senha') ?? '',
     telefone: formData.get('telefone') ?? '',
     email: formData.get('email') ?? '',
+    marketing: formData.get('marketing') ?? '',
   });
 
   if (!parsed.success) {
@@ -83,6 +95,22 @@ export async function criarConta(shortCode: string, formData: FormData): Promise
   });
 
   if (error) return { ok: false, erro: error.message };
+
+  // O aceite é gravado DEPOIS do cadastro e com o texto vindo do banco: a
+  // função `aceitar_marketing` não recebe frase nenhuma daqui, justamente para
+  // que a prova guardada não possa ser escrita pelo navegador (§10.1).
+  //
+  // Sem telefone não há o que aceitar — a marcação existe, mas não há para onde
+  // mandar, e a view de público já filtra isso.
+  if (parsed.data.marketing === 'sim' && parsed.data.telefone) {
+    const { error: erroConsent } = await admin.rpc('aceitar_marketing', {
+      p_customer: data as string,
+    });
+    // Falhar aqui NÃO derruba o cadastro. A conta e o cashback são o que a
+    // pessoa veio buscar; o aceite de marketing é acessório, e perdê-lo custa
+    // uma marcação, não a noite dela. O erro fica no log do servidor.
+    if (erroConsent) console.error('aceite de marketing falhou', erroConsent.message);
+  }
 
   await abrirContaDoCliente({
     clienteId: data as string,

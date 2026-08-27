@@ -9,7 +9,7 @@ import { listarComandas } from '@/lib/caixa/queries';
 import { DISCOUNT_CEILING_PCT, can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Caixa · Markello',
+  title: 'Caixa · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

@@ -45,7 +45,7 @@ export function Onboarding({
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
       <header className="mb-6">
-        <p className="font-display text-2xl leading-tight">Markello</p>
+        <p className="font-display text-2xl leading-tight">Pedidos.IA</p>
         <p className="mt-0.5 text-[13px] text-muted-foreground">
           Vamos deixar o seu restaurante pronto para receber pedidos.
         </p>

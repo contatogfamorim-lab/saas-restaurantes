@@ -7,7 +7,7 @@ import { carregarCategorias } from '@/lib/cardapio/queries';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Categorias · Markello',
+  title: 'Categorias · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

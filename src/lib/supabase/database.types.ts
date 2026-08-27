@@ -211,6 +211,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customer_cashback_ledger_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "publico_de_marketing"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customer_cashback_ledger_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
@@ -261,11 +268,15 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          marketing_consent_text: string | null
+          marketing_opt_in_at: string | null
+          marketing_opt_out_at: string | null
           name: string
           password_hash: string
           phone: string | null
           phone_mask: string | null
           restaurant_id: string
+          unsubscribe_token: string | null
           updated_at: string
         }
         Insert: {
@@ -274,11 +285,15 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          marketing_consent_text?: string | null
+          marketing_opt_in_at?: string | null
+          marketing_opt_out_at?: string | null
           name: string
           password_hash: string
           phone?: string | null
           phone_mask?: string | null
           restaurant_id: string
+          unsubscribe_token?: string | null
           updated_at?: string
         }
         Update: {
@@ -287,11 +302,15 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          marketing_consent_text?: string | null
+          marketing_opt_in_at?: string | null
+          marketing_opt_out_at?: string | null
           name?: string
           password_hash?: string
           phone?: string | null
           phone_mask?: string | null
           restaurant_id?: string
+          unsubscribe_token?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1731,6 +1750,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "session_guests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "publico_de_marketing"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "session_guests_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
@@ -2328,6 +2354,41 @@ export type Database = {
           },
         ]
       }
+      publico_de_marketing: {
+        Row: {
+          id: string | null
+          marketing_consent_text: string | null
+          marketing_opt_in_at: string | null
+          name: string | null
+          phone_mask: string | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          id?: string | null
+          marketing_consent_text?: string | null
+          marketing_opt_in_at?: string | null
+          name?: string | null
+          phone_mask?: string | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          id?: string | null
+          marketing_consent_text?: string | null
+          marketing_opt_in_at?: string | null
+          name?: string | null
+          phone_mask?: string | null
+          restaurant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ready_pass: {
         Row: {
           area: string | null
@@ -2476,6 +2537,7 @@ export type Database = {
       }
     }
     Functions: {
+      aceitar_marketing: { Args: { p_customer: string }; Returns: boolean }
       adicionar_bloco: {
         Args: { p_config?: Json; p_tipo: string }
         Returns: string
@@ -2545,9 +2607,18 @@ export type Database = {
         Args: { p_area?: string; p_prefixo?: string; p_quantidade: number }
         Returns: number
       }
+      descadastrar_marketing: { Args: { p_token: string }; Returns: boolean }
       desfazer_resgate: {
         Args: { p_cliente: string; p_sessao: string }
         Returns: Json
+      }
+      dono_do_token: {
+        Args: { p_token: string }
+        Returns: {
+          ja_saiu: boolean
+          nome: string
+          restaurante: string
+        }[]
       }
       ensure_draft_layout: { Args: never; Returns: string }
       gerar_demonstracao: { Args: never; Returns: Json }
@@ -2610,6 +2681,7 @@ export type Database = {
         Returns: Json
       }
       remover_bloco: { Args: { p_bloco: string }; Returns: undefined }
+      remover_do_marketing: { Args: { p_customer: string }; Returns: boolean }
       resgatar_cashback: {
         Args: { p_cliente: string; p_sessao: string }
         Returns: Json

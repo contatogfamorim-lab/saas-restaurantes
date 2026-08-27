@@ -28,7 +28,7 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   // White label: o título real de cada cardápio vem do restaurante, definido
   // em generateMetadata de /m/[short_code]. Isto é só o fallback da plataforma.
-  title: "Markello",
+  title: "Pedidos.IA",
   description: "Cardápio digital por mesa",
 };
 

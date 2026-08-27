@@ -7,7 +7,7 @@ import { carregarCategorias, carregarProdutos } from '@/lib/cardapio/queries';
 import { canOpenMenuEditor, menuPermissions } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Cardápio · Markello',
+  title: 'Cardápio · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

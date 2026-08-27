@@ -9,7 +9,7 @@ import { normalizarPeriodo } from '@/lib/gestao/periodo';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Operação · Markello',
+  title: 'Operação · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

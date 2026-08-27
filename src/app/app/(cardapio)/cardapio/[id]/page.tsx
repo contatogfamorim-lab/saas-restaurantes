@@ -12,7 +12,7 @@ import {
 import { canOpenMenuEditor, menuPermissions } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Editar item · Markello',
+  title: 'Editar item · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

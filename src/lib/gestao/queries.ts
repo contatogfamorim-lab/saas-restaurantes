@@ -404,6 +404,32 @@ export async function carregarClientes(periodo: number, limite = 200): Promise<C
   }));
 }
 
+/**
+ * O público de marketing — quem PODE receber mensagem.
+ *
+ * Deliberadamente separado de `carregarClientes`, e não uma coluna a mais lá.
+ * A lista de cima é "quem passou pela casa no período"; esta é "quem autorizou
+ * a gente a chamar depois", e ela não tem recorte de período: consentimento não
+ * vence por a pessoa ter ficado dois meses sem vir.
+ *
+ * Devolve só a CONTAGEM. A tela do balcão não precisa da lista de quem
+ * autorizou — precisa saber que existe e quanta gente é. Quando as campanhas
+ * chegarem, quem lê nome a nome é o disparador, com `service_role`, no momento
+ * de enviar.
+ */
+export async function contarPublicoDeMarketing(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('publico_de_marketing')
+    .select('id', { count: 'exact', head: true });
+
+  // Engolir o erro aqui mostraria "0 pessoas" para um problema de permissão — e
+  // zero é uma resposta plausível, então ninguém desconfiaria. Já aconteceu uma
+  // vez neste projeto, com o extrato de cashback.
+  if (error) throw new Error(`público de marketing: ${error.message}`);
+  return count ?? 0;
+}
+
 // ---------------------------------------------------------------------------
 // AUDITORIA — §10.8
 // ---------------------------------------------------------------------------

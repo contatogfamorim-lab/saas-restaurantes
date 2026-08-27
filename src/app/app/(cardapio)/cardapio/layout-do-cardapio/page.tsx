@@ -7,7 +7,7 @@ import { can } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
-  title: 'Organizar cardápio · Markello',
+  title: 'Organizar cardápio · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

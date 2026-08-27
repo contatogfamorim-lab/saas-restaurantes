@@ -13,7 +13,7 @@ import { CartBar } from './cart-bar';
 import { CategoryNav, useScrollSpy } from './category-nav';
 import { FilterBar } from './filter-bar';
 import { IdentifySheet } from './identify-sheet';
-import { MarkelloBadge } from './markello-badge';
+import { SeloDaPlataforma } from './selo-da-plataforma';
 import { OrderTracker } from './order-tracker';
 import { ProductCard } from './product-card';
 import { ProductSheet } from './product-sheet';
@@ -396,7 +396,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
       </>
       )}
 
-      <MarkelloBadge />
+      <SeloDaPlataforma />
 
       <ProductSheet
         restricoes={menu.restaurant.restricoes}

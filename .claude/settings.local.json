@@ -75,7 +75,17 @@
       "Bash(curl -s -m 25 \"https://fpgkaqdzgtcvhegzaixa.supabase.co/auth/v1/settings\")",
       "Bash(python3 -m json.tool)",
       "Bash(curl -s -o /dev/null -w \"servidor: %{http_code}\\\\n\" -m 10 http://localhost:3000/app/entrar)",
-      "Bash(grep -n \"^function \\\\|^export function \\\\|=> {$\" src/components/menu/product-sheet.tsx)"
+      "Bash(grep -n \"^function \\\\|^export function \\\\|=> {$\" src/components/menu/product-sheet.tsx)",
+      "Bash(xargs cat)",
+      "WebSearch",
+      "Read(//Users/gabrielamorim/Desktop/**)",
+      "Bash(cd ~/crm_beta_final *)",
+      "Bash(awk '/CREATE TABLE.*message_campaign/,/^\\\\\\);/' schema.sql)",
+      "Bash(awk '/CREATE TABLE organizations/,/^\\\\\\);/' schema.sql)",
+      "Bash(docker exec -i supabase_db_SaaS_RESTAURANTE psql -U postgres -d postgres -tA '-F | ' -c ' *)",
+      "Bash(docker exec -i supabase_db_SaaS_RESTAURANTE psql -U postgres -d postgres -tA -c ' *)",
+      "Bash(bash \"/private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/bf1c2f91-bb6c-4c36-a8a2-d17aa63089b2/scratchpad/sabota.sh\")",
+      "Bash(docker exec *)"
     ]
   }
 }

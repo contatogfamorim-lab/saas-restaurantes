@@ -153,7 +153,7 @@ export default async function ContaImpressa({
             A taxa de servico e opcional.
           </p>
           <p className="mt-2 text-center text-[9px]">Nao e documento fiscal.</p>
-          <p className="mt-1 text-center text-[9px]">feito com Markello</p>
+          <p className="mt-1 text-center text-[9px]">feito com Pedidos.IA</p>
         </div>
 
         <div className="nao-imprimir mt-6 text-center">

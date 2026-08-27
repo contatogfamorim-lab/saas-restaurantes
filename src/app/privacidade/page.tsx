@@ -11,7 +11,7 @@ export const metadata: Metadata = {
  * É uma descrição FACTUAL do que o sistema coleta, por quê, por quanto tempo e
  * como apagar — escrita a partir do que o código realmente faz. Não é a
  * política de privacidade jurídica do restaurante: essa depende do contrato
- * entre a Markello (operadora) e cada casa (controladora), e precisa de revisão
+ * entre a Pedidos.IA (operadora) e cada casa (controladora), e precisa de revisão
  * de advogado antes de ir ao ar com clientes reais.
  */
 export default function Privacidade() {
@@ -20,7 +20,7 @@ export default function Privacidade() {
       <h1 className="font-display text-3xl leading-tight">Como usamos seus dados</h1>
 
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        Este cardápio é operado pela Markello para o restaurante onde você está.
+        Este cardápio é operado pela Pedidos.IA para o restaurante onde você está.
         O texto abaixo descreve o que o sistema faz hoje, na prática.
       </p>
 

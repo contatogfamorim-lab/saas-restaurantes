@@ -10,7 +10,7 @@ import { qrDaMesa } from '@/lib/mesas/qr';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Mesas · Markello',
+  title: 'Mesas · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

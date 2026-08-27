@@ -5,7 +5,7 @@ import { ArrowRightIcon, QrCodeIcon } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
-  title: 'Markello — pedidos por mesa',
+  title: 'Pedidos.IA — pedidos por mesa',
   description: 'O cliente pede pelo celular, o garçom aprova, a cozinha produz.',
 };
 
@@ -41,7 +41,7 @@ export default async function Home() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6 py-14">
       <header>
-        <p className="font-display text-[15px] text-brand">Markello</p>
+        <p className="font-display text-[15px] text-brand">Pedidos.IA</p>
         <h1 className="font-display mt-3 text-[38px] leading-[1.05] sm:text-[46px]">
           O cliente pede
           <br />

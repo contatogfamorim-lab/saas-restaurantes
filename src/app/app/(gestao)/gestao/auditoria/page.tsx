@@ -9,7 +9,7 @@ import { formatCents } from '@/lib/money';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Auditoria · Markello',
+  title: 'Auditoria · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

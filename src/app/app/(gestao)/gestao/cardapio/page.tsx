@@ -12,7 +12,7 @@ import { formatCents } from '@/lib/money';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Cardápio · Markello',
+  title: 'Cardápio · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

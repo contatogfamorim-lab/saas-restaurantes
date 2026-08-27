@@ -9,7 +9,7 @@ import { carregarFila, type Estacao } from '@/lib/cozinha/queries';
 import { can } from '@/lib/permissions';
 
 export const metadata: Metadata = {
-  title: 'Cozinha · Markello',
+  title: 'Cozinha · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 

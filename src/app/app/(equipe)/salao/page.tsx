@@ -9,7 +9,7 @@ import { can } from '@/lib/permissions';
 import { carregarSalao } from '@/lib/salao/queries';
 
 export const metadata: Metadata = {
-  title: 'Salão · Markello',
+  title: 'Salão · Pedidos.IA',
   robots: { index: false, follow: false },
 };
 
