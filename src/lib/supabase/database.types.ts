@@ -34,6 +34,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          chave: string
+          valor: string
+        }
+        Insert: {
+          chave: string
+          valor: string
+        }
+        Update: {
+          chave?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -571,6 +586,147 @@ export type Database = {
           },
           {
             foreignKeyName: "menu_layouts_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_campaign_targets: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          customer_id: string
+          error_message: string | null
+          id: string
+          message: string
+          motivo: string | null
+          restaurant_id: string
+          send_order: number | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          customer_id: string
+          error_message?: string | null
+          id?: string
+          message: string
+          motivo?: string | null
+          restaurant_id: string
+          send_order?: number | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          customer_id?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          motivo?: string | null
+          restaurant_id?: string
+          send_order?: number | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_campaign_targets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campanhas_com_progresso"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_campaign_targets_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "message_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_campaign_targets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_campaign_targets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "publico_de_marketing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_campaign_targets_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_campaigns: {
+        Row: {
+          corpo: string
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          next_send_at: string | null
+          restaurant_id: string
+          scheduled_at: string | null
+          started_at: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          corpo: string
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          next_send_at?: string | null
+          restaurant_id: string
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          corpo?: string
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          next_send_at?: string | null
+          restaurant_id?: string
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_campaigns_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1574,9 +1730,11 @@ export type Database = {
           cashback_pct: number
           created_at: string
           currency: string
+          evolution_instance_name: string | null
           expires_at: string | null
           id: string
           logo_url: string | null
+          marketing_max_por_dia: number
           name: string
           require_phone: boolean
           require_waiter_to_open_table: boolean
@@ -1592,9 +1750,11 @@ export type Database = {
           cashback_pct?: number
           created_at?: string
           currency?: string
+          evolution_instance_name?: string | null
           expires_at?: string | null
           id?: string
           logo_url?: string | null
+          marketing_max_por_dia?: number
           name: string
           require_phone?: boolean
           require_waiter_to_open_table?: boolean
@@ -1610,9 +1770,11 @@ export type Database = {
           cashback_pct?: number
           created_at?: string
           currency?: string
+          evolution_instance_name?: string | null
           expires_at?: string | null
           id?: string
           logo_url?: string | null
+          marketing_max_por_dia?: number
           name?: string
           require_phone?: boolean
           require_waiter_to_open_table?: boolean
@@ -2011,6 +2173,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "table_sessions"
             referencedColumns: ["id", "restaurant_id"]
+          },
+        ]
+      }
+      campanhas_com_progresso: {
+        Row: {
+          corpo: string | null
+          created_at: string | null
+          enviados: number | null
+          falharam: number | null
+          finished_at: string | null
+          id: string | null
+          last_error: string | null
+          next_send_at: string | null
+          pendentes: number | null
+          pulados: number | null
+          restaurant_id: string | null
+          scheduled_at: string | null
+          started_at: string | null
+          status: string | null
+          titulo: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_campaigns_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2586,6 +2777,10 @@ export type Database = {
         }
         Returns: string
       }
+      concluir_envio: {
+        Args: { p_alvo: string; p_erro?: string; p_ok: boolean }
+        Returns: boolean
+      }
       create_guest_order: {
         Args: {
           p_guest_id: string
@@ -2622,6 +2817,10 @@ export type Database = {
       }
       ensure_draft_layout: { Args: never; Returns: string }
       gerar_demonstracao: { Args: never; Returns: Json }
+      iniciar_campanha: {
+        Args: { p_campanha: string; p_quando?: string }
+        Returns: number
+      }
       kds_item_ready: { Args: { p_item_id: string }; Returns: undefined }
       kds_out_of_stock: {
         Args: { p_item_id: string; p_marcar_indisponivel?: boolean }
@@ -2638,6 +2837,7 @@ export type Database = {
       }
       marcar_como_demonstracao: { Args: never; Returns: string }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
+      montar_publico: { Args: { p_campanha: string }; Returns: number }
       mover_bloco: {
         Args: { p_bloco: string; p_direcao: string }
         Returns: undefined
@@ -2652,6 +2852,11 @@ export type Database = {
         }
         Returns: Json
       }
+      parar_campanha: {
+        Args: { p_campanha: string; p_definitivo?: boolean }
+        Returns: boolean
+      }
+      promover_agendadas: { Args: never; Returns: number }
       publish_menu_layout: { Args: never; Returns: Json }
       register_payment: {
         Args: {
@@ -2682,6 +2887,17 @@ export type Database = {
       }
       remover_bloco: { Args: { p_bloco: string }; Returns: undefined }
       remover_do_marketing: { Args: { p_customer: string }; Returns: boolean }
+      reservar_proximo_envio: {
+        Args: never
+        Returns: {
+          alvo: string
+          campanha: string
+          instancia: string
+          mensagem: string
+          restaurante: string
+          telefone: string
+        }[]
+      }
       resgatar_cashback: {
         Args: { p_cliente: string; p_sessao: string }
         Returns: Json

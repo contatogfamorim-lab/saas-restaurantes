@@ -24,6 +24,28 @@ const serverSchema = z.object({
   SESSION_COOKIE_SECRET: z
     .string()
     .min(32, 'SESSION_COOKIE_SECRET precisa de pelo menos 32 caracteres'),
+
+  /**
+   * WhatsApp (Evolution API) e o segredo do worker de campanhas.
+   *
+   * OPCIONAIS de propósito: uma instalação sem WhatsApp precisa subir. Se
+   * fossem obrigatórias, quem só quer o cardápio e o caixa não conseguiria
+   * fazer build — e a saída natural seria preencher com lixo, que é pior.
+   *
+   * A ausência é tratada onde importa: o worker é fail-closed sem o segredo, e
+   * `iniciar_campanha` recusa sem instância configurada. Não há caminho em que
+   * "faltou variável" vire "mandou mensagem errada".
+   *
+   * O piso de 24 caracteres no segredo não é enfeite. Sem piso, um
+   * `MARKETING_WORKER_SECRET=1` passaria — e a rota que dispara campanha de
+   * todos os restaurantes ficaria protegida por um dígito.
+   */
+  EVOLUTION_API_URL: z.string().url().optional(),
+  EVOLUTION_API_KEY: z.string().min(8).optional(),
+  MARKETING_WORKER_SECRET: z
+    .string()
+    .min(24, 'MARKETING_WORKER_SECRET precisa de pelo menos 24 caracteres')
+    .optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -41,6 +63,9 @@ export function serverEnv(): ServerEnv {
   cache ??= serverSchema.parse({
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     SESSION_COOKIE_SECRET: process.env.SESSION_COOKIE_SECRET,
+    EVOLUTION_API_URL: process.env.EVOLUTION_API_URL || undefined,
+    EVOLUTION_API_KEY: process.env.EVOLUTION_API_KEY || undefined,
+    MARKETING_WORKER_SECRET: process.env.MARKETING_WORKER_SECRET || undefined,
   });
   return cache;
 }
