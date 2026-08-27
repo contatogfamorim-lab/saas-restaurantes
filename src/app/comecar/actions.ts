@@ -231,6 +231,18 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
     };
   }
 
+  // MARCA O PRAZO ANTES, em chamada própria.
+  //
+  // `gerar_demonstracao` é uma transação só: se ela falhar no meio, TUDO o que
+  // escreveu é desfeito — inclusive um `expires_at` que estivesse lá dentro. Foi
+  // assim que a produção ficou com um restaurante de demonstração marcado como
+  // permanente, que a faxina não reconhecia.
+  //
+  // Esta chamada commita sozinha. Falha depois dela deixa para trás um
+  // restaurante que expira, que é o que quem marcou a caixa pediu.
+  const { error: erroMarca } = await supabase.rpc('marcar_como_demonstracao');
+  if (erroMarca) return { ok: false, erro: erroMarca.message };
+
   const { data: demo, error: erroDemo } = await supabase.rpc('gerar_demonstracao');
 
   // O briefing já foi aplicado quando isto falha, e o restaurante está de pé

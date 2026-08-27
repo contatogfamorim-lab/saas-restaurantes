@@ -524,6 +524,10 @@ describe('a fresta na imutabilidade do audit_log', () => {
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Auditoria Demo Viva');
       await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      // O PRAZO vem de `marcar_como_demonstracao`, e não de `gerar_demonstracao`
+      // — desde a 0046. A geração é uma transação só, e uma falha nela desfaria
+      // o `expires_at` junto com o resto; a marca precisa vir de fora.
+      await c.query(`select public.marcar_como_demonstracao()`);
       await c.query(`select public.gerar_demonstracao()`);
       await c.query(`set local role postgres`);
 

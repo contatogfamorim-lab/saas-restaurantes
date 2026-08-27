@@ -59,6 +59,18 @@ async function blocosPublicados(c: Client): Promise<string> {
   return rows[0].b;
 }
 
+async function comoPostgres<T>(fn: (c: Client) => Promise<T>): Promise<T> {
+  const client = new Client({ connectionString: DATABASE_URL });
+  await client.connect();
+  try {
+    await client.query('begin');
+    return await fn(client);
+  } finally {
+    await client.query('rollback').catch(() => {});
+    await client.end();
+  }
+}
+
 async function esperaFalhar(c: Client, sql: string, params: unknown[], padrao: RegExp) {
   await c.query('savepoint t');
   try {
@@ -163,6 +175,83 @@ describe('§12.10 — organizar o cardápio', () => {
         [],
         /não encontrado/i,
       );
+    });
+  });
+});
+
+// ===========================================================================
+describe('a demonstração nasce com prazo (0046)', () => {
+  it('a marca de prazo sobrevive à geração que falha', async () => {
+    // Foi o que aconteceu em produção: a geração falhou no meio, `expires_at`
+    // nunca foi escrito, e quem pediu uma demonstração levou um restaurante
+    // PERMANENTE — que a faxina não tinha como reconhecer.
+    //
+    // A primeira versão deste teste era VAZIA: eu punha o `update` dentro de
+    // `gerar_demonstracao` e conferia depois de `esperaFalhar` — que desfaz o
+    // savepoint, e com ele a própria linha que eu queria conferir. Pior: nem
+    // adiantaria, porque `raise exception` já desfaz tudo o que a função
+    // escreveu. A marca tem de vir de OUTRA transação.
+    await como(DONO, async (c) => {
+      await c.query(`set local role postgres`);
+      await c.query(
+        `update public.restaurants set expires_at = null where id = $1`, [RESTAURANTE],
+      );
+      await c.query(`set local role authenticated`);
+
+      // O que a Server Action faz: marca primeiro, gera depois.
+      await c.query(`select public.marcar_como_demonstracao()`);
+
+      const marcado = (await c.query(
+        `select expires_at is not null as tem from public.restaurants where id = $1`,
+        [RESTAURANTE],
+      )).rows[0].tem;
+      expect(marcado, 'o prazo precisa estar gravado antes de gerar').toBe(true);
+
+      // Agora a geração falha — e a marca continua lá, porque foi escrita fora.
+      await c.query(`set local role postgres`);
+      await c.query(
+        `update public.products set is_available = false, archived_at = now()
+          where restaurant_id = $1`, [RESTAURANTE],
+      );
+      await c.query(`set local role authenticated`);
+
+      await esperaFalhar(
+        c, `select public.gerar_demonstracao()`, [], /cardápio antes da demonstração/i,
+      );
+
+      expect((await c.query(
+        `select expires_at is not null as tem from public.restaurants where id = $1`,
+        [RESTAURANTE],
+      )).rows[0].tem, 'a marca não pode sumir com a falha').toBe(true);
+    });
+  });
+
+  it('marcar duas vezes não estende o prazo', async () => {
+    await como(DONO, async (c) => {
+      await c.query(`set local role postgres`);
+      await c.query(
+        `update public.restaurants set expires_at = null where id = $1`, [RESTAURANTE],
+      );
+      await c.query(`set local role authenticated`);
+
+      const a = (await c.query(`select public.marcar_como_demonstracao() as p`)).rows[0].p;
+      const b = (await c.query(`select public.marcar_como_demonstracao() as p`)).rows[0].p;
+      expect(String(b)).toBe(String(a));
+    });
+  });
+
+  it('e a faxina está AGENDADA, não só oportunista', async () => {
+    // A justificativa da 0034 — "sempre tem quem a dispare, todo visitante
+    // novo" — é falsa num endereço de portfólio: passam dias sem ninguém gerar
+    // demonstração, e nesse intervalo nada é limpo. Foi visto em produção, com
+    // uma demo vencida há mais de um dia, intacta.
+    await comoPostgres(async (c) => {
+      const { rows } = await c.query(
+        `select jobname, schedule, command from cron.job
+          where jobname = 'faxina-das-demonstracoes'`,
+      );
+      expect(rows.length, 'a faxina precisa estar agendada').toBe(1);
+      expect(rows[0].command).toContain('limpar_demos_vencidas');
     });
   });
 });

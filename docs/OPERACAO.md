@@ -163,11 +163,20 @@ quem precisa ver que ele já mudou três vezes esta semana.
 
 ### As demonstrações não estão sumindo
 
-A limpeza é **oportunista**: `app.limpar_demos_vencidas()` roda de dentro de
-`gerar_demonstracao`, disparada pelo próximo visitante. Não há cron. O custo é
-proporcional ao movimento — banco parado não acumula, banco movimentado se
-limpa sozinho — mas o corolário é que uma demo vencida FICA no banco enquanto
-ninguém gerar a próxima.
+A limpeza roda **de hora em hora**, por `pg_cron` (migration 0046), no minuto 7.
+Ela também continua rodando de dentro de `gerar_demonstracao`, como reforço.
+
+Antes era só oportunista, e a justificativa — "sempre tem quem a dispare, todo
+visitante novo" — é falsa num endereço de portfólio: o movimento é irregular, e
+uma demonstração vencida ficou mais de um dia intacta em produção. O prazo de 3
+horas que a tela promete não estava sendo cumprido.
+
+Conferir o agendamento:
+
+```sql
+select jobname, schedule, active from cron.job;
+select * from cron.job_run_details order by start_time desc limit 5;
+```
 
 Para forçar:
 

@@ -2515,6 +2515,7 @@ export type Database = {
         Args: { p_hash_conta: string; p_hash_origem: string }
         Returns: boolean
       }
+      marcar_como_demonstracao: { Args: never; Returns: string }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
       mover_bloco: {
         Args: { p_bloco: string; p_direcao: string }
