@@ -59,28 +59,6 @@ async function como<T>(uid: string, fn: (c: Client) => Promise<T>): Promise<T> {
   }
 }
 
-/** O cliente na mesa não tem login: fala como `anon`. */
-async function comoAnon<T>(fn: (c: Client) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString: DATABASE_URL });
-  await client.connect();
-  try {
-    await client.query('begin');
-    await client.query('set local role anon');
-    return await fn(client);
-  } finally {
-    await client.query('rollback').catch(() => {});
-    await client.end();
-  }
-}
-
-/**
- * Vira funcionário no meio de uma transação já aberta como `postgres`.
- *
- * Existe para os testes que precisam montar o cenário com privilégio e
- * verificá-lo sem: sem isso, o preparo teria que ser `commit`-ado para a outra
- * conexão enxergar — e a limpeza depois esbarraria no `audit_log`, que não
- * aceita DELETE nem do dono do banco.
- */
 async function viraStaff(c: Client, uid: string) {
   await c.query(
     `select set_config('request.jwt.claims',

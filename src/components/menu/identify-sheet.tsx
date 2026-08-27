@@ -55,10 +55,6 @@ export function IdentifySheet({
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [consentimento, setConsentimento] = useState(false);
-  // Começa DESMARCADO, e não é isso que trava o botão. Caixa pré-marcada não é
-  // consentimento — é o padrão que a LGPD chama de não-manifestação, e o único
-  // efeito prático seria uma lista grande de gente que não escolheu nada.
-  const [marketing, setMarketing] = useState(false);
 
   const telefoneLimpo = telefone.replace(/\D/g, '');
   const telefoneValido = telefoneLimpo.length === 0 || telefoneLimpo.length >= 10;

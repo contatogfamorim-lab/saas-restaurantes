@@ -31,7 +31,9 @@ export default async function ConfiguracoesPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from('restaurants')
-    .select('name, service_fee_pct, cashback_pct, timezone, require_phone, brand_color')
+    // Uma string literal só: quebrar em duas com `+` derruba a inferência de
+    // tipos do Supabase, e a linha inteira volta como `GenericStringError`.
+    .select('name, service_fee_pct, cashback_pct, timezone, require_phone, brand_color, evolution_instance_name, marketing_max_por_dia')
     .eq('id', staff.restaurantId)
     .single();
 
@@ -43,6 +45,8 @@ export default async function ConfiguracoesPage() {
       timezone={data?.timezone ?? 'America/Sao_Paulo'}
       pedirTelefone={Boolean(data?.require_phone)}
       cor={data?.brand_color ?? '#D97A28'}
+      whatsapp={data?.evolution_instance_name ?? ''}
+      tetoDiario={Number(data?.marketing_max_por_dia ?? 200)}
     />
   );
 }

@@ -29,6 +29,28 @@ const configuracoes = z.object({
   timezone: z.string().trim().min(3).max(64),
   pedirTelefone: z.boolean(),
   cor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Cor precisa ser hexadecimal'),
+
+  /**
+   * O nome da instância na Evolution API.
+   *
+   * Vazio é válido e significa DESCONECTAR — sem isso, quem apagasse o campo
+   * ficaria com a instância antiga gravada e continuaria disparando por ela.
+   *
+   * O formato é apertado porque este valor vai direto para o CAMINHO de uma
+   * URL. Barra ou ponto aqui viraria travessia de caminho na chamada à
+   * Evolution. O banco repete a mesma regra, e é ele que decide.
+   */
+  whatsapp: z
+    .string()
+    .trim()
+    .max(60)
+    .regex(/^[A-Za-z0-9_-]*$/, 'Use só letras, números, hífen e sublinhado'),
+
+  tetoDiario: z.coerce
+    .number()
+    .int()
+    .min(0, 'No mínimo 0')
+    .max(2000, 'No máximo 2000 por dia'),
 });
 
 export async function salvarConfiguracoes(formData: FormData): Promise<ResultadoConfig> {
@@ -42,6 +64,8 @@ export async function salvarConfiguracoes(formData: FormData): Promise<Resultado
     timezone: formData.get('timezone'),
     pedirTelefone: formData.get('pedirTelefone') === 'on',
     cor: formData.get('cor'),
+    whatsapp: formData.get('whatsapp') ?? '',
+    tetoDiario: formData.get('tetoDiario') ?? 200,
   });
 
   if (!parsed.success) {
@@ -59,6 +83,8 @@ export async function salvarConfiguracoes(formData: FormData): Promise<Resultado
       timezone: parsed.data.timezone,
       pedir_telefone: parsed.data.pedirTelefone,
       cor: parsed.data.cor,
+      whatsapp: parsed.data.whatsapp,
+      teto_diario: parsed.data.tetoDiario,
     },
   });
 

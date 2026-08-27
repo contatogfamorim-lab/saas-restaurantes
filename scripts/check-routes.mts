@@ -108,6 +108,16 @@ const CASOS: Caso[] = [
     contendo: 'Dar cashback',
     descricao: 'configurações da casa',
   },
+  {
+    caminho: '/app/gestao/campanhas',
+    espera: 'pagina',
+    como: 'admin',
+    // A frase que carrega a regra inteira da tela. Se ela sumir num refactor,
+    // sumiu junto a única explicação de por que a lista é menor do que a
+    // pessoa esperava.
+    contendo: 'Só recebe quem marcou que aceita',
+    descricao: 'campanhas',
+  },
 
   // --- editor de cardápio (spec §12): porta PRÓPRIA, não é seção da gestão --
   { caminho: '/app/cardapio', espera: 'pagina', como: 'admin', descricao: 'editor de cardápio' },
@@ -137,6 +147,8 @@ const CASOS: Caso[] = [
     contendo: 'Área da gestão', descricao: 'garçom NÃO vê auditoria' },
   { caminho: '/app/gestao/configuracoes', espera: 'proibido', como: 'garcom',
     contendo: 'Área da gestão', descricao: 'garçom NÃO mexe em taxa nem cashback' },
+  { caminho: '/app/gestao/campanhas', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO fala pelo WhatsApp da casa' },
 ];
 
 /**

@@ -50,6 +50,7 @@ export const ACTIONS = [
   'staff.manage',
   'audit.view',
   'restaurant.settings',
+  'campaign.manage',
   // cardápio (delegáveis)
   ...DELEGATABLE_PERMISSIONS,
 ] as const;
@@ -97,6 +98,14 @@ export const PERMISSION_MATRIX: Readonly<Record<Action, readonly Role[]>> = {
   // e delegável pessoa a pessoa
   'menu.price':               ['owner'],
   'menu.publish':             ['owner'],
+
+  // Escrever e disparar campanha. Gerente entra porque é quem conhece o
+  // movimento da casa e sabe quando vale chamar gente.
+  //
+  // O que gerente NÃO faz é ligar o WhatsApp a uma instância: isso é
+  // `restaurant.settings`, de dono, porque errar a instância manda a campanha
+  // pelo número de outro restaurante.
+  'campaign.manage':          ['manager', 'owner'],
 } as const;
 
 /** Teto de desconto por função, em pontos percentuais (spec §10.3). */

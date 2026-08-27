@@ -17,6 +17,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client, Pool } from 'pg';
+import { renderMensagem } from '@/lib/marketing/mensagem';
 
 const DATABASE_URL =
   process.env.DATABASE_URL ??
@@ -663,6 +664,38 @@ describe('agendamento', () => {
         [campanha],
       );
       expect(rows[0].status).toBe('sending');
+    });
+  });
+});
+
+describe('a prévia da tela e o banco escrevem a mesma coisa', () => {
+  it('para os mesmos valores, o texto é idêntico', async () => {
+    // A tela mostra a mensagem enquanto a pessoa digita, e para isso repete em
+    // TypeScript o que `app.render_mensagem` faz em SQL. Duplicação é dívida, e
+    // esta é a cobrança: se alguém mexer em um lado só, cai aqui.
+    //
+    // Sem isto, a divergência apareceria da pior forma — a prévia mostrando um
+    // texto e o cliente recebendo outro.
+    await comoPostgres(async (c) => {
+      const casos: [string, string, number][] = [
+        ['Oi {nome}, você tem {saldo}!', 'Ana Paula Souza', 2500],
+        ['Sem substituição nenhuma.', 'Jorge', 0],
+        ['{nome}{nome} e {saldo}', 'Bia', 123456],
+        ['Saldo alto: {saldo}', 'Zé', 1234567],
+        ['Nome de uma palavra só: {nome}', 'Madonna', 99],
+      ];
+
+      const { rows: base } = await c.query(`select app.url_base() as u`);
+
+      for (const [corpo, nome, saldo] of casos) {
+        const { rows } = await c.query(
+          `select app.render_mensagem($1, $2, $3, $4) as t`,
+          [corpo, nome, saldo, 'aBcD1234'],
+        );
+        expect(rows[0].t).toBe(
+          renderMensagem(corpo, nome, saldo, base[0].u, 'aBcD1234'),
+        );
+      }
     });
   });
 });

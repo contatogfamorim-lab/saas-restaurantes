@@ -6,6 +6,7 @@ import {
   BanknoteIcon,
   ClipboardListIcon,
   FlameIcon,
+  MessageCircleIcon,
   QrCodeIcon,
   ScrollTextIcon, SettingsIcon,
   TagIcon,
@@ -35,6 +36,7 @@ const SECOES = [
   { href: '/app/gestao/mesas', rotulo: 'Mesas', icone: QrCodeIcon },
   { href: '/app/gestao/equipe', rotulo: 'Equipe', icone: UsersIcon },
   { href: '/app/gestao/clientes', rotulo: 'Clientes', icone: ClipboardListIcon },
+  { href: '/app/gestao/campanhas', rotulo: 'Campanhas', icone: MessageCircleIcon },
   { href: '/app/gestao/auditoria', rotulo: 'Auditoria', icone: ScrollTextIcon },
   { href: '/app/gestao/configuracoes', rotulo: 'Configurações', icone: SettingsIcon },
 ] as const;

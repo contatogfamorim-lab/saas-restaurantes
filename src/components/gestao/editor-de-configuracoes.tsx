@@ -22,6 +22,8 @@ export function EditorDeConfiguracoes({
   nome: nomeInicial,
   taxaServico: taxaInicial,
   cashback: cashbackInicial,
+  whatsapp: whatsappInicial,
+  tetoDiario: tetoInicial,
   timezone: fusoInicial,
   pedirTelefone: telefoneInicial,
   cor: corInicial,
@@ -29,6 +31,8 @@ export function EditorDeConfiguracoes({
   nome: string;
   taxaServico: number;
   cashback: number;
+  whatsapp: string;
+  tetoDiario: number;
   timezone: string;
   pedirTelefone: boolean;
   cor: string;
@@ -49,6 +53,8 @@ export function EditorDeConfiguracoes({
   // Antes era só um campo com zero por padrão, e "0" numa caixa de número não
   // diz "desligado" — diz "ainda não digitei". Ligado/desligado explícito, e o
   // percentual só aparece quando faz sentido responder.
+  const [whatsapp, setWhatsapp] = useState(whatsappInicial);
+  const [teto, setTeto] = useState(String(tetoInicial));
   const [cashbackLigado, setCashbackLigado] = useState(cashbackInicial > 0);
   const [cashback, setCashback] = useState(String(cashbackInicial || 5));
 
@@ -57,6 +63,8 @@ export function EditorDeConfiguracoes({
   const sujo =
     nome !== nomeInicial ||
     Number(taxa) !== taxaInicial ||
+    whatsapp !== whatsappInicial ||
+    Number(teto) !== tetoInicial ||
     cashbackEfetivo !== cashbackInicial ||
     fuso !== fusoInicial ||
     telefone !== telefoneInicial ||
@@ -245,6 +253,44 @@ export function EditorDeConfiguracoes({
                 exige permissão e é registrado na auditoria.
               </span>
             </span>
+          </label>
+        </Bloco>
+
+        <Bloco titulo="WhatsApp">
+          <label className="block">
+            <Rotulo>Nome da instância na Evolution</Rotulo>
+            <input
+              name="whatsapp"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              maxLength={60}
+              placeholder="minha-casa"
+              autoComplete="off"
+              spellCheck={false}
+              className={CAMPO}
+            />
+            <Ajuda>
+              É o &ldquo;aparelho&rdquo; ligado ao número da casa. Sem isso,
+              nenhuma campanha sai — e a tela de Campanhas avisa. Apagar o campo
+              desconecta.
+            </Ajuda>
+          </label>
+
+          <label className="mt-4 block">
+            <Rotulo>Máximo de mensagens por dia</Rotulo>
+            <input
+              name="tetoDiario"
+              value={teto}
+              onChange={(e) => setTeto(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              inputMode="numeric"
+              className={CAMPO}
+            />
+            <Ajuda>
+              As mensagens já saem uma a uma, com 40 a 90 segundos entre elas —
+              isso é o RITMO. Este número é o VOLUME, que é o que costuma
+              derrubar um WhatsApp. Chegando ao teto, a campanha espera o dia
+              seguinte em vez de falhar.
+            </Ajuda>
           </label>
         </Bloco>
 
