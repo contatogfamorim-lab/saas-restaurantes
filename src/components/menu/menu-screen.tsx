@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { ReceiptTextIcon, WalletIcon } from 'lucide-react';
 
 import { brandStyle } from '@/lib/brand';
@@ -18,6 +18,8 @@ import { OrderTracker } from './order-tracker';
 import { ProductCard } from './product-card';
 import { ProductSheet } from './product-sheet';
 import { PromoRail } from './promo-rail';
+import { BannerDoCardapio } from './banner-do-cardapio';
+import { urlDaImagem } from '@/lib/menu/imagens';
 
 /**
  * Tela do cardápio do cliente.
@@ -92,6 +94,38 @@ export function MenuScreen({ menu, shortCode }: Props) {
     .filter((category) => category.products.length > 0);
 
   const resultCount = visibleCategories.reduce((n, c) => n + c.products.length, 0);
+
+  const banners = menu.blocos.filter((b) => b.tipo === 'banner');
+
+  /**
+   * A ordem das categorias, definida pelo editor de blocos.
+   *
+   * A REGRA QUE IMPEDE O PIOR ERRO: categoria sem bloco correspondente NÃO
+   * some — vai para o fim. A alternativa (só aparece o que está no layout)
+   * significa que cadastrar uma categoria e esquecer de arrastá-la ao editor
+   * faz a comida desaparecer do cardápio, sem erro e sem aviso.
+   *
+   * O layout ORDENA e ACRESCENTA; nunca subtrai por omissão. Para esconder há
+   * `is_hidden`, que é escolha explícita e já vem filtrada do banco.
+   *
+   * Sem layout publicado, `menu.blocos` é vazio e isto devolve exatamente o que
+   * o cardápio sempre devolveu.
+   */
+  const categoriasOrdenadas = useMemo(() => {
+    const noLayout = menu.blocos
+      .filter((b) => b.tipo === 'category' && b.config.category_id)
+      .map((b) => b.config.category_id!);
+
+    if (noLayout.length === 0) return visibleCategories;
+
+    const posicao = new Map(noLayout.map((id, i) => [id, i]));
+    return [...visibleCategories].sort((a, b) => {
+      // `?? Infinity` é o que manda para o fim quem não está no layout.
+      const pa = posicao.get(a.id) ?? Number.POSITIVE_INFINITY;
+      const pb = posicao.get(b.id) ?? Number.POSITIVE_INFINITY;
+      return pa - pb;
+    });
+  }, [menu.blocos, visibleCategories]);
 
   useScrollSpy(
     menu.categories.map((c) => c.id),
@@ -261,6 +295,21 @@ export function MenuScreen({ menu, shortCode }: Props) {
         </main>
       ) : (
       <>
+      {/* BANNERS antes de qualquer coisa, e só quando não há filtro: quem está
+          buscando "sem glúten" não quer uma foto de hambúrguer no caminho. */}
+      {!isFiltering &&
+        banners.map((b) => (
+          <div key={b.id} className="pb-1 pt-1">
+            <BannerDoCardapio
+              imagens={(b.config.imagens ?? []).map((i) => ({
+                url: urlDaImagem(i.caminho),
+                alt: i.alt,
+              }))}
+              intervaloMs={b.config.intervalo_ms}
+            />
+          </div>
+        ))}
+
       {!isFiltering && <PromoRail products={menu.promoted} onOpen={openProduct} />}
 
       <FilterBar
@@ -294,7 +343,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
       )}
 
       <main>
-        {visibleCategories.map((category, categoryIndex) => (
+        {categoriasOrdenadas.map((category, categoryIndex) => (
           <section
             key={category.id}
             id={`categoria-${category.id}`}

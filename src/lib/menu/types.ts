@@ -92,6 +92,8 @@ export interface MenuData {
   restaurant: MenuRestaurant;
   table: MenuTable;
   categories: MenuCategory[];
+  /** Ordem e blocos extras definidos pela casa. Vazio = ordem das categorias. */
+  blocos: BlocoDoCardapio[];
   /** Itens com promoção viva agora — alimenta o bloco "Hoje na casa". */
   promoted: MenuProduct[];
 }
@@ -107,4 +109,25 @@ export interface SeloDoCardapio {
   label: string;
   color: string;
   animation: 'none' | 'pulse' | 'shine' | 'bounce';
+}
+
+/**
+ * Um bloco do cardápio, na ordem em que a casa o organizou.
+ *
+ * `config` é apresentação pura — referências a produto e categoria, caminho de
+ * imagem, título. Nome e preço NUNCA vêm daqui; vêm de `products`, como manda a
+ * 0009.
+ */
+export interface BlocoDoCardapio {
+  id: string;
+  tipo: 'category' | 'product' | 'featured_group' | 'banner' | 'text' | 'combo' | 'drink_grid' | 'spacer';
+  config: {
+    category_id?: string;
+    titulo?: string;
+    corpo?: string;
+    origem?: 'promocoes' | 'manual';
+    produtos?: string[];
+    imagens?: { caminho: string; alt?: string }[];
+    intervalo_ms?: number;
+  };
 }

@@ -5,6 +5,7 @@ import { urlPublicaDaFoto } from '@/lib/supabase/storage';
 import { createPublicClient } from '@/lib/supabase/public';
 
 import type {
+  BlocoDoCardapio,
   DietTag,
   MenuCategory,
   MenuData,
@@ -54,6 +55,16 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
   if (!restaurant || !restaurant.active) return null;
 
   const restaurantId = restaurant.id;
+
+  // OS BLOCOS, pelo client de ADMIN.
+  //
+  // `menu_blocks` não está entre as tabelas que o `anon` lê, e não deve estar:
+  // manter aquela lista curta é o que o `check-rls` verifica nas duas direções.
+  // A função é `security definer` e já devolve só o layout publicado, sem os
+  // ocultos e dentro da janela de horário.
+  const { data: blocosBrutos } = await admin.rpc('blocos_do_cardapio', {
+    p_restaurante: restaurantId,
+  });
   const timezone = restaurant.timezone ?? 'America/Sao_Paulo';
 
   const supabase = createPublicClient();
@@ -202,6 +213,10 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       area: table.area,
     },
     categories: menuCategories,
+    // Os blocos vão como vieram. Quem decide o que fazer com cada um é a tela —
+    // e ela ignora bloco cuja categoria não tem produto disponível, sem
+    // precisar que este arquivo saiba disso.
+    blocos: (blocosBrutos ?? []) as unknown as BlocoDoCardapio[],
     promoted,
   };
 }

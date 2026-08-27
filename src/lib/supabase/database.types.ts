@@ -2426,6 +2426,10 @@ export type Database = {
       }
     }
     Functions: {
+      adicionar_bloco: {
+        Args: { p_config?: Json; p_tipo: string }
+        Returns: string
+      }
       aplicar_briefing: { Args: { p_respostas: Json }; Returns: Json }
       apply_discount: {
         Args: {
@@ -2449,11 +2453,16 @@ export type Database = {
         Args: { p_arquivar?: boolean; p_product_id: string }
         Returns: undefined
       }
+      atualizar_bloco: {
+        Args: { p_bloco: string; p_config?: Json; p_oculto?: boolean }
+        Returns: undefined
+      }
       atualizar_configuracoes: { Args: { p_valores: Json }; Returns: Json }
       autenticar_cliente: {
         Args: { p_cpf: string; p_restaurante: string; p_senha: string }
         Returns: string
       }
+      blocos_do_cardapio: { Args: { p_restaurante: string }; Returns: Json }
       cadastrar_cliente: {
         Args: {
           p_cpf: string
@@ -2507,6 +2516,10 @@ export type Database = {
         Returns: boolean
       }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
+      mover_bloco: {
+        Args: { p_bloco: string; p_direcao: string }
+        Returns: undefined
+      }
       open_guest_session: {
         Args: {
           p_device_hash: string
@@ -2545,6 +2558,7 @@ export type Database = {
         }
         Returns: Json
       }
+      remover_bloco: { Args: { p_bloco: string }; Returns: undefined }
       resgatar_cashback: {
         Args: { p_cliente: string; p_sessao: string }
         Returns: Json

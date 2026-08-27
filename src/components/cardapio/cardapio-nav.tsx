@@ -26,6 +26,11 @@ export function CardapioNav({ permissoes }: { permissoes: DelegatablePermission[
       visivel: tem('menu.structure'),
     },
     {
+      href: '/app/cardapio/layout-do-cardapio',
+      rotulo: 'Organizar',
+      visivel: tem('menu.structure'),
+    },
+    {
       href: '/app/cardapio/selos',
       rotulo: 'Selos',
       // `menu.content`, e não `menu.structure`: selo é vitrine, a mesma decisão

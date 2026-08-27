@@ -112,6 +112,10 @@ const CASOS: Caso[] = [
   // --- editor de cardápio (spec §12): porta PRÓPRIA, não é seção da gestão --
   { caminho: '/app/cardapio', espera: 'pagina', como: 'admin', descricao: 'editor de cardápio' },
   { caminho: '/app/cardapio/categorias', espera: 'pagina', como: 'admin', descricao: 'categorias' },
+  { caminho: '/app/cardapio/layout-do-cardapio', espera: 'pagina', como: 'admin',
+    contendo: 'Organizar cardápio', descricao: 'organizar o cardápio' },
+  { caminho: '/app/cardapio/selos', espera: 'pagina', como: 'admin',
+    contendo: 'Selos', descricao: 'selos' },
   // "Acabou" é do garçom e da cozinha; o EDITOR não é.
   { caminho: '/app/disponibilidade', espera: 'pagina', como: 'garcom',
     descricao: 'garçom marca esgotado' },
@@ -121,6 +125,8 @@ const CASOS: Caso[] = [
   // --- e a porta fechada, que é o teste que vale ---------------------------
   { caminho: '/app/cardapio', espera: 'proibido', como: 'garcom',
     contendo: 'Área da gestão', descricao: 'garçom NÃO abre o editor' },
+  { caminho: '/app/cardapio/layout-do-cardapio', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO organiza o cardápio' },
   { caminho: '/app/cardapio/categorias', espera: 'proibido', como: 'garcom',
     contendo: 'Área da gestão', descricao: 'garçom NÃO mexe na estrutura' },
   { caminho: '/app/gestao', espera: 'proibido', como: 'garcom',
