@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import { formatCents } from '@/lib/money';
-import { DIET_LABELS, PRODUCT_BADGE_LABELS, servesLabel } from '@/lib/menu/labels';
-import type { DietTag, ProductBadge } from '@/lib/menu/types';
+import { servesLabel } from '@/lib/menu/labels';
+import { Selo } from '@/components/menu/selo';
+import type { RestricaoDoCardapio, SeloDoCardapio } from '@/lib/menu/types';
 
 /**
  * Como o item aparece no celular do cliente.
@@ -34,6 +35,8 @@ export function PreviewDoCelular({
   servePessoas,
   dietTags,
   badges,
+  selos,
+  restricoes,
   disponivel,
 }: {
   nome: string;
@@ -43,6 +46,9 @@ export function PreviewDoCelular({
   servePessoas: number;
   dietTags: string[];
   badges: string[];
+  /** Definições vindas do banco — o preview usa as mesmas do cliente. */
+  selos: SeloDoCardapio[];
+  restricoes: RestricaoDoCardapio[];
   disponivel: boolean;
 }) {
   const serve = servesLabel(servePessoas);
@@ -63,14 +69,13 @@ export function PreviewDoCelular({
           <div className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left">
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-wrap items-center gap-1.5">
-                {badges.map((b) => (
-                  <span
-                    key={b}
-                    className="rounded-sm bg-accent px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-accent-foreground"
-                  >
-                    {PRODUCT_BADGE_LABELS[b as ProductBadge] ?? b}
-                  </span>
-                ))}
+                {/* O MESMO componente do cardápio do cliente, com o mesmo CSS
+                    de animação. Reimplementar o selo aqui daria uma prévia que
+                    parece certa e mente na cor e no movimento. */}
+                {badges.map((slug) => {
+                  const selo = selos.find((x) => x.slug === slug);
+                  return selo ? <Selo key={slug} selo={selo} /> : null;
+                })}
               </div>
 
               <h3 className="font-display mt-1 text-[19px] leading-tight text-foreground">
@@ -94,14 +99,26 @@ export function PreviewDoCelular({
 
               {dietTags.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
-                  {dietTags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-sm border border-border px-1 py-0.5 text-[9px] font-semibold tracking-wide text-muted-foreground"
-                    >
-                      {DIET_LABELS[t as DietTag]?.short ?? t}
-                    </span>
-                  ))}
+                  {/* Mesmas cores do card de verdade. Prévia que aproxima o
+                      resultado é pior que nenhuma: a pessoa escolhe achando que
+                      ficou de um jeito e descobre o contrário no celular de
+                      quem está pagando. */}
+                  {dietTags.map((slug) => {
+                    const r = restricoes.find((x) => x.slug === slug);
+                    if (!r) return null;
+                    return (
+                      <span
+                        key={slug}
+                        className="rounded-sm px-1 py-0.5 text-[9px] font-bold tracking-wide"
+                        style={{
+                          color: r.color,
+                          background: `color-mix(in oklab, ${r.color} 15%, transparent)`,
+                        }}
+                      >
+                        {r.label}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </div>

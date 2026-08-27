@@ -3,8 +3,7 @@
 import { SearchIcon, XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { DIET_LABELS, DIET_ORDER } from '@/lib/menu/labels';
-import type { DietTag } from '@/lib/menu/types';
+import type { RestricaoDoCardapio } from '@/lib/menu/types';
 
 /**
  * Busca e filtros rápidos (spec §4).
@@ -17,8 +16,10 @@ import type { DietTag } from '@/lib/menu/types';
 interface Props {
   query: string;
   onQueryChange: (value: string) => void;
-  activeDiets: DietTag[];
-  onToggleDiet: (tag: DietTag) => void;
+  activeDiets: string[];
+  onToggleDiet: (tag: string) => void;
+  /** As restrições da casa. Vazio = a barra não mostra filtro de restrição. */
+  restricoes: RestricaoDoCardapio[];
   onlyPromos: boolean;
   onToggleOnlyPromos: () => void;
   hasPromos: boolean;
@@ -32,6 +33,7 @@ export function FilterBar({
   onlyPromos,
   onToggleOnlyPromos,
   hasPromos,
+  restricoes,
 }: Props) {
   return (
     <div className="px-3 pb-1 pt-3">
@@ -64,13 +66,13 @@ export function FilterBar({
             Só promoções
           </FilterChip>
         )}
-        {DIET_ORDER.map((tag) => (
+        {restricoes.map((r) => (
           <FilterChip
-            key={tag}
-            active={activeDiets.includes(tag)}
-            onClick={() => onToggleDiet(tag)}
+            key={r.slug}
+            active={activeDiets.includes(r.slug)}
+            onClick={() => onToggleDiet(r.slug)}
           >
-            {DIET_LABELS[tag].long}
+            {r.labelLong}
           </FilterChip>
         ))}
       </div>

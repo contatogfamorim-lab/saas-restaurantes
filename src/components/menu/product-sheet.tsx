@@ -6,7 +6,7 @@ import { MinusIcon, PlusIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { formatCents, discountPercent } from '@/lib/money';
-import { DIET_LABELS, servesLabel } from '@/lib/menu/labels';
+import { servesLabel } from '@/lib/menu/labels';
 import {
   buildLine,
   missingRequirement,
@@ -14,7 +14,7 @@ import {
   type CartLine,
   type SelectionState,
 } from '@/lib/menu/cart';
-import type { MenuProduct } from '@/lib/menu/types';
+import type { MenuProduct, RestricaoDoCardapio } from '@/lib/menu/types';
 
 import { ProductImage } from './product-image';
 import { PromoCountdown } from './promo-countdown';
@@ -30,10 +30,12 @@ interface Props {
   product: MenuProduct | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Definições das restrições da casa — cor e nome inteiro. */
+  restricoes: RestricaoDoCardapio[];
   onAdd: (line: CartLine) => void;
 }
 
-export function ProductSheet({ product, open, onOpenChange, onAdd }: Props) {
+export function ProductSheet({ product, open, onOpenChange, onAdd, restricoes }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -52,6 +54,7 @@ export function ProductSheet({ product, open, onOpenChange, onAdd }: Props) {
             key={product.id}
             product={product}
             onAdd={onAdd}
+            restricoes={restricoes}
             onClose={() => onOpenChange(false)}
           />
         )}
@@ -63,9 +66,11 @@ export function ProductSheet({ product, open, onOpenChange, onAdd }: Props) {
 function ProductSheetBody({
   product,
   onAdd,
+  restricoes,
   onClose,
 }: {
   product: MenuProduct;
+  restricoes: RestricaoDoCardapio[];
   onAdd: (line: CartLine) => void;
   onClose: () => void;
 }) {
@@ -138,14 +143,25 @@ function ProductSheetBody({
 
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
               {serves && <span className="text-xs text-muted-foreground">{serves}</span>}
-              {product.dietTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-sm bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
-                >
-                  {DIET_LABELS[tag].long}
-                </span>
-              ))}
+              {/* Na ficha aberta vai o nome INTEIRO — "Sem glúten", não
+                  "S/ GLÚTEN". Aqui há espaço, e é onde a pessoa confere antes
+                  de pedir. Abreviação serve à lista, não à decisão. */}
+              {product.dietTags.map((slug) => {
+                const r = restricoes.find((x) => x.slug === slug);
+                if (!r) return null;
+                return (
+                  <span
+                    key={slug}
+                    className="rounded-sm px-1.5 py-0.5 text-[11px] font-semibold"
+                    style={{
+                      color: r.color,
+                      background: `color-mix(in oklab, ${r.color} 15%, transparent)`,
+                    }}
+                  >
+                    {r.labelLong}
+                  </span>
+                );
+              })}
             </div>
 
             {product.promotion && (

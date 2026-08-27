@@ -57,7 +57,11 @@ export interface MenuProduct {
   imageUrl: string | null;
   prepMinutes: number;
   servesPeople: number;
-  dietTags: DietTag[];
+  /**
+   * Slugs das restrições. `string[]` e não o enum: o conjunto deixou de ser
+   * fechado na 0048, e cada casa cadastra as suas.
+   */
+  dietTags: string[];
   badges: ProductBadge[];
   modifierGroups: MenuModifierGroup[];
   promotion: MenuPromotionBadge | null;
@@ -80,6 +84,8 @@ export interface MenuRestaurant {
   cashbackPct: number;
   /** Os selos cadastrados pela casa, com cor e animação próprias. */
   selos: SeloDoCardapio[];
+  /** As restrições cadastradas pela casa. Sem animação: aviso não é vitrine. */
+  restricoes: RestricaoDoCardapio[];
 }
 
 export interface MenuTable {
@@ -104,6 +110,15 @@ export interface MenuData {
  * Cor e animação vêm do banco, não de um mapa fixo no código: o conjunto deixou
  * de ser os quatro do enum e passou a ser o que cada restaurante quiser.
  */
+export interface RestricaoDoCardapio {
+  slug: string;
+  /** Curto, para o card: "S/ GLÚTEN". */
+  label: string;
+  /** Inteiro, para o filtro e o editor: "Sem glúten". */
+  labelLong: string;
+  color: string;
+}
+
 export interface SeloDoCardapio {
   slug: string;
   label: string;

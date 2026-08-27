@@ -1,9 +1,9 @@
 'use client';
 
 import { formatCents, discountPercent } from '@/lib/money';
-import { DIET_LABELS, servesLabel } from '@/lib/menu/labels';
+import { servesLabel } from '@/lib/menu/labels';
 import { Selo } from './selo';
-import type { SeloDoCardapio } from '@/lib/menu/types';
+import type { RestricaoDoCardapio, SeloDoCardapio } from '@/lib/menu/types';
 import type { MenuProduct } from '@/lib/menu/types';
 
 import { ProductImage } from './product-image';
@@ -27,9 +27,11 @@ interface Props {
   inCart?: number;
   /** Definições dos selos da casa — cor e animação. */
   selos: SeloDoCardapio[];
+  /** Definições das restrições da casa — cor, sem animação. */
+  restricoes: RestricaoDoCardapio[];
 }
 
-export function ProductCard({ product, onOpen, priority, inCart = 0, selos }: Props) {
+export function ProductCard({ product, onOpen, priority, inCart = 0, selos, restricoes }: Props) {
   const hasDiscount = product.originalPriceCents !== null;
   const percent = hasDiscount
     ? discountPercent(product.originalPriceCents!, product.priceCents)
@@ -84,14 +86,23 @@ export function ProductCard({ product, onOpen, priority, inCart = 0, selos }: Pr
             {serves && (
               <span className="text-[11px] text-muted-foreground">{serves}</span>
             )}
-            {product.dietTags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] font-medium tracking-wide text-muted-foreground"
-              >
-                {DIET_LABELS[tag].short}
-              </span>
-            ))}
+            {/* Restrição pintada, e não cinza como o resto da linha.
+                Quem procura "sem glúten" varre a lista com o olho — cinza igual
+                ao "Serve 2 pessoas" ao lado obriga a LER cada uma.
+                Sem animação de propósito: aviso de alergia não é vitrine. */}
+            {product.dietTags.map((slug) => {
+              const r = restricoes.find((x) => x.slug === slug);
+              if (!r) return null;
+              return (
+                <span
+                  key={slug}
+                  className="text-[10px] font-bold tracking-wide"
+                  style={{ color: r.color }}
+                >
+                  {r.label}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>

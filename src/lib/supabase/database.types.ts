@@ -304,6 +304,56 @@ export type Database = {
           },
         ]
       }
+      diet_restrictions: {
+        Row: {
+          active: boolean
+          built_in: boolean
+          color: string
+          created_at: string
+          id: string
+          label: string
+          label_long: string
+          restaurant_id: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          built_in?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          label: string
+          label_long: string
+          restaurant_id: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          built_in?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          label?: string
+          label_long?: string
+          restaurant_id?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diet_restrictions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_blocks: {
         Row: {
           config: Json
@@ -1143,7 +1193,7 @@ export type Database = {
           category_id: string
           created_at: string
           description: string | null
-          diet_tags: Database["public"]["Enums"]["diet_tag"][]
+          diet_tags: string[]
           id: string
           image_url: string | null
           is_available: boolean
@@ -1164,7 +1214,7 @@ export type Database = {
           category_id: string
           created_at?: string
           description?: string | null
-          diet_tags?: Database["public"]["Enums"]["diet_tag"][]
+          diet_tags?: string[]
           id?: string
           image_url?: string | null
           is_available?: boolean
@@ -1185,7 +1235,7 @@ export type Database = {
           category_id?: string
           created_at?: string
           description?: string | null
-          diet_tags?: Database["public"]["Enums"]["diet_tag"][]
+          diet_tags?: string[]
           id?: string
           image_url?: string | null
           is_available?: boolean

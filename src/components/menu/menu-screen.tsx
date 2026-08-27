@@ -7,7 +7,7 @@ import { brandStyle } from '@/lib/brand';
 import { addLine, setLineQty } from '@/lib/menu/cart';
 import { useCart } from '@/lib/menu/use-cart';
 import { useOrderStatus } from '@/lib/menu/use-order-status';
-import type { DietTag, MenuData, MenuProduct } from '@/lib/menu/types';
+import type { MenuData, MenuProduct } from '@/lib/menu/types';
 
 import { CartBar } from './cart-bar';
 import { CategoryNav, useScrollSpy } from './category-nav';
@@ -35,7 +35,7 @@ interface Props {
 
 export function MenuScreen({ menu, shortCode }: Props) {
   const [query, setQuery] = useState('');
-  const [diets, setDiets] = useState<DietTag[]>([]);
+  const [diets, setDiets] = useState<string[]>([]);
   const [onlyPromos, setOnlyPromos] = useState(false);
   const [selected, setSelected] = useState<MenuProduct | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -324,6 +324,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
         onlyPromos={onlyPromos}
         onToggleOnlyPromos={() => setOnlyPromos((v) => !v)}
         hasPromos={menu.promoted.length > 0}
+        restricoes={menu.restaurant.restricoes}
       />
 
       {!isFiltering && (
@@ -367,6 +368,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
                   // prioritárias; o resto é lazy (spec §13.2)
                   priority={categoryIndex === 0 && index < 2}
                   selos={menu.restaurant.selos}
+                  restricoes={menu.restaurant.restricoes}
                   inCart={qtyInCart(product.id)}
                 />
               ))}
@@ -397,6 +399,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
       <MarkelloBadge />
 
       <ProductSheet
+        restricoes={menu.restaurant.restricoes}
         product={selected}
         open={sheetOpen}
         onOpenChange={setSheetOpen}

@@ -99,6 +99,10 @@ async function main() {
     // primeiro `pnpm verify` depois da 0043 — que é exatamente o que ele
     // deveria fazer, e o motivo de a lista ser exata em vez de um mínimo.
     'product_badges',
+    // Restrições, pelo mesmo motivo dos selos: são CARDÁPIO. E aqui pesa mais —
+    // é por elas que o cliente celíaco filtra. Sem leitura pública, o filtro
+    // volta vazio e o prato seguro fica invisível para quem mais precisa dele.
+    'diet_restrictions',
   ]);
 
   const { rows: grantsAnon } = await client.query<{ table_name: string; privilege_type: string }>(`

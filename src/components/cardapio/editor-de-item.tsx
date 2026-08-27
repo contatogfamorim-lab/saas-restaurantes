@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import { ArchiveIcon, ArchiveRestoreIcon, LockIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import type { RestricaoDoCardapio, SeloDoCardapio } from '@/lib/menu/types';
 import { formatCentsBare, parseCents } from '@/lib/money';
-import { DIET_LABELS, DIET_ORDER, PRODUCT_BADGE_LABELS } from '@/lib/menu/labels';
-import type { DietTag, ProductBadge } from '@/lib/menu/types';
 import type { DelegatablePermission } from '@/lib/permissions';
 import type {
   CategoriaDoEditor,
@@ -22,7 +21,6 @@ import { CampoDeFoto } from './campo-de-foto';
 import { HistoricoDoItem } from './historico-do-item';
 import { PreviewDoCelular } from './preview-do-celular';
 
-const BADGES: ProductBadge[] = ['novo', 'mais_pedido', 'picante', 'da_casa'];
 
 /**
  * Edição de um item (spec §12).
@@ -44,11 +42,16 @@ export function EditorDeItem({
   categorias,
   historico,
   permissoes,
+  selos,
+  restricoes,
 }: {
   produto: ProdutoDoEditor;
   categorias: CategoriaDoEditor[];
   historico: MudancaDoItem[];
   permissoes: DelegatablePermission[];
+  /** Selos da casa, com cor. Vêm do banco — ver o comentário no uso. */
+  selos: SeloDoCardapio[];
+  restricoes: RestricaoDoCardapio[];
 }) {
   const router = useRouter();
   const [pendente, iniciar] = useTransition();
@@ -281,7 +284,11 @@ export function EditorDeItem({
             rotulo="Selos"
             dica="Aparecem acima do nome, no card. Dois já é muito."
             liberado={podeConteudo}
-            opcoes={BADGES.map((b) => ({ valor: b, rotulo: PRODUCT_BADGE_LABELS[b] }))}
+            // DO BANCO, e não de uma lista escrita aqui. A versão anterior
+            // tinha os quatro do enum fixos neste arquivo: selo criado na aba
+            // "Selos" não aparecia, e não havia como pô-lo num prato. Era a
+            // única tela que não sabia da 0043.
+            opcoes={selos.map((b) => ({ valor: b.slug, rotulo: b.label, cor: b.color }))}
             ativos={badges}
             onAlternar={(v) => alternarNaLista(v, badges, setBadges)}
             campo="badges"
@@ -291,9 +298,10 @@ export function EditorDeItem({
             rotulo="Restrições"
             dica="O cliente filtra por elas. Errar aqui é sério: alguém com alergia acredita."
             liberado={podeConteudo}
-            opcoes={DIET_ORDER.map((d: DietTag) => ({
-              valor: d,
-              rotulo: DIET_LABELS[d].long,
+            opcoes={restricoes.map((d) => ({
+              valor: d.slug,
+              rotulo: d.labelLong,
+              cor: d.color,
             }))}
             ativos={diet}
             onAlternar={(v) => alternarNaLista(v, diet, setDiet)}
@@ -381,6 +389,8 @@ export function EditorDeItem({
 
       <div className="lg:pt-8">
         <PreviewDoCelular
+          selos={selos}
+          restricoes={restricoes}
           nome={nome}
           descricao={descricao.trim() || null}
           precoCents={parseCents(preco) ?? produto.precoCents}
@@ -455,7 +465,7 @@ function Selo({
   rotulo: string;
   dica: string;
   liberado: boolean;
-  opcoes: { valor: string; rotulo: string }[];
+  opcoes: { valor: string; rotulo: string; cor?: string }[];
   ativos: string[];
   onAlternar: (valor: string) => void;
   campo: string;
@@ -482,12 +492,26 @@ function Selo({
               disabled={!liberado}
               onClick={() => onAlternar(o.valor)}
               aria-pressed={ativo}
+              // A COR do selo aparece já na escolha, e não só depois de salvar.
+              // Escolher às cegas e descobrir no preview é uma viagem a mais
+              // por decisão — e são quatro ou cinco decisões por prato.
               className={cn(
-                'rounded-md px-2.5 py-1.5 text-[12px] font-semibold disabled:opacity-60',
-                ativo
-                  ? 'bg-foreground text-background'
-                  : 'bg-secondary text-muted-foreground',
+                'rounded-md border px-2.5 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-60',
+                !o.cor && (ativo
+                  ? 'border-transparent bg-foreground text-background'
+                  : 'border-transparent bg-secondary text-muted-foreground'),
               )}
+              style={
+                o.cor
+                  ? ativo
+                    ? { background: o.cor, borderColor: o.cor, color: '#fff' }
+                    : {
+                        color: o.cor,
+                        borderColor: `color-mix(in oklab, ${o.cor} 40%, transparent)`,
+                        background: `color-mix(in oklab, ${o.cor} 10%, transparent)`,
+                      }
+                  : undefined
+              }
             >
               {o.rotulo}
             </button>

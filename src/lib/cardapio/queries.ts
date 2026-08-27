@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
 import { urlPublicaDaFoto } from '@/lib/supabase/storage';
+import type { RestricaoDoCardapio, SeloDoCardapio } from '@/lib/menu/types';
 
 /**
  * Dados do editor de cardápio (spec §12).
@@ -207,4 +208,46 @@ export async function carregarHistorico(produtoId: string): Promise<MudancaDoIte
     antes: (l.before as Record<string, unknown> | null) ?? null,
     depois: (l.after as Record<string, unknown> | null) ?? null,
   }));
+}
+
+/**
+ * Selos e restrições da casa, para o editor de item.
+ *
+ * Antes o editor tinha as quatro etiquetas escritas no código. Selo cadastrado
+ * pela casa nunca aparecia ali — dava para criá-lo na aba "Selos" e não havia
+ * como pô-lo num prato. O editor era a única tela que não sabia da 0043.
+ */
+export async function carregarEtiquetas(): Promise<{
+  selos: SeloDoCardapio[];
+  restricoes: RestricaoDoCardapio[];
+}> {
+  const supabase = await createClient();
+
+  const [selosRes, restricoesRes] = await Promise.all([
+    supabase
+      .from('product_badges')
+      .select('slug, label, color, animation')
+      .eq('active', true)
+      .order('sort_order'),
+    supabase
+      .from('diet_restrictions')
+      .select('slug, label, label_long, color')
+      .eq('active', true)
+      .order('sort_order'),
+  ]);
+
+  return {
+    selos: (selosRes.data ?? []).map((b) => ({
+      slug: b.slug,
+      label: b.label,
+      color: b.color,
+      animation: b.animation as SeloDoCardapio['animation'],
+    })),
+    restricoes: (restricoesRes.data ?? []).map((d) => ({
+      slug: d.slug,
+      label: d.label,
+      labelLong: d.label_long,
+      color: d.color,
+    })),
+  };
 }

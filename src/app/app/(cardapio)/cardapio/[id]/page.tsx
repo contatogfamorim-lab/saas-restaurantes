@@ -6,6 +6,7 @@ import { exigirStaff } from '@/lib/auth/staff';
 import {
   carregarCategorias,
   carregarHistorico,
+  carregarEtiquetas,
   carregarProduto,
 } from '@/lib/cardapio/queries';
 import { canOpenMenuEditor, menuPermissions } from '@/lib/permissions';
@@ -27,10 +28,11 @@ export default async function EditarItem({
 
   const { id } = await params;
 
-  const [produto, categorias, historico] = await Promise.all([
+  const [produto, categorias, historico, etiquetas] = await Promise.all([
     carregarProduto(id),
     carregarCategorias(),
     carregarHistorico(id),
+    carregarEtiquetas(),
   ]);
 
   // `carregarProduto` volta nulo tanto para item inexistente quanto para item
@@ -44,6 +46,8 @@ export default async function EditarItem({
       categorias={categorias}
       historico={historico}
       permissoes={menuPermissions(staff)}
+      selos={etiquetas.selos}
+      restricoes={etiquetas.restricoes}
     />
   );
 }

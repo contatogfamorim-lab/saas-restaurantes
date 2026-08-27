@@ -6,7 +6,6 @@ import { createPublicClient } from '@/lib/supabase/public';
 
 import type {
   BlocoDoCardapio,
-  DietTag,
   MenuCategory,
   MenuData,
   MenuModifierGroup,
@@ -69,7 +68,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
 
   const supabase = createPublicClient();
 
-  const [categoriesRes, productsRes, linksRes, groupsRes, optionsRes, pricesRes, selosRes] =
+  const [categoriesRes, productsRes, linksRes, groupsRes, optionsRes, pricesRes, selosRes, restricoesRes] =
     await Promise.all([
       supabase
         .from('categories')
@@ -107,6 +106,12 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       supabase
         .from('product_badges')
         .select('slug, label, color, animation')
+        .eq('restaurant_id', restaurantId)
+        .eq('active', true)
+        .order('sort_order'),
+      supabase
+        .from('diet_restrictions')
+        .select('slug, label, label_long, color')
         .eq('restaurant_id', restaurantId)
         .eq('active', true)
         .order('sort_order')
@@ -169,7 +174,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       imageUrl: publicUrl(p.image_url),
       prepMinutes: p.prep_minutes,
       servesPeople: Number(p.serves_people),
-      dietTags: (p.diet_tags ?? []) as DietTag[],
+      dietTags: (p.diet_tags ?? []) as string[],
       badges: (p.badges ?? []) as ProductBadge[],
       modifierGroups: groupsByProduct.get(p.id) ?? [],
       promotion: preco?.promotion_id ? toBadge(preco, timezone) : null,
@@ -205,6 +210,12 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
         label: b.label,
         color: b.color,
         animation: b.animation as 'none' | 'pulse' | 'shine' | 'bounce',
+      })),
+      restricoes: (restricoesRes.data ?? []).map((d) => ({
+        slug: d.slug,
+        label: d.label,
+        labelLong: d.label_long,
+        color: d.color,
       })),
     },
     table: {
