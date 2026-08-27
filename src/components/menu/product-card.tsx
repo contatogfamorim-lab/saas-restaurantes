@@ -1,7 +1,9 @@
 'use client';
 
 import { formatCents, discountPercent } from '@/lib/money';
-import { DIET_LABELS, PRODUCT_BADGE_LABELS, servesLabel } from '@/lib/menu/labels';
+import { DIET_LABELS, servesLabel } from '@/lib/menu/labels';
+import { Selo } from './selo';
+import type { SeloDoCardapio } from '@/lib/menu/types';
 import type { MenuProduct } from '@/lib/menu/types';
 
 import { ProductImage } from './product-image';
@@ -23,9 +25,11 @@ interface Props {
   priority?: boolean;
   /** Quantas unidades deste produto já estão no carrinho. */
   inCart?: number;
+  /** Definições dos selos da casa — cor e animação. */
+  selos: SeloDoCardapio[];
 }
 
-export function ProductCard({ product, onOpen, priority, inCart = 0 }: Props) {
+export function ProductCard({ product, onOpen, priority, inCart = 0, selos }: Props) {
   const hasDiscount = product.originalPriceCents !== null;
   const percent = hasDiscount
     ? discountPercent(product.originalPriceCents!, product.priceCents)
@@ -40,14 +44,13 @@ export function ProductCard({ product, onOpen, priority, inCart = 0 }: Props) {
     >
       <div className="min-w-0 flex-1 pt-0.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          {product.badges.map((b) => (
-            <span
-              key={b}
-              className="rounded-sm bg-accent px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-accent-foreground"
-            >
-              {PRODUCT_BADGE_LABELS[b]}
-            </span>
-          ))}
+          {/* Selo desconhecido some em silêncio: a casa pode ter desativado
+              um selo que ainda está em produtos antigos, e um retângulo vazio
+              no card seria pior que a ausência. */}
+          {product.badges.map((slug) => {
+            const selo = selos.find((s) => s.slug === slug);
+            return selo ? <Selo key={slug} selo={selo} /> : null;
+          })}
         </div>
 
         <h3 className="font-display mt-1 text-[19px] leading-tight text-foreground">

@@ -221,7 +221,7 @@ function ItemDaLista({
               : 'bg-alert-critical text-background',
           )}
         >
-          {produto.disponivel ? 'No ar' : 'Acabou'}
+          {produto.disponivel ? 'No ar' : 'Zerou'}
         </button>
       )}
 

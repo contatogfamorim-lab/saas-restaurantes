@@ -376,3 +376,70 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ===========================================================================
+   SELOS
+   ===========================================================================
+   A cor vem do cadastro da casa por `--selo`, e o fundo é a mesma cor a 18% —
+   assim o selo tem a cor certa sem gritar contra o fundo escuro do cardápio.
+
+   `prefers-reduced-motion` desliga TODAS as animações. Não é enfeite: quem
+   marcou essa preferência no sistema costuma ter uma razão médica, e cardápio
+   piscando é exatamente o gatilho.
+   =========================================================================== */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--selo);
+  background: color-mix(in oklab, var(--selo) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--selo) 35%, transparent);
+}
+
+.selo--pulse { animation: selo-pulse 2s ease-in-out infinite; }
+.selo--bounce { animation: selo-bounce 1.6s ease-in-out infinite; }
+
+/* O brilho atravessa o selo uma vez a cada 3s. Mais lento que isso ninguém vê;
+   mais rápido vira estroboscópio no meio de uma lista de vinte pratos. */
+.selo--shine {
+  position: relative;
+  overflow: hidden;
+}
+.selo--shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklab, var(--selo) 55%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: selo-shine 3s ease-in-out infinite;
+}
+
+@keyframes selo-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+@keyframes selo-bounce {
+  0%, 100%   { transform: translateY(0); }
+  50%        { transform: translateY(-2px); }
+}
+
+@keyframes selo-shine {
+  0%        { transform: translateX(-100%); }
+  55%, 100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selo--pulse,
+  .selo--bounce { animation: none; }
+  .selo--shine::after { display: none; }
+}

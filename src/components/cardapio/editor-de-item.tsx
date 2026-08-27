@@ -173,7 +173,7 @@ export function EditorDeItem({
                   : 'bg-brand text-background',
               )}
             >
-              {produto.disponivel ? 'Acabou' : 'Voltar ao ar'}
+              {produto.disponivel ? 'Zerou' : 'Voltar ao ar'}
             </button>
           </div>
         )}

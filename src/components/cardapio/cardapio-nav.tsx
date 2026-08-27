@@ -25,6 +25,13 @@ export function CardapioNav({ permissoes }: { permissoes: DelegatablePermission[
       rotulo: 'Categorias',
       visivel: tem('menu.structure'),
     },
+    {
+      href: '/app/cardapio/selos',
+      rotulo: 'Selos',
+      // `menu.content`, e não `menu.structure`: selo é vitrine, a mesma decisão
+      // que mudar nome e descrição do prato.
+      visivel: tem('menu.content'),
+    },
   ].filter((a) => a.visivel);
 
   return (

@@ -23,7 +23,7 @@ const ETAPAS: Record<string, { rotulo: string; passo: number; icone: typeof Cloc
   ready: { rotulo: 'Pronto, saindo', passo: 3, icone: CheckIcon },
   delivered: { rotulo: 'Entregue', passo: 4, icone: CheckIcon },
   cancelled: { rotulo: 'Cancelado', passo: -1, icone: XIcon },
-  out_of_stock: { rotulo: 'Acabou', passo: -1, icone: XIcon },
+  out_of_stock: { rotulo: 'Zerou', passo: -1, icone: XIcon },
 };
 
 interface Props {

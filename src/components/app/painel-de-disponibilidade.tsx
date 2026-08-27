@@ -190,7 +190,7 @@ function LinhaDeItem({ produto }: { produto: ProdutoDoEditor }) {
             : 'bg-alert-critical text-background',
         )}
       >
-        {disponivel ? 'Acabou' : 'Voltar'}
+        {disponivel ? 'Zerou' : 'Voltar'}
       </button>
     </li>
   );

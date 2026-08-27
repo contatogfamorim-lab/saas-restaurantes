@@ -1025,6 +1025,56 @@ export type Database = {
           },
         ]
       }
+      product_badges: {
+        Row: {
+          active: boolean
+          animation: string
+          built_in: boolean
+          color: string
+          created_at: string
+          id: string
+          label: string
+          restaurant_id: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          animation?: string
+          built_in?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          label: string
+          restaurant_id: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          animation?: string
+          built_in?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          label?: string
+          restaurant_id?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_badges_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_modifier_groups: {
         Row: {
           created_at: string
@@ -1089,7 +1139,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           auto_reactivate_at: string | null
-          badges: Database["public"]["Enums"]["product_badge"][]
+          badges: string[]
           category_id: string
           created_at: string
           description: string | null
@@ -1110,7 +1160,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           auto_reactivate_at?: string | null
-          badges?: Database["public"]["Enums"]["product_badge"][]
+          badges?: string[]
           category_id: string
           created_at?: string
           description?: string | null
@@ -1131,7 +1181,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           auto_reactivate_at?: string | null
-          badges?: Database["public"]["Enums"]["product_badge"][]
+          badges?: string[]
           category_id?: string
           created_at?: string
           description?: string | null

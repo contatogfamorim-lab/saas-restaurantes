@@ -716,3 +716,58 @@ describe('o telefone na hora do pedido', () => {
     });
   });
 });
+
+// ===========================================================================
+describe('a faxina acompanha o esquema sozinha (0044)', () => {
+  it('tabela NOVA com restaurant_id entra na limpeza sem ninguém lembrar', async () => {
+    // Este defeito já voltou duas vezes. A lista de DELETEs era escrita à mão,
+    // das folhas para a raiz, e toda tabela nova precisava ser acrescentada
+    // ali — o que ninguém lembra de fazer. `product_badges` quebrou a faxina
+    // uma migration depois de eu ESCREVER que isso aconteceria.
+    //
+    // Aqui uma tabela é criada dentro da transação, com uma linha da demo, e a
+    // faxina precisa apagá-la sem que nada no código a mencione.
+    await comoPostgres(async (c) => {
+      await c.query(`
+        create table public.tabela_inventada_no_teste (
+          id uuid primary key default gen_random_uuid(),
+          restaurant_id uuid not null references public.restaurants(id) on delete restrict
+        )`);
+
+      // Não precisa gerar a demonstração inteira: o que se testa é a FAXINA.
+      // Marcar o restaurante como vencido é o estado que ela procura, e gerar a
+      // demo aqui só disputava mesa com o `montarMesa` das outras suítes.
+      await c.query(
+        `insert into public.tabela_inventada_no_teste (restaurant_id) values ($1)`,
+        [RESTAURANTE],
+      );
+      await c.query(
+        `update public.restaurants set expires_at = now() - interval '1 minute'
+          where id = $1`, [RESTAURANTE],
+      );
+
+      const { rows } = await c.query(`select app.limpar_demos_vencidas() as n`);
+      expect(rows[0].n).toBe(1);
+
+      expect((await c.query(
+        `select count(*)::int as n from public.tabela_inventada_no_teste`,
+      )).rows[0].n).toBe(0);
+      expect((await c.query(
+        `select count(*)::int as n from public.restaurants where id = $1`, [RESTAURANTE],
+      )).rows[0].n).toBe(0);
+    });
+  });
+
+  it('selo do sistema continua protegido em restaurante de verdade', async () => {
+    // A faxina precisou de uma fresta para apagar selo interno. Ela vale só
+    // para demonstração vencida — este teste é o que a mantém desse tamanho.
+    await comoPostgres(async (c) => {
+      await esperaFalhar(
+        c,
+        `delete from public.product_badges where restaurant_id = $1 and built_in`,
+        [RESTAURANTE],
+        /é do sistema/i,
+      );
+    });
+  });
+});

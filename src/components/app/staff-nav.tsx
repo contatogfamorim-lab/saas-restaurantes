@@ -46,7 +46,7 @@ export function StaffNav({ telas, nome, restaurante, papeis }: Props) {
     { href: '/app/caixa', rotulo: 'Caixa', visivel: telas.caixa },
     // "Acabou" é operação e fica junto das outras telas de serviço. O EDITOR
     // não aparece aqui: é ferramenta de quem administra, com casca própria.
-    { href: '/app/disponibilidade', rotulo: 'Acabou', visivel: telas.disponibilidade },
+    { href: '/app/disponibilidade', rotulo: 'Zerou', visivel: telas.disponibilidade },
     // Gestão não aparece na navegação das outras telas (spec §8) — só para
     // quem tem a permissão, que é exclusiva do dono.
     { href: '/app/gestao', rotulo: 'Gestão', visivel: telas.gestao },

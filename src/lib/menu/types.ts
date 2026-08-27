@@ -78,6 +78,8 @@ export interface MenuRestaurant {
   requirePhone: boolean;
   /** 0 = a casa não dá cashback, e a oferta some do fluxo de pedido. */
   cashbackPct: number;
+  /** Os selos cadastrados pela casa, com cor e animação próprias. */
+  selos: SeloDoCardapio[];
 }
 
 export interface MenuTable {
@@ -92,4 +94,17 @@ export interface MenuData {
   categories: MenuCategory[];
   /** Itens com promoção viva agora — alimenta o bloco "Hoje na casa". */
   promoted: MenuProduct[];
+}
+
+/**
+ * Um selo, como a casa o cadastrou.
+ *
+ * Cor e animação vêm do banco, não de um mapa fixo no código: o conjunto deixou
+ * de ser os quatro do enum e passou a ser o que cada restaurante quiser.
+ */
+export interface SeloDoCardapio {
+  slug: string;
+  label: string;
+  color: string;
+  animation: 'none' | 'pulse' | 'shine' | 'bounce';
 }

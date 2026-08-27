@@ -98,7 +98,7 @@ export function KdsCard({ item, podeRemoverDoCardapio }: Props) {
       {confirmandoAcabou ? (
         <div className="border-t-2 p-2">
           <p className="mb-2 text-center text-sm font-semibold">
-            Acabou o {item.produto}?
+            Zerou o {item.produto}?
           </p>
           <div className="grid gap-2">
             {podeRemoverDoCardapio && (
@@ -166,7 +166,7 @@ export function KdsCard({ item, podeRemoverDoCardapio }: Props) {
               onClick={() => setConfirmandoAcabou(true)}
               className="h-16 rounded-md border-2 border-alert-critical px-4 text-base font-bold text-alert-critical disabled:opacity-50"
             >
-              Acabou
+              Zerou
             </button>
           )}
         </footer>

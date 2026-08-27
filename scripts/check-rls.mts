@@ -91,6 +91,14 @@ async function main() {
     'modifier_groups',
     'modifier_options',
     'product_modifier_groups',
+    // Os selos entram porque são CARDÁPIO: rótulo, cor e animação do que o
+    // cliente vê no card. Não há dado de pessoa nem de dinheiro aqui, e a
+    // policy só devolve os ativos de restaurante ativo.
+    //
+    // A linha existe para ser DELIBERADA. O script acusou a tabela nova no
+    // primeiro `pnpm verify` depois da 0043 — que é exatamente o que ele
+    // deveria fazer, e o motivo de a lista ser exata em vez de um mínimo.
+    'product_badges',
   ]);
 
   const { rows: grantsAnon } = await client.query<{ table_name: string; privilege_type: string }>(`

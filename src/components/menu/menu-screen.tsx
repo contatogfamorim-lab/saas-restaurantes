@@ -317,6 +317,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
                   // só as duas primeiras da primeira seção entram como
                   // prioritárias; o resto é lazy (spec §13.2)
                   priority={categoryIndex === 0 && index < 2}
+                  selos={menu.restaurant.selos}
                   inCart={qtyInCart(product.id)}
                 />
               ))}

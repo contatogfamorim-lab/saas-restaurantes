@@ -1,27 +1,27 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowRightIcon, QrCodeIcon } from 'lucide-react';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
   title: 'Markello — pedidos por mesa',
-  description:
-    'Demonstração de um sistema multi-tenant de pedidos por mesa: cardápio do cliente, ' +
-    'salão, cozinha, caixa e console de gestão.',
+  description: 'O cliente pede pelo celular, o garçom aprova, a cozinha produz.',
 };
 
 /** A demonstração precisa do estado atual do banco; cache aqui mostraria mesa errada. */
 export const dynamic = 'force-dynamic';
 
 /**
- * Porta de entrada da demonstração.
+ * Porta de entrada.
  *
- * A raiz era o "Hello world!" do scaffold — a primeira coisa que qualquer
- * pessoa vê ao abrir o endereço, e a única página que muita gente vai abrir.
+ * A versão anterior explicava a arquitetura — RLS, congelamento de preço,
+ * auditoria imutável — em quatro parágrafos densos. Nada daquilo é falso, e
+ * nada daquilo é lido: quem abre um link de demonstração quer VER a coisa
+ * funcionando, não ler sobre ela.
  *
- * Seis superfícies e nenhuma delas é descobrível sozinha: o cardápio precisa do
- * `short_code` de uma mesa, e as telas da equipe precisam de login. Sem esta
- * página, o link do portfólio leva a lugar nenhum.
+ * A página agora faz uma coisa só: pôr a pessoa dentro do produto em um toque.
+ * Duas portas, e a do cliente vem primeiro porque é a que não pede nada.
  */
 export default async function Home() {
   // O short_code é aleatório e muda a cada `db:reset`. Fixar um aqui deixaria o
@@ -39,131 +39,64 @@ export default async function Home() {
     (mesa?.restaurants as unknown as { name: string } | null)?.name ?? 'restaurante';
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6 py-14">
       <header>
-        <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Demonstração
-        </p>
-        <h1 className="font-display mt-1 text-4xl leading-[1.05] sm:text-5xl">
-          Pedidos por mesa,
+        <p className="font-display text-[15px] text-brand">Markello</p>
+        <h1 className="font-display mt-3 text-[38px] leading-[1.05] sm:text-[46px]">
+          O cliente pede
           <br />
-          do QR ao fechamento da conta.
+          pelo celular.
         </h1>
-        <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-          O cliente encosta o celular na etiqueta da mesa e o cardápio abre sem
-          instalar nada. O pedido <strong className="text-foreground">não vai
-          direto para a cozinha</strong> — passa pelo garçom, e só depois entra
-          em produção. Multi-tenant desde a primeira linha.
+        <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground">
+          Do QR na mesa ao fechamento da conta.
         </p>
       </header>
 
-      {/* ---------------------------------------------------------------- */}
-      <section className="mt-12">
-        <h2 className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
-          Comece por aqui
-        </h2>
-
-        {mesa ? (
+      <div className="mt-9 space-y-3">
+        {mesa && (
           <Link
             href={`/m/${mesa.short_code}`}
-            className="mt-2 block rounded-xl border-2 border-brand bg-card p-5 transition-colors hover:bg-secondary/40"
+            className="flex items-center gap-4 rounded-2xl border-2 border-brand bg-card p-5 transition-colors active:bg-secondary/40"
           >
-            <p className="font-display text-2xl leading-tight">O cardápio do cliente</p>
-            <p className="mt-1 text-[14px] text-muted-foreground">
-              {mesa.label} do {restaurante}. É o que abre ao apontar a câmera
-              para o QR da mesa — sem login, sem instalar nada.
-            </p>
-            <p className="mt-2 text-[13px] font-semibold text-brand">
-              Abrir o cardápio →
-            </p>
+            <QrCodeIcon className="size-7 shrink-0 text-brand" />
+            <span className="min-w-0 flex-1">
+              <span className="font-display block text-xl leading-tight">
+                Ver o cardápio
+              </span>
+              <span className="mt-0.5 block text-[13px] text-muted-foreground">
+                É o que abre ao apontar a câmera para a mesa
+              </span>
+            </span>
+            <ArrowRightIcon className="size-5 shrink-0 text-brand" />
           </Link>
-        ) : (
-          <p className="mt-2 rounded-xl border border-border bg-card p-5 text-[14px] text-muted-foreground">
-            Nenhuma mesa cadastrada nesta instância ainda.
-          </p>
         )}
-      </section>
 
-      {/* ---------------------------------------------------------------- */}
-      <section className="mt-10">
-        <h2 className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
-          As telas da equipe
-        </h2>
-        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-          Cada função tem a sua porta e enxerga só o que é dela: o garçom aprova
-          pedido e leva prato, a cozinha produz e diz o que acabou, o caixa
-          fecha conta, e só o administrador vê faturamento. A diferença entre
-          elas é o produto.
-        </p>
+        <Link
+          href="/comecar"
+          className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 transition-colors active:bg-secondary/40"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="font-display block text-xl leading-tight">
+              Montar meu restaurante
+            </span>
+            <span className="mt-0.5 block text-[13px] text-muted-foreground">
+              Pronto em um minuto, com movimento simulado
+            </span>
+          </span>
+          <ArrowRightIcon className="size-5 shrink-0 text-muted-foreground" />
+        </Link>
+      </div>
 
-        {/*
-          Nenhuma credencial publicada aqui, e nem precisa: quem quiser percorrer
-          as telas cria a PRÓPRIA conta e um restaurante próprio. Login
-          compartilhado numa página aberta seria uma conta real, com senha real,
-          num sistema real — exposta a quem passar.
-        */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Link
-            href="/comecar"
-            className="flex h-11 items-center rounded-lg bg-brand px-5 text-[14px] font-bold text-background"
-          >
-            Criar meu restaurante
-          </Link>
-          <Link
-            href="/app/entrar"
-            className="flex h-11 items-center rounded-lg border border-border px-5 text-[14px] font-semibold"
-          >
-            Já tenho conta
-          </Link>
-        </div>
-        <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-muted-foreground">
-          O cadastro pergunta como é a casa e monta o sistema a partir das
-          respostas. Dá para pedir um restaurante <strong>já em movimento</strong>
-          {' '}— mesa ocupada, pedido esperando o garçom, prato na passagem — que
-          se apaga sozinho em 3 horas. O login fica: depois é só voltar e montar
-          o restaurante de verdade com a mesma conta.
-        </p>
-      </section>
+      <p className="mt-8 text-[13px] text-muted-foreground">
+        Já tem conta?{' '}
+        <Link href="/app/entrar" className="font-semibold text-foreground underline">
+          Entrar
+        </Link>
+      </p>
 
-      {/* ---------------------------------------------------------------- */}
-      <section className="mt-12">
-        <h2 className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
-          O que foi construído por baixo
-        </h2>
-
-        <dl className="mt-2 space-y-3 text-[14px] leading-relaxed">
-          {[
-            [
-              'O servidor nunca confia no cliente',
-              'O celular manda só produto, quantidade e observação. Preço, total e desconto são resolvidos no banco. Injetar preço 1 no corpo do pedido registra o preço do catálogo.',
-            ],
-            [
-              'RLS em todas as tabelas, verificada nas duas direções',
-              'Um script confere que o anônimo lê exatamente as cinco tabelas do cardápio — nem mais, nem menos. A versão que só checava "não escreve" passava por vacuidade.',
-            ],
-            [
-              'Toda decisão de dinheiro deixa rastro',
-              'Preço, desconto, taxa de serviço e liberação forçada de mesa vão para uma tabela imutável — que ninguém atualiza nem apaga, nem o administrador.',
-            ],
-            [
-              'Cada guarda foi vista falhando',
-              'Guarda que nunca falhou é uma linha verde. Todas foram testadas contra sabotagem deliberada, e três delas já passavam por vacuidade antes de serem consertadas.',
-            ],
-          ].map(([titulo, texto]) => (
-            <div key={titulo}>
-              <dt className="font-semibold">{titulo}</dt>
-              <dd className="text-muted-foreground">{texto}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      <footer className="mt-12 border-t border-border pt-5">
-        <p className="text-[12px] leading-relaxed text-muted-foreground">
-          <strong className="text-foreground">É uma demonstração.</strong> Os
-          dados são fictícios: nada aqui contém informação real de pessoa ou de
-          estabelecimento.
+      <footer className="mt-auto pt-12">
+        <p className="text-[12px] text-muted-foreground">
+          Demonstração de {restaurante}. Dados fictícios.
         </p>
       </footer>
     </main>

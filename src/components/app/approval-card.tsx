@@ -22,7 +22,7 @@ import { Elapsed } from './elapsed';
  */
 
 const MOTIVOS = [
-  { valor: 'acabou', rotulo: 'Acabou' },
+  { valor: 'acabou', rotulo: 'Zerou' },
   { valor: 'cliente_desistiu', rotulo: 'Cliente desistiu' },
   { valor: 'erro_no_pedido', rotulo: 'Erro no pedido' },
 ] as const;

@@ -58,7 +58,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
 
   const supabase = createPublicClient();
 
-  const [categoriesRes, productsRes, linksRes, groupsRes, optionsRes, pricesRes] =
+  const [categoriesRes, productsRes, linksRes, groupsRes, optionsRes, pricesRes, selosRes] =
     await Promise.all([
       supabase
         .from('categories')
@@ -90,6 +90,15 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
         .from('product_effective_prices')
         .select('*')
         .eq('restaurant_id', restaurantId),
+      // Os selos da casa: cor e animação vêm daqui, e não de um mapa fixo no
+      // código. `anon` lê pela policy `badges_public_read`, que já filtra os
+      // inativos.
+      supabase
+        .from('product_badges')
+        .select('slug, label, color, animation')
+        .eq('restaurant_id', restaurantId)
+        .eq('active', true)
+        .order('sort_order')
     ]);
 
   const categories = categoriesRes.data ?? [];
@@ -180,6 +189,12 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       brandColor: restaurant.brand_color ?? '#D97A28',
       requirePhone: Boolean(restaurant.require_phone),
       cashbackPct: Number(restaurant.cashback_pct ?? 0),
+      selos: (selosRes.data ?? []).map((b) => ({
+        slug: b.slug,
+        label: b.label,
+        color: b.color,
+        animation: b.animation as 'none' | 'pulse' | 'shine' | 'bounce',
+      })),
     },
     table: {
       id: table.id,
