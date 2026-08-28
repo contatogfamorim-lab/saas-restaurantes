@@ -14,6 +14,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import { renderMensagem } from '@/lib/marketing/mensagem';
+import { SeletorDeSegmento, type Segmento } from './segmento';
 import {
   apagarRascunho,
   criarCampanha,
@@ -32,12 +33,21 @@ export interface Campanha {
   proximoEnvio: string | null;
   ultimoErro: string | null;
   criadaEm: string;
+  segmento: Segmento;
   total: number;
   enviados: number;
   pendentes: number;
   falharam: number;
   pulados: number;
 }
+
+/** Para a linha da campanha dizer, depois, para quem aquilo foi. */
+const ROTULO_SEGMENTO: Record<string, string> = {
+  todos: 'todo mundo',
+  com_saldo: 'com cashback guardado',
+  sumidos: 'sumidos',
+  melhores: 'quem mais gasta',
+};
 
 const ROTULO: Record<string, { texto: string; cor: string }> = {
   draft: { texto: 'Rascunho', cor: 'bg-secondary text-muted-foreground' },
@@ -343,6 +353,8 @@ function Linha({
 }) {
   const [pendente, iniciar] = useTransition();
   const [confirmando, setConfirmando] = useState(false);
+  const [montando, setMontando] = useState(false);
+  const [segmento, setSegmento] = useState<Segmento>(c.segmento);
   const [quando, setQuando] = useState('');
   // O mínimo do campo é calculado no CLIQUE, não no render.
   //
@@ -390,9 +402,9 @@ function Linha({
                 Editar
               </Botao>
               <Botao
-                onClick={() => agir(() => montarPublico(c.id))}
+                onClick={() => setMontando(!montando)}
                 disabled={pendente}
-                titulo="Monta a lista de quem vai receber"
+                titulo="Escolhe para quem vai e monta a lista"
               >
                 <UsersIcon className="size-3.5" />
                 {c.total > 0 ? 'Refazer lista' : 'Montar lista'}
@@ -443,6 +455,35 @@ function Linha({
           )}
         </div>
       </div>
+
+      {montando && c.status === 'draft' && (
+        <div className="mt-3 rounded-lg border border-border bg-background p-3">
+          <SeletorDeSegmento valor={segmento} onChange={setSegmento} />
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                agir(async () => {
+                  const r = await montarPublico(c.id, segmento);
+                  if (r.ok) setMontando(false);
+                  return r;
+                })
+              }
+              disabled={pendente}
+              className="h-9 rounded-lg bg-foreground px-4 text-[13px] font-semibold text-background disabled:opacity-40"
+            >
+              {pendente ? 'Montando…' : 'Montar esta lista'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMontando(false)}
+              className="h-9 rounded-lg px-3 text-[13px] text-muted-foreground"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/*
         A CONFIRMAÇÃO DIZ O NÚMERO.
@@ -535,6 +576,7 @@ function Linha({
               <CheckCircle2Icon className="mr-1 inline size-3" />
               {c.enviados} de {c.total} enviadas
             </span>
+            <span>{ROTULO_SEGMENTO[c.segmento?.tipo ?? 'todos']}</span>
             {c.pendentes > 0 && <span>{c.pendentes} na fila</span>}
             {c.pulados > 0 && (
               <span title="Saíram da lista antes de a mensagem chegar nelas">

@@ -98,6 +98,7 @@ export default async function CampanhasPage() {
           pendentes: Number(c.pendentes ?? 0),
           falharam: Number(c.falharam ?? 0),
           pulados: Number(c.pulados ?? 0),
+          segmento: (c.segmento as { tipo: 'todos' } | null) ?? { tipo: 'todos' },
         }))}
         publico={publico.count ?? 0}
         whatsapp={casa.data?.evolution_instance_name ?? null}

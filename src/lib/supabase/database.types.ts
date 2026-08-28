@@ -736,6 +736,7 @@ export type Database = {
           next_send_at: string | null
           restaurant_id: string
           scheduled_at: string | null
+          segmento: Json
           started_at: string | null
           status: string
           titulo: string
@@ -752,6 +753,7 @@ export type Database = {
           next_send_at?: string | null
           restaurant_id: string
           scheduled_at?: string | null
+          segmento?: Json
           started_at?: string | null
           status?: string
           titulo: string
@@ -768,6 +770,7 @@ export type Database = {
           next_send_at?: string | null
           restaurant_id?: string
           scheduled_at?: string | null
+          segmento?: Json
           started_at?: string | null
           status?: string
           titulo?: string
@@ -2483,6 +2486,7 @@ export type Database = {
           pulados: number | null
           restaurant_id: string | null
           scheduled_at: string | null
+          segmento: Json | null
           started_at: string | null
           status: string | null
           titulo: string | null
@@ -3166,6 +3170,7 @@ export type Database = {
         Args: { p_alvo: string; p_erro?: string; p_ok: boolean }
         Returns: boolean
       }
+      contar_segmento: { Args: { p_segmento: Json }; Returns: number }
       create_guest_order: {
         Args: {
           p_guest_id: string
@@ -3241,7 +3246,10 @@ export type Database = {
       }
       marcar_como_demonstracao: { Args: never; Returns: string }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
-      montar_publico: { Args: { p_campanha: string }; Returns: number }
+      montar_publico: {
+        Args: { p_campanha: string; p_segmento?: Json }
+        Returns: number
+      }
       mover_bloco: {
         Args: { p_bloco: string; p_direcao: string }
         Returns: undefined

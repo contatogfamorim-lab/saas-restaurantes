@@ -122,9 +122,32 @@ export async function editarCampanha(
   return { ok: true };
 }
 
-export async function montarPublico(id: string): Promise<Resultado> {
+/**
+ * Quantas pessoas um segmento alcança AGORA.
+ *
+ * Vem do servidor, da mesma função que monta o público. Estimar no navegador
+ * seria mais rápido e prometeria um número que a fila não cumpre.
+ */
+export async function contarSegmento(segmento: unknown): Promise<number> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc('montar_publico', { p_campanha: id });
+  const { data, error } = await supabase.rpc('contar_segmento', {
+    p_segmento: segmento as never,
+  });
+  if (error) return 0;
+  return (data as number) ?? 0;
+}
+
+export async function montarPublico(
+  id: string,
+  segmento?: unknown,
+): Promise<Resultado> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('montar_publico', {
+    p_campanha: id,
+    // `undefined` faz a função reusar o segmento já gravado — que é o
+    // comportamento certo para "refazer a lista".
+    p_segmento: (segmento ?? undefined) as never,
+  });
 
   if (error) return { ok: false, erro: emPortugues(error.message) };
 
