@@ -88,7 +88,9 @@
       "Bash(docker exec *)",
       "Bash(awk '/create table.*message_campaigns/,/^\\\\\\);/' schema.sql)",
       "Bash(awk '/create table.*message_campaign_targets/,/^\\\\\\);/' schema.sql)",
-      "Bash(bash \"/private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/bf1c2f91-bb6c-4c36-a8a2-d17aa63089b2/scratchpad/sabota-campanhas.sh\")"
+      "Bash(bash \"/private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/bf1c2f91-bb6c-4c36-a8a2-d17aa63089b2/scratchpad/sabota-campanhas.sh\")",
+      "Bash(bash \"/private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/bf1c2f91-bb6c-4c36-a8a2-d17aa63089b2/scratchpad/sabota-estoque.sh\")",
+      "Bash(curl -s 'http://127.0.0.1:54321/rest/v1/product_ingredients?select=ingredient_id,quantidade,ingredients\\(name,unit\\)' -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __TRACKED_VAR__')"
     ]
   }
 }

@@ -388,6 +388,50 @@ export type Database = {
           },
         ]
       }
+      ingredients: {
+        Row: {
+          created_at: string
+          custo_por_mil_cents: number
+          id: string
+          minimo: number
+          name: string
+          quantidade: number
+          restaurant_id: string
+          unit: Database["public"]["Enums"]["stock_unit"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custo_por_mil_cents?: number
+          id?: string
+          minimo?: number
+          name: string
+          quantidade?: number
+          restaurant_id: string
+          unit: Database["public"]["Enums"]["stock_unit"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custo_por_mil_cents?: number
+          id?: string
+          minimo?: number
+          name?: string
+          quantidade?: number
+          restaurant_id?: string
+          unit?: Database["public"]["Enums"]["stock_unit"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredients_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_blocks: {
         Row: {
           config: Json
@@ -500,6 +544,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "session_guests"
             referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "menu_events_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
           },
           {
             foreignKeyName: "menu_events_product_id_restaurant_id_fkey"
@@ -1033,6 +1084,13 @@ export type Database = {
             foreignKeyName: "order_items_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "product_effective_prices"
             referencedColumns: ["product_id", "restaurant_id"]
           },
@@ -1300,6 +1358,111 @@ export type Database = {
           },
         ]
       }
+      product_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_id: string
+          product_id: string
+          quantidade: number
+          restaurant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_id: string
+          product_id: string
+          quantidade: number
+          restaurant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string
+          product_id?: string
+          quantidade?: number
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ficha_insumo_da_mesma_casa"
+            columns: ["ingredient_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_atual"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "ficha_insumo_da_mesma_casa"
+            columns: ["ingredient_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "ficha_produto_da_mesma_casa"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "ficha_produto_da_mesma_casa"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "ficha_produto_da_mesma_casa"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_atual"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_modifier_groups: {
         Row: {
           created_at: string
@@ -1335,6 +1498,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "modifier_groups"
             referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "product_modifier_groups_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
           },
           {
             foreignKeyName: "product_modifier_groups_product_id_restaurant_id_fkey"
@@ -1379,6 +1549,7 @@ export type Database = {
           serves_people: number
           sort_order: number
           station_override: Database["public"]["Enums"]["station"] | null
+          unavailable_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -1400,6 +1571,7 @@ export type Database = {
           serves_people?: number
           sort_order?: number
           station_override?: Database["public"]["Enums"]["station"] | null
+          unavailable_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -1421,6 +1593,7 @@ export type Database = {
           serves_people?: number
           sort_order?: number
           station_override?: Database["public"]["Enums"]["station"] | null
+          unavailable_reason?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1948,6 +2121,105 @@ export type Database = {
           },
         ]
       }
+      stock_movements: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          delta: number
+          id: string
+          ingredient_id: string
+          kind: Database["public"]["Enums"]["stock_movement_kind"]
+          motivo: string | null
+          order_item_id: string | null
+          restaurant_id: string
+          saldo_depois: number
+          seq: number
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          delta: number
+          id?: string
+          ingredient_id: string
+          kind: Database["public"]["Enums"]["stock_movement_kind"]
+          motivo?: string | null
+          order_item_id?: string | null
+          restaurant_id: string
+          saldo_depois: number
+          seq?: never
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          delta?: number
+          id?: string
+          ingredient_id?: string
+          kind?: Database["public"]["Enums"]["stock_movement_kind"]
+          motivo?: string | null
+          order_item_id?: string | null
+          restaurant_id?: string
+          saldo_depois?: number
+          seq?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_atual"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "kitchen_queue"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_item_timings"
+            referencedColumns: ["order_item_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "ready_pass"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       table_sessions: {
         Row: {
           closed_at: string | null
@@ -2205,6 +2477,26 @@ export type Database = {
           },
         ]
       }
+      custo_dos_pratos: {
+        Row: {
+          custo_cents: number | null
+          itens_na_ficha: number | null
+          name: string | null
+          porcoes_possiveis: number | null
+          price_cents: number | null
+          product_id: string | null
+          restaurant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_directory: {
         Row: {
           guest_id: string | null
@@ -2266,6 +2558,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "table_sessions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_atual: {
+        Row: {
+          abaixo_do_minimo: boolean | null
+          custo_por_mil_cents: number | null
+          id: string | null
+          minimo: number | null
+          name: string | null
+          negativo: boolean | null
+          pratos_que_usam: number | null
+          quantidade: number | null
+          restaurant_id: string | null
+          unit: Database["public"]["Enums"]["stock_unit"] | null
+          valor_cents: number | null
+        }
+        Insert: {
+          abaixo_do_minimo?: never
+          custo_por_mil_cents?: number | null
+          id?: string | null
+          minimo?: number | null
+          name?: string | null
+          negativo?: never
+          pratos_que_usam?: never
+          quantidade?: number | null
+          restaurant_id?: string | null
+          unit?: Database["public"]["Enums"]["stock_unit"] | null
+          valor_cents?: never
+        }
+        Update: {
+          abaixo_do_minimo?: never
+          custo_por_mil_cents?: number | null
+          id?: string | null
+          minimo?: number | null
+          name?: string | null
+          negativo?: never
+          pratos_que_usam?: never
+          quantidade?: number | null
+          restaurant_id?: string | null
+          unit?: Database["public"]["Enums"]["stock_unit"] | null
+          valor_cents?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredients_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -2414,6 +2756,13 @@ export type Database = {
             foreignKeyName: "order_items_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
             isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
             referencedRelation: "product_effective_prices"
             referencedColumns: ["product_id", "restaurant_id"]
           },
@@ -2497,6 +2846,13 @@ export type Database = {
           restaurant_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
           {
             foreignKeyName: "order_items_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
@@ -2619,6 +2975,13 @@ export type Database = {
           restaurant_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
           {
             foreignKeyName: "order_items_product_id_restaurant_id_fkey"
             columns: ["product_id", "restaurant_id"]
@@ -2802,6 +3165,15 @@ export type Database = {
         Args: { p_area?: string; p_prefixo?: string; p_quantidade: number }
         Returns: number
       }
+      criar_insumo: {
+        Args: {
+          p_custo?: number
+          p_minimo?: number
+          p_nome: string
+          p_unidade: Database["public"]["Enums"]["stock_unit"]
+        }
+        Returns: string
+      }
       descadastrar_marketing: { Args: { p_token: string }; Returns: boolean }
       desfazer_resgate: {
         Args: { p_cliente: string; p_sessao: string }
@@ -2814,6 +3186,15 @@ export type Database = {
           nome: string
           restaurante: string
         }[]
+      }
+      editar_insumo: {
+        Args: {
+          p_custo?: number
+          p_insumo: string
+          p_minimo?: number
+          p_nome?: string
+        }
+        Returns: boolean
       }
       ensure_draft_layout: { Args: never; Returns: string }
       gerar_demonstracao: { Args: never; Returns: Json }
@@ -2841,6 +3222,15 @@ export type Database = {
       mover_bloco: {
         Args: { p_bloco: string; p_direcao: string }
         Returns: undefined
+      }
+      movimentar_estoque: {
+        Args: {
+          p_delta: number
+          p_insumo: string
+          p_kind: string
+          p_motivo?: string
+        }
+        Returns: number
       }
       open_guest_session: {
         Args: {
@@ -2979,6 +3369,13 @@ export type Database = {
       session_status: "open" | "closing" | "closed" | "cancelled"
       staff_role: "owner" | "manager" | "waiter" | "kitchen" | "cashier"
       station: "cozinha" | "bar"
+      stock_movement_kind:
+        | "entrada"
+        | "venda"
+        | "devolucao"
+        | "perda"
+        | "ajuste"
+      stock_unit: "g" | "ml" | "un"
       waiter_call_status: "open" | "resolved" | "cancelled"
       waiter_call_type: "call_waiter" | "request_bill"
     }
@@ -3167,6 +3564,8 @@ export const Constants = {
       session_status: ["open", "closing", "closed", "cancelled"],
       staff_role: ["owner", "manager", "waiter", "kitchen", "cashier"],
       station: ["cozinha", "bar"],
+      stock_movement_kind: ["entrada", "venda", "devolucao", "perda", "ajuste"],
+      stock_unit: ["g", "ml", "un"],
       waiter_call_status: ["open", "resolved", "cancelled"],
       waiter_call_type: ["call_waiter", "request_bill"],
     },

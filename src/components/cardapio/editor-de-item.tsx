@@ -8,6 +8,8 @@ import { ArchiveIcon, ArchiveRestoreIcon, LockIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RestricaoDoCardapio, SeloDoCardapio } from '@/lib/menu/types';
 import { formatCentsBare, parseCents } from '@/lib/money';
+import type { InsumoDisponivel, LinhaDaFicha } from '@/lib/cardapio/queries';
+import { FichaTecnica } from './ficha-tecnica';
 import type { DelegatablePermission } from '@/lib/permissions';
 import type {
   CategoriaDoEditor,
@@ -44,6 +46,8 @@ export function EditorDeItem({
   permissoes,
   selos,
   restricoes,
+  ficha,
+  insumos,
 }: {
   produto: ProdutoDoEditor;
   categorias: CategoriaDoEditor[];
@@ -52,6 +56,9 @@ export function EditorDeItem({
   /** Selos da casa, com cor. Vêm do banco — ver o comentário no uso. */
   selos: SeloDoCardapio[];
   restricoes: RestricaoDoCardapio[];
+  /** O que este prato consome, e o que ainda pode consumir (0052). */
+  ficha: LinhaDaFicha[];
+  insumos: InsumoDisponivel[];
 }) {
   const router = useRouter();
   const [pendente, iniciar] = useTransition();
@@ -306,6 +313,22 @@ export function EditorDeItem({
             ativos={diet}
             onAlternar={(v) => alternarNaLista(v, diet, setDiet)}
             campo="dietTags"
+          />
+
+          {/*
+            A ficha vem ANTES da barra de salvar, e salva por conta própria.
+
+            Cada linha grava no `blur`, sem passar pelo botão. Ficar depois da
+            barra sugeriria que ela depende do "Salvar alterações" — e a pessoa
+            editaria a receita, sairia da tela, e perderia. Antes da barra, e com
+            gravação imediata, as duas coisas contam a mesma história.
+          */}
+          <FichaTecnica
+            produtoId={produto.id}
+            precoCents={produto.precoCents}
+            linhas={ficha}
+            disponiveis={insumos}
+            liberado={podeConteudo}
           />
 
           {/*

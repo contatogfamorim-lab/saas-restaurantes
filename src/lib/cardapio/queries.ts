@@ -251,3 +251,83 @@ export async function carregarEtiquetas(): Promise<{
     })),
   };
 }
+
+// ---------------------------------------------------------------------------
+// FICHA TÉCNICA — o que o prato consome (0052)
+// ---------------------------------------------------------------------------
+
+export interface LinhaDaFicha {
+  insumoId: string;
+  nome: string;
+  unidade: string;
+  quantidade: number;
+  custoPorMilCents: number;
+}
+
+export interface InsumoDisponivel {
+  id: string;
+  nome: string;
+  unidade: string;
+  custoPorMilCents: number;
+  quantidade: number;
+}
+
+/**
+ * A ficha de UM prato, e a lista de insumos que ainda podem entrar nela.
+ *
+ * As duas juntas porque o editor precisa das duas ao mesmo tempo, e duas idas
+ * ao servidor para montar um bloco só é uma ida a mais em cada abertura de
+ * item — que é a tela mais usada do editor.
+ */
+export async function carregarFicha(produtoId: string): Promise<{
+  linhas: LinhaDaFicha[];
+  disponiveis: InsumoDisponivel[];
+}> {
+  const supabase = await createClient();
+
+  const [ficha, insumos] = await Promise.all([
+    supabase
+      .from('product_ingredients')
+      .select('ingredient_id, quantidade, ingredients(name, unit, custo_por_mil_cents)')
+      .eq('product_id', produtoId),
+    supabase
+      .from('ingredients')
+      .select('id, name, unit, custo_por_mil_cents, quantidade')
+      .order('name'),
+  ]);
+
+  // Engolir o erro aqui mostraria "este prato não desconta nada do estoque" —
+  // que é uma frase plausível, e foi exatamente o que aconteceu: uma chave
+  // estrangeira duplicada quebrou o join, e a tela informou com toda a calma
+  // que a ficha estava vazia. Erro de consulta não pode virar dado.
+  if (ficha.error) throw new Error(`ficha técnica: ${ficha.error.message}`);
+  if (insumos.error) throw new Error(`insumos: ${insumos.error.message}`);
+
+  const linhas = (ficha.data ?? []).map((f) => {
+    const i = f.ingredients as unknown as {
+      name: string;
+      unit: string;
+      custo_por_mil_cents: number;
+    } | null;
+    return {
+      insumoId: f.ingredient_id as string,
+      nome: i?.name ?? 'insumo removido',
+      unidade: i?.unit ?? 'g',
+      quantidade: Number(f.quantidade ?? 0),
+      custoPorMilCents: Number(i?.custo_por_mil_cents ?? 0),
+    };
+  });
+
+  return {
+    // Ordem alfabética, porque a do banco é a de inserção — e uma ficha de dez
+    // linhas que muda de ordem a cada edição é ilegível.
+    linhas: linhas.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+    disponiveis: (insumos.data ?? []).map((i) => ({
+      id: i.id as string,
+      nome: i.name as string,
+      unidade: i.unit as string,
+      custoPorMilCents: Number(i.custo_por_mil_cents ?? 0),
+      quantidade: Number(i.quantidade ?? 0),
+    })),
+  };
+}

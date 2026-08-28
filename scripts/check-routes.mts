@@ -109,6 +109,15 @@ const CASOS: Caso[] = [
     descricao: 'configurações da casa',
   },
   {
+    caminho: '/app/gestao/estoque',
+    espera: 'pagina',
+    como: 'admin',
+    // A frase que carrega a regra que mais surpreende quem chega: falta de
+    // estoque NÃO recusa pedido. Se ela sumir, sumiu a explicação do negativo.
+    contendo: 'nunca recusa um pedido',
+    descricao: 'estoque',
+  },
+  {
     caminho: '/app/gestao/campanhas',
     espera: 'pagina',
     como: 'admin',
@@ -149,6 +158,8 @@ const CASOS: Caso[] = [
     contendo: 'Área da gestão', descricao: 'garçom NÃO mexe em taxa nem cashback' },
   { caminho: '/app/gestao/campanhas', espera: 'proibido', como: 'garcom',
     contendo: 'Área da gestão', descricao: 'garçom NÃO fala pelo WhatsApp da casa' },
+  { caminho: '/app/gestao/estoque', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO vê o estoque' },
 ];
 
 /**

@@ -5,6 +5,7 @@ import { EditorDeItem } from '@/components/cardapio/editor-de-item';
 import { exigirStaff } from '@/lib/auth/staff';
 import {
   carregarCategorias,
+  carregarFicha,
   carregarHistorico,
   carregarEtiquetas,
   carregarProduto,
@@ -28,11 +29,12 @@ export default async function EditarItem({
 
   const { id } = await params;
 
-  const [produto, categorias, historico, etiquetas] = await Promise.all([
+  const [produto, categorias, historico, etiquetas, ficha] = await Promise.all([
     carregarProduto(id),
     carregarCategorias(),
     carregarHistorico(id),
     carregarEtiquetas(),
+    carregarFicha(id),
   ]);
 
   // `carregarProduto` volta nulo tanto para item inexistente quanto para item
@@ -48,6 +50,8 @@ export default async function EditarItem({
       permissoes={menuPermissions(staff)}
       selos={etiquetas.selos}
       restricoes={etiquetas.restricoes}
+      ficha={ficha.linhas}
+      insumos={ficha.disponiveis}
     />
   );
 }
