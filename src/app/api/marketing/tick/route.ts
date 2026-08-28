@@ -64,6 +64,17 @@ export async function POST(req: Request) {
     // agendar de noite para a manhã seguinte simplesmente não acontecia.
     const { data: promovidas } = await admin.rpc('promover_agendadas');
 
+    // 1b. Os gatilhos automáticos enchem a fila.
+    //
+    // Rodam AQUI, e não num cron próprio, porque a fila é a mesma: o que eles
+    // produzem é campanha, e campanha é o que este laço já sabe mandar. Um
+    // agendador separado teria que reimplementar o intervalo, o teto e a
+    // reconferência de consentimento — ou passar por cima dos três.
+    //
+    // Rodar a cada tick é barato: as consultas são indexadas e a idempotência
+    // por evento faz a segunda passada não produzir nada.
+    const { data: gatilhos } = await admin.rpc('rodar_gatilhos');
+
     // 2. Uma mensagem.
     const enviou = await rodadaDeEnvio();
 
@@ -87,6 +98,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       promovidas: promovidas ?? 0,
+      gatilhos: gatilhos ?? {},
       enviou: Boolean(enviou),
       emMs,
     });

@@ -33,7 +33,7 @@ export default async function ConfiguracoesPage() {
     .from('restaurants')
     // Uma string literal só: quebrar em duas com `+` derruba a inferência de
     // tipos do Supabase, e a linha inteira volta como `GenericStringError`.
-    .select('name, service_fee_pct, cashback_pct, timezone, require_phone, brand_color, evolution_instance_name, marketing_max_por_dia')
+    .select('name, service_fee_pct, cashback_pct, timezone, require_phone, brand_color, evolution_instance_name, marketing_max_por_dia, cashback_carencia_horas, cashback_validade_dias')
     .eq('id', staff.restaurantId)
     .single();
 
@@ -47,6 +47,8 @@ export default async function ConfiguracoesPage() {
       cor={data?.brand_color ?? '#D97A28'}
       whatsapp={data?.evolution_instance_name ?? ''}
       tetoDiario={Number(data?.marketing_max_por_dia ?? 200)}
+      carencia={Number(data?.cashback_carencia_horas ?? 24)}
+      validade={Number(data?.cashback_validade_dias ?? 0)}
     />
   );
 }

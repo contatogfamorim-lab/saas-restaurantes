@@ -24,6 +24,8 @@ export function EditorDeConfiguracoes({
   cashback: cashbackInicial,
   whatsapp: whatsappInicial,
   tetoDiario: tetoInicial,
+  carencia: carenciaInicial,
+  validade: validadeInicial,
   timezone: fusoInicial,
   pedirTelefone: telefoneInicial,
   cor: corInicial,
@@ -33,6 +35,8 @@ export function EditorDeConfiguracoes({
   cashback: number;
   whatsapp: string;
   tetoDiario: number;
+  carencia: number;
+  validade: number;
   timezone: string;
   pedirTelefone: boolean;
   cor: string;
@@ -55,6 +59,9 @@ export function EditorDeConfiguracoes({
   // percentual só aparece quando faz sentido responder.
   const [whatsapp, setWhatsapp] = useState(whatsappInicial);
   const [teto, setTeto] = useState(String(tetoInicial));
+  const [carencia, setCarencia] = useState(String(carenciaInicial));
+  const [validadeLigada, setValidadeLigada] = useState(validadeInicial > 0);
+  const [validade, setValidade] = useState(String(validadeInicial || 180));
   const [cashbackLigado, setCashbackLigado] = useState(cashbackInicial > 0);
   const [cashback, setCashback] = useState(String(cashbackInicial || 5));
 
@@ -65,6 +72,8 @@ export function EditorDeConfiguracoes({
     Number(taxa) !== taxaInicial ||
     whatsapp !== whatsappInicial ||
     Number(teto) !== tetoInicial ||
+    Number(carencia) !== carenciaInicial ||
+    (validadeLigada ? Number(validade) : 0) !== validadeInicial ||
     cashbackEfetivo !== cashbackInicial ||
     fuso !== fusoInicial ||
     telefone !== telefoneInicial ||
@@ -220,7 +229,15 @@ export function EditorDeConfiguracoes({
                     a taxa é da equipe, não receita da casa.
                   </li>
                   <li>
-                    O cliente só pode usar <strong>24 horas depois</strong> de ganhar.
+                    O cliente só pode usar{' '}
+                    <strong>
+                      {Number(carencia) === 0
+                        ? 'na hora'
+                        : Number(carencia) === 1
+                          ? '1 hora depois'
+                          : `${carencia} horas depois`}
+                    </strong>{' '}
+                    de ganhar.
                   </li>
                   <li>
                     No resgate, o abatimento vai até <strong>30% da conta</strong>.
@@ -232,6 +249,78 @@ export function EditorDeConfiguracoes({
                     depois — só para de crescer.
                   </li>
                 </ul>
+
+                <label className="mt-4 block">
+                  <Rotulo>Tempo até poder usar</Rotulo>
+                  <div className="relative">
+                    <input
+                      name="carencia"
+                      type="number"
+                      min={0}
+                      max={720}
+                      value={carencia}
+                      onChange={(e) => setCarencia(e.target.value)}
+                      className={cn(CAMPO, 'tabular pr-14')}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">
+                      horas
+                    </span>
+                  </div>
+                  <Ajuda>
+                    Existe para o cashback não virar desconto na hora, que é
+                    outro produto. Zero faz valer imediatamente.
+                  </Ajuda>
+                </label>
+
+                {/*
+                  A VALIDADE começa DESLIGADA, e o padrão é não expirar nunca.
+
+                  É a escolha segura: uma casa que não decidiu não deve tirar
+                  saldo de ninguém por omissão. Quem liga está escolhendo tirar,
+                  e a tela diz isso com essas palavras.
+                */}
+                <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-3">
+                  <input
+                    name="validadeLigada"
+                    type="checkbox"
+                    checked={validadeLigada}
+                    onChange={(e) => setValidadeLigada(e.target.checked)}
+                    className="mt-0.5 size-4 accent-[var(--color-brand)]"
+                  />
+                  <span className="text-[14px] leading-snug">
+                    O saldo expira se não for usado
+                    <span className="mt-0.5 block text-[12px] text-muted-foreground">
+                      Desligado, o saldo vale para sempre — e é assim que vem de
+                      fábrica.
+                    </span>
+                  </span>
+                </label>
+
+                {validadeLigada && (
+                  <label className="mt-3 block">
+                    <Rotulo>Expira depois de</Rotulo>
+                    <div className="relative">
+                      <input
+                        name="validade"
+                        type="number"
+                        min={1}
+                        max={3650}
+                        value={validade}
+                        onChange={(e) => setValidade(e.target.value)}
+                        className={cn(CAMPO, 'tabular pr-12')}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">
+                        dias
+                      </span>
+                    </div>
+                    <Ajuda>
+                      Conta a partir de cada crédito, e quem gasta consome o mais
+                      antigo primeiro — então usar o saldo empurra a data para
+                      frente em vez de puxá-la. O cliente vê a expiração no
+                      extrato dele, com valor e data.
+                    </Ajuda>
+                  </label>
+                )}
               </div>
             )}
           </div>

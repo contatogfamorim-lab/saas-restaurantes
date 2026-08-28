@@ -657,6 +657,7 @@ export type Database = {
           send_order: number | null
           sent_at: string | null
           status: string
+          trigger_ref: string | null
         }
         Insert: {
           campaign_id: string
@@ -670,6 +671,7 @@ export type Database = {
           send_order?: number | null
           sent_at?: string | null
           status?: string
+          trigger_ref?: string | null
         }
         Update: {
           campaign_id?: string
@@ -683,6 +685,7 @@ export type Database = {
           send_order?: number | null
           sent_at?: string | null
           status?: string
+          trigger_ref?: string | null
         }
         Relationships: [
           {
@@ -736,6 +739,7 @@ export type Database = {
           started_at: string | null
           status: string
           titulo: string
+          trigger_kind: string | null
           updated_at: string
         }
         Insert: {
@@ -751,6 +755,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           titulo: string
+          trigger_kind?: string | null
           updated_at?: string
         }
         Update: {
@@ -766,6 +771,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           titulo?: string
+          trigger_kind?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -778,6 +784,47 @@ export type Database = {
           },
           {
             foreignKeyName: "message_campaigns_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_triggers: {
+        Row: {
+          ativo: boolean
+          corpo: string
+          created_at: string
+          dias: number
+          id: string
+          kind: string
+          restaurant_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          corpo: string
+          created_at?: string
+          dias?: number
+          id?: string
+          kind: string
+          restaurant_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          corpo?: string
+          created_at?: string
+          dias?: number
+          id?: string
+          kind?: string
+          restaurant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_triggers_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1420,41 +1467,6 @@ export type Database = {
             referencedColumns: ["id", "restaurant_id"]
           },
           {
-            foreignKeyName: "product_ingredients_ingredient_id_fkey"
-            columns: ["ingredient_id"]
-            isOneToOne: false
-            referencedRelation: "estoque_atual"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_ingredients_ingredient_id_fkey"
-            columns: ["ingredient_id"]
-            isOneToOne: false
-            referencedRelation: "ingredients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_ingredients_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "custo_dos_pratos"
-            referencedColumns: ["product_id"]
-          },
-          {
-            foreignKeyName: "product_ingredients_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_effective_prices"
-            referencedColumns: ["product_id"]
-          },
-          {
-            foreignKeyName: "product_ingredients_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "product_ingredients_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
@@ -1900,13 +1912,16 @@ export type Database = {
           active: boolean
           brand_color: string
           briefing_at: string | null
+          cashback_carencia_horas: number
           cashback_pct: number
+          cashback_validade_dias: number
           created_at: string
           currency: string
           evolution_instance_name: string | null
           expires_at: string | null
           id: string
           logo_url: string | null
+          marketing_max_por_cliente_mes: number
           marketing_max_por_dia: number
           name: string
           require_phone: boolean
@@ -1920,13 +1935,16 @@ export type Database = {
           active?: boolean
           brand_color?: string
           briefing_at?: string | null
+          cashback_carencia_horas?: number
           cashback_pct?: number
+          cashback_validade_dias?: number
           created_at?: string
           currency?: string
           evolution_instance_name?: string | null
           expires_at?: string | null
           id?: string
           logo_url?: string | null
+          marketing_max_por_cliente_mes?: number
           marketing_max_por_dia?: number
           name: string
           require_phone?: boolean
@@ -1940,13 +1958,16 @@ export type Database = {
           active?: boolean
           brand_color?: string
           briefing_at?: string | null
+          cashback_carencia_horas?: number
           cashback_pct?: number
+          cashback_validade_dias?: number
           created_at?: string
           currency?: string
           evolution_instance_name?: string | null
           expires_at?: string | null
           id?: string
           logo_url?: string | null
+          marketing_max_por_cliente_mes?: number
           marketing_max_por_dia?: number
           name?: string
           require_phone?: boolean
@@ -2466,6 +2487,7 @@ export type Database = {
           status: string | null
           titulo: string | null
           total: number | null
+          trigger_kind: string | null
         }
         Relationships: [
           {
@@ -3197,6 +3219,7 @@ export type Database = {
         Returns: boolean
       }
       ensure_draft_layout: { Args: never; Returns: string }
+      expirar_cashback_vencido: { Args: never; Returns: number }
       gerar_demonstracao: { Args: never; Returns: Json }
       iniciar_campanha: {
         Args: { p_campanha: string; p_quando?: string }
@@ -3295,6 +3318,7 @@ export type Database = {
       resolve_waiter_call: { Args: { p_call_id: string }; Returns: undefined }
       reveal_guest_phone: { Args: { p_guest_id: string }; Returns: string }
       revert_menu_layout: { Args: { p_version: number }; Returns: Json }
+      rodar_gatilhos: { Args: never; Returns: Json }
       saldo_disponivel_do_cliente: {
         Args: { p_cliente: string }
         Returns: number
@@ -3320,7 +3344,7 @@ export type Database = {
     Enums: {
       adjustment_type: "discount" | "service_fee_waiver" | "cashback"
       audit_actor_type: "staff" | "guest" | "system"
-      cashback_kind: "credito" | "resgate"
+      cashback_kind: "credito" | "resgate" | "expiracao"
       diet_tag:
         | "vegetariano"
         | "vegano"
@@ -3510,7 +3534,7 @@ export const Constants = {
     Enums: {
       adjustment_type: ["discount", "service_fee_waiver", "cashback"],
       audit_actor_type: ["staff", "guest", "system"],
-      cashback_kind: ["credito", "resgate"],
+      cashback_kind: ["credito", "resgate", "expiracao"],
       diet_tag: [
         "vegetariano",
         "vegano",

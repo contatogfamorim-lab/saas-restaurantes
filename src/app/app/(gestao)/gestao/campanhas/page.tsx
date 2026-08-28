@@ -4,6 +4,7 @@ import { forbidden } from 'next/navigation';
 
 import { Cabecalho } from '@/components/gestao/cabecalho';
 import { Campanhas } from '@/components/gestao/campanhas';
+import { Gatilhos, type Gatilho } from '@/components/gestao/gatilhos';
 import { exigirStaff } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import { can } from '@/lib/permissions';
@@ -51,7 +52,7 @@ export default async function CampanhasPage() {
       .select('id', { count: 'exact', head: true }),
     supabase
       .from('restaurants')
-      .select('evolution_instance_name, marketing_max_por_dia')
+      .select('evolution_instance_name, marketing_max_por_dia, cashback_validade_dias, marketing_max_por_cliente_mes')
       .maybeSingle(),
     supabase
       .from('message_campaign_targets')
@@ -63,7 +64,16 @@ export default async function CampanhasPage() {
   // Engolir o erro mostraria "nenhuma campanha" para um problema de permissão,
   // e zero é uma resposta plausível — ninguém desconfiaria. Já aconteceu neste
   // projeto, com o extrato de cashback.
+  // A contagem por gatilho sai das MESMAS campanhas já carregadas acima — a
+  // view devolve `trigger_kind` desde a 0057. Uma segunda consulta traria os
+  // mesmos dados por outro caminho, e os dois discordariam no dia em que
+  // alguém mudasse o `limit` de um só.
+  const gatilhos = await supabase
+    .from('message_triggers')
+    .select('kind, ativo, corpo, dias');
+
   if (campanhas.error) throw new Error(`campanhas: ${campanhas.error.message}`);
+  if (gatilhos.error) throw new Error(`gatilhos: ${gatilhos.error.message}`);
   if (publico.error) throw new Error(`público: ${publico.error.message}`);
 
   return (
@@ -95,6 +105,15 @@ export default async function CampanhasPage() {
         enviadasHoje={hoje.count ?? 0}
       />
 
+      <div className="mt-6 border-t border-border pt-5">
+        <GatilhosDaCasa
+          linhas={gatilhos.data ?? []}
+          enviadas={contarPorGatilho(campanhas.data ?? [])}
+          temValidade={Number(casa.data?.cashback_validade_dias ?? 0) > 0}
+          teto={Number(casa.data?.marketing_max_por_cliente_mes ?? 4)}
+        />
+      </div>
+
       <div className="mt-6 space-y-2 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
         <p>
           <strong className="text-foreground">
@@ -125,4 +144,57 @@ export default async function CampanhasPage() {
       </div>
     </div>
   );
+}
+
+/** Quantas mensagens cada gatilho já mandou, somando as campanhas dele. */
+function contarPorGatilho(
+  campanhas: { trigger_kind?: string | null; enviados?: number | null }[],
+): Record<string, number> {
+  const conta: Record<string, number> = {};
+  for (const c of campanhas) {
+    if (!c.trigger_kind) continue;
+    conta[c.trigger_kind] = (conta[c.trigger_kind] ?? 0) + Number(c.enviados ?? 0);
+  }
+  return conta;
+}
+
+/**
+ * Os três avisos, sempre os três.
+ *
+ * A tela mostra os que a casa nunca tocou junto com os configurados: o valor
+ * disto é justamente a pessoa DESCOBRIR que existe um aviso de "cashback
+ * liberado". Uma lista que só mostra o que já foi criado nunca ensina nada.
+ */
+function GatilhosDaCasa({
+  linhas,
+  enviadas,
+  temValidade,
+  teto,
+}: {
+  linhas: { kind: string; ativo: boolean; corpo: string; dias: number }[];
+  enviadas: Record<string, number>;
+  temValidade: boolean;
+  teto: number;
+}) {
+  const PADRAO: Record<string, string> = {
+    liberou:
+      'Oi {nome}! Seu cashback de {saldo} já está liberado para usar. Te esperamos 😊',
+    vai_expirar:
+      'Oi {nome}, parte do seu cashback está perto de expirar. Você tem {saldo} para usar — vem aproveitar!',
+    sumido:
+      'Oi {nome}, faz tempo que você não aparece — e a gente sentiu falta. Vem tomar um café por nossa conta?',
+  };
+
+  const lista: Gatilho[] = (['liberou', 'vai_expirar', 'sumido'] as const).map((kind) => {
+    const l = linhas.find((x) => x.kind === kind);
+    return {
+      kind,
+      ativo: Boolean(l?.ativo),
+      corpo: l?.corpo ?? PADRAO[kind],
+      dias: l?.dias ?? 60,
+      enviadas: enviadas[kind] ?? 0,
+    };
+  });
+
+  return <Gatilhos gatilhos={lista} temValidade={temValidade} tetoPorPessoa={teto} />;
 }

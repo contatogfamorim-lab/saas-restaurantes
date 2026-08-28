@@ -51,6 +51,17 @@ const configuracoes = z.object({
     .int()
     .min(0, 'No mínimo 0')
     .max(2000, 'No máximo 2000 por dia'),
+
+  /** Horas até o saldo poder ser usado. 0 = vale na hora. */
+  carencia: z.coerce.number().int().min(0, 'No mínimo 0').max(720, 'No máximo 30 dias'),
+
+  /**
+   * Dias até o saldo sumir. 0 = NUNCA expira, e é o padrão.
+   *
+   * O zero não é "campo vazio": é uma escolha, e é a escolha segura. Casa que
+   * não decidiu não tira saldo de ninguém por omissão.
+   */
+  validade: z.coerce.number().int().min(0, 'No mínimo 0').max(3650, 'No máximo 10 anos'),
 });
 
 export async function salvarConfiguracoes(formData: FormData): Promise<ResultadoConfig> {
@@ -66,6 +77,10 @@ export async function salvarConfiguracoes(formData: FormData): Promise<Resultado
     cor: formData.get('cor'),
     whatsapp: formData.get('whatsapp') ?? '',
     tetoDiario: formData.get('tetoDiario') ?? 200,
+    carencia: formData.get('carencia') ?? 24,
+    // Caixa desmarcada não vem no FormData, e a ausência É o zero — a mesma
+    // pegadinha do cashback logo acima.
+    validade: formData.get('validadeLigada') === 'on' ? formData.get('validade') : 0,
   });
 
   if (!parsed.success) {
@@ -85,6 +100,8 @@ export async function salvarConfiguracoes(formData: FormData): Promise<Resultado
       cor: parsed.data.cor,
       whatsapp: parsed.data.whatsapp,
       teto_diario: parsed.data.tetoDiario,
+      carencia: parsed.data.carencia,
+      validade: parsed.data.validade,
     },
   });
 

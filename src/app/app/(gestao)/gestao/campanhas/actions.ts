@@ -188,3 +188,47 @@ export async function apagarRascunho(id: string): Promise<Resultado> {
   revalidatePath(CAMINHO);
   return { ok: true };
 }
+
+const TIPOS = ['liberou', 'vai_expirar', 'sumido'] as const;
+
+/**
+ * Liga, desliga e reescreve um aviso automático.
+ *
+ * `upsert` porque a linha pode não existir: a tela mostra os três tipos sempre,
+ * inclusive os que a casa nunca tocou. Criar as três linhas no nascimento do
+ * restaurante seria a alternativa, e deixaria restaurante antigo sem elas.
+ */
+export async function salvarGatilho(
+  kind: string,
+  ativo: boolean,
+  corpo: string,
+  dias: number,
+): Promise<Resultado> {
+  if (!TIPOS.includes(kind as (typeof TIPOS)[number])) {
+    return { ok: false, erro: 'Tipo de aviso desconhecido' };
+  }
+  const texto = corpo.trim();
+  if (texto.length < 10 || texto.length > 900) {
+    return { ok: false, erro: 'A mensagem precisa ter entre 10 e 900 caracteres' };
+  }
+
+  const staff = await exigirPermissao('campaign.manage');
+  const supabase = await createClient();
+
+  const { error } = await supabase.from('message_triggers').upsert(
+    {
+      restaurant_id: staff.restaurantId,
+      kind,
+      ativo,
+      corpo: texto,
+      dias: Math.min(Math.max(Math.round(dias) || 60, 1), 3650),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'restaurant_id,kind' },
+  );
+
+  if (error) return { ok: false, erro: emPortugues(error.message) };
+
+  revalidatePath(CAMINHO);
+  return { ok: true };
+}
