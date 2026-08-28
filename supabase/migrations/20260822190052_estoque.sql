@@ -581,10 +581,25 @@ begin
     raise exception 'Movimento inválido: %', p_kind using errcode = '45132';
   end if;
 
-  -- Perda e ajuste mexem no que a casa já pagou; entrada muda o custo médio.
-  -- Nenhum dos três é da mão do garçom.
-  if not app.has_any_role('owner', 'manager', 'kitchen') then
-    raise exception 'Sem permissão para mexer no estoque' using errcode = '42501';
+  -- QUEM PODE O QUÊ, e a diferença importa.
+  --
+  -- PERDA é da cozinha: é ela que vê a comida estragar, e obrigar a chamar o
+  -- gerente para registrar meio quilo de alface murcha é obrigar a não
+  -- registrar. Perda que ninguém anota é perda que vira "sumiu queijo".
+  --
+  -- ENTRADA e AJUSTE não são. Entrada é o que a casa comprou — mexe em nota
+  -- fiscal e em custo. Ajuste é a contagem física, que é o momento em que o
+  -- sistema aceita que estava errado; deixar qualquer um refazer o saldo é
+  -- deixar qualquer um apagar uma diferença em vez de explicá-la.
+  if p_kind = 'perda' then
+    if not app.has_any_role('owner', 'manager', 'kitchen') then
+      raise exception 'Sem permissão para registrar perda' using errcode = '42501';
+    end if;
+  else
+    if not app.has_any_role('owner', 'manager') then
+      raise exception 'Só dono ou gerente registra entrada e contagem'
+        using errcode = '42501';
+    end if;
   end if;
 
   -- Perda é sempre saída, entrada é sempre entrada. Ajuste é o único que anda

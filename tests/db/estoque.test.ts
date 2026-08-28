@@ -564,6 +564,42 @@ describe('o saldo não se escreve à mão', () => {
     });
   });
 
+  it('a cozinha registra perda, mas NÃO entrada nem contagem', async () => {
+    // A distinção é o ponto. Perda é da cozinha porque é ela que vê a comida
+    // estragar — obrigar a chamar o gerente para meio quilo de alface murcha é
+    // obrigar a não registrar. Entrada mexe em nota fiscal; contagem é o
+    // momento em que o sistema aceita que estava errado, e deixar qualquer um
+    // refazer o saldo é deixar qualquer um APAGAR uma diferença em vez de
+    // explicá-la.
+    await comoPostgres(async (c) => {
+      const insumo = await novoInsumo(c, 10_000);
+      const { rows: cozinha } = await c.query(
+        `select id from public.profiles
+          where restaurant_id = $1 and 'kitchen' = any(roles) limit 1`,
+        [RESTAURANTE],
+      );
+      expect(cozinha.length).toBe(1);
+
+      await viraStaff(c, cozinha[0].id);
+      await esperaFalhar(
+        c,
+        `select public.movimentar_estoque($1, 'entrada', 5000, 'nota')`,
+        [insumo],
+        /Só dono ou gerente/,
+      );
+      await esperaFalhar(
+        c,
+        `select public.movimentar_estoque($1, 'ajuste', -3000, 'contei')`,
+        [insumo],
+        /Só dono ou gerente/,
+      );
+      // E a perda passa.
+      await c.query(`select public.movimentar_estoque($1, 'perda', -1000, 'caiu')`, [insumo]);
+      await c.query('reset role');
+      expect(await saldo(c, insumo)).toBe(9_000);
+    });
+  });
+
   it('a cozinha registra perda — é ela que vê a comida estragar', async () => {
     await comoPostgres(async (c) => {
       const insumo = await novoInsumo(c, 10_000);

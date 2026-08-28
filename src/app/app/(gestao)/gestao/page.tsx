@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { forbidden } from 'next/navigation';
+import { forbidden, redirect } from 'next/navigation';
 
 import { BarraComposicao } from '@/components/gestao/barra-composicao';
 import { Cabecalho } from '@/components/gestao/cabecalho';
@@ -13,7 +13,7 @@ import {
   normalizarPeriodo,
 } from '@/lib/gestao/queries';
 import { formatCents } from '@/lib/money';
-import { can } from '@/lib/permissions';
+import { can, secoesVisiveis } from '@/lib/permissions';
 
 export const metadata: Metadata = {
   title: 'Vendas · Pedidos.IA',
@@ -30,10 +30,17 @@ export default async function Vendas({
 }) {
   const staff = await exigirStaff();
 
-  // O layout já checou, e esta linha repete de propósito: layout não é
-  // fronteira de rota, e uma página que confia no pai fica desprotegida no dia
-  // em que alguém a move (spec §10.3).
-  if (!can(staff, 'dashboard.view')) forbidden();
+  // Quem entrou no console mas NÃO abre Vendas é mandado para a primeira seção
+  // que abre — não recebe 403 na cara logo depois de passar pela porta.
+  //
+  // O gerente é exatamente esse caso: ele entra por estoque e campanhas, e
+  // Vendas continua sendo do dono. Deixar cair em `forbidden()` aqui daria a
+  // ele um console que só sabe dizer não.
+  if (!can(staff, 'dashboard.view')) {
+    const outras = secoesVisiveis(staff).filter((h) => h !== '/app/gestao');
+    if (outras.length > 0) redirect(outras[0]);
+    forbidden();
+  }
 
   const periodo = normalizarPeriodo((await searchParams).periodo);
 

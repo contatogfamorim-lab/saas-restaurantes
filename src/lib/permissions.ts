@@ -51,6 +51,8 @@ export const ACTIONS = [
   'audit.view',
   'restaurant.settings',
   'campaign.manage',
+  'stock.manage',
+  'stock.waste',
   // cardápio (delegáveis)
   ...DELEGATABLE_PERMISSIONS,
 ] as const;
@@ -106,6 +108,12 @@ export const PERMISSION_MATRIX: Readonly<Record<Action, readonly Role[]>> = {
   // `restaurant.settings`, de dono, porque errar a instância manda a campanha
   // pelo número de outro restaurante.
   'campaign.manage':          ['manager', 'owner'],
+
+  // Estoque é rotina de gerente, e perda é a cozinha que vê acontecer. O
+  // CUSTO, que é dinheiro, aparece na mesma tela — e por isso a cozinha não
+  // entra aqui: ela registra perda pela própria tela, em `/app/perdas`.
+  'stock.manage':             ['manager', 'owner'],
+  'stock.waste':              ['kitchen', 'manager', 'owner'],
 } as const;
 
 /** Teto de desconto por função, em pontos percentuais (spec §10.3). */
@@ -271,4 +279,49 @@ export function maskPhone(phone: string | null | undefined): string | null {
   const digits = phone.replace(/\D/g, '');
   if (digits.length < 4) return '••••';
   return `•••••-${digits.slice(-4)}`;
+}
+
+// ---------------------------------------------------------------------------
+// AS SEÇÕES DO CONSOLE
+// ---------------------------------------------------------------------------
+
+/**
+ * Quais seções da gestão a pessoa abre.
+ *
+ * Existe porque eu criei duas permissões que não valiam nada. `campaign.manage`
+ * dava campanha ao gerente, e `movimentar_estoque` dava estoque ao gerente e à
+ * cozinha — mas o console inteiro cobrava `dashboard.view`, que é só do dono.
+ * A capacidade existia no banco e não tinha porta.
+ *
+ * A saída não é afrouxar o console: é cada seção ter o próprio portão, e o
+ * console admitir quem abre PELO MENOS UMA. Vendas continua do dono; estoque e
+ * campanhas passam a ser do gerente também, que é quem toca isso numa casa de
+ * verdade.
+ *
+ * Uma função só, e não `can()` espalhado por três arquivos: a barra lateral, o
+ * portão do layout e o redirecionamento da raiz têm que concordar. Discordando,
+ * o resultado é um item de menu que leva a 403.
+ */
+export const SECOES_DA_GESTAO = [
+  { href: '/app/gestao',                acao: 'dashboard.view' },
+  { href: '/app/gestao/operacao',       acao: 'dashboard.view' },
+  { href: '/app/gestao/cardapio',       acao: 'dashboard.view' },
+  { href: '/app/gestao/promocoes',      acao: 'dashboard.view' },
+  { href: '/app/gestao/mesas',          acao: 'dashboard.view' },
+  { href: '/app/gestao/equipe',         acao: 'staff.manage' },
+  { href: '/app/gestao/clientes',       acao: 'dashboard.view' },
+  { href: '/app/gestao/estoque',        acao: 'stock.manage' },
+  { href: '/app/gestao/campanhas',      acao: 'campaign.manage' },
+  { href: '/app/gestao/auditoria',      acao: 'audit.view' },
+  { href: '/app/gestao/configuracoes',  acao: 'restaurant.settings' },
+] as const satisfies readonly { href: string; acao: Action }[];
+
+/** As seções que ESTA pessoa abre, na ordem da barra lateral. */
+export function secoesVisiveis(session: Actor | null | undefined): string[] {
+  return SECOES_DA_GESTAO.filter((s) => can(session, s.acao)).map((s) => s.href);
+}
+
+/** Entra no console quem abre pelo menos uma seção. */
+export function podeAbrirGestao(session: Actor | null | undefined): boolean {
+  return SECOES_DA_GESTAO.some((s) => can(session, s.acao));
 }

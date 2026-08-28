@@ -88,7 +88,15 @@ from (values
   ('aaaaaaaa-0000-4000-8000-000000000002'::uuid, 'garcom@brasaburger.test',  'Ivo Bezerra'),
   ('aaaaaaaa-0000-4000-8000-000000000003'::uuid, 'cozinha@brasaburger.test', 'Ravi Nunes'),
   ('aaaaaaaa-0000-4000-8000-000000000004'::uuid, 'caixa@brasaburger.test',   'Selma Prado'),
-  ('aaaaaaaa-0000-4000-8000-000000000005'::uuid, 'duplo@brasaburger.test',   'Nara Vilaça')
+  ('aaaaaaaa-0000-4000-8000-000000000005'::uuid, 'duplo@brasaburger.test',   'Nara Vilaça'),
+  -- O GERENTE existe no seed porque a CI precisa dele.
+  --
+  -- O console de gestão passou a admitir quem abre PELO MENOS UMA seção, e é o
+  -- gerente que prova isso: ele entra por estoque e campanhas, e Vendas
+  -- continua sendo do dono. Sem ele no seed, o `check:portas` testaria o
+  -- console só com quem vê tudo — que é o caso em que nenhuma filtragem
+  -- aparece.
+  ('aaaaaaaa-0000-4000-8000-000000000006'::uuid, 'gerente@brasaburger.test', 'Célia Gerente')
 ) as u(id, email, name);
 
 insert into auth.identities (
@@ -121,7 +129,10 @@ values
    array['cashier']::public.staff_role[], '{}', '03'),
   ('aaaaaaaa-0000-4000-8000-000000000005',
    '11111111-1111-4111-8111-111111111111', 'Nara Vilaça',
-   array['waiter','cashier']::public.staff_role[], '{}', '04');
+   array['waiter','cashier']::public.staff_role[], '{}', '04'),
+  ('aaaaaaaa-0000-4000-8000-000000000006',
+   '11111111-1111-4111-8111-111111111111', 'Célia Gerente',
+   array['manager']::public.staff_role[], '{}', '05');
 
 -- -----------------------------------------------------------------------------
 -- 8 mesas. short_code vem do default aleatório — nunca derivado do número.

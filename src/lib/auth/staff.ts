@@ -203,5 +203,9 @@ export function telasVisiveis(staff: StaffSession) {
     // administra. Juntar as duas dava à cozinha um editor onde nada abria.
     disponibilidade: canMarkOutOfStock(staff),
     cardapio: canOpenMenuEditor(staff),
+    // Perdas é da cozinha, e é tela de operação: acontece de pé, no meio do
+    // serviço. O ESTOQUE inteiro — com custo e margem — é outra tela, na
+    // gestão, porque mostra dinheiro.
+    perdas: can(staff, 'stock.waste'),
   };
 }

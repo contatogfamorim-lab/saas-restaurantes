@@ -5,7 +5,7 @@ import { LogOutIcon } from 'lucide-react';
 
 import { ConsoleNav } from '@/components/gestao/console-nav';
 import { exigirStaff } from '@/lib/auth/staff';
-import { can } from '@/lib/permissions';
+import { podeAbrirGestao, secoesVisiveis } from '@/lib/permissions';
 
 import { sair } from '../../entrar/actions';
 
@@ -32,8 +32,13 @@ export default async function GestaoLayout({ children }: { children: React.React
   //
   // A checagem continua valendo o que valia: o middleware não é fronteira
   // (CVE-2025-29927), e esta é a que conta.
+  // O portão do console é "abre PELO MENOS UMA seção", e cada página cobra a
+  // sua. Antes ele cobrava `dashboard.view`, que é do dono — e com isso o
+  // gerente ficava do lado de fora de estoque e campanhas, que são justamente
+  // as duas coisas que ele toca. A capacidade existia no banco e não tinha
+  // porta.
   const staff = await exigirStaff();
-  if (!can(staff, 'dashboard.view')) forbidden();
+  if (!podeAbrirGestao(staff)) forbidden();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background lg:flex-row">
@@ -56,8 +61,13 @@ export default async function GestaoLayout({ children }: { children: React.React
         </div>
 
         {/* `useSearchParams` obriga fronteira de Suspense no App Router. */}
+        {/*
+          A barra recebe as seções JÁ FILTRADAS pelo servidor. Filtrar no
+          cliente mandaria a lista inteira no HTML — e um item de menu que leva
+          a 403 é pior que um item ausente: ele promete.
+        */}
         <Suspense fallback={<div className="h-12 lg:h-full" />}>
-          <ConsoleNav />
+          <ConsoleNav visiveis={secoesVisiveis(staff)} />
         </Suspense>
 
         <div className="mt-auto hidden border-t border-border p-3 lg:block">

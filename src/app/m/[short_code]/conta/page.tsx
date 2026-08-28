@@ -64,9 +64,16 @@ export default async function ContaPage({ params }: Props) {
     );
   }
 
-  const [{ data: disponivel }, { data: carencia }] = await Promise.all([
+  const [{ data: disponivel }, { data: carencia }, { data: cliente }] = await Promise.all([
     admin.rpc('saldo_disponivel_do_cliente', { p_cliente: conta.clienteId }),
     admin.rpc('saldo_em_carencia_do_cliente', { p_cliente: conta.clienteId }),
+    // O estado do consentimento, para a tela mostrar o que a pessoa escolheu —
+    // e não um interruptor que começa sempre no mesmo lugar.
+    admin
+      .from('customers')
+      .select('phone, marketing_opt_in_at, marketing_opt_out_at')
+      .eq('id', conta.clienteId)
+      .maybeSingle(),
   ]);
 
   // O ERRO É LIDO, e não descartado.
@@ -127,6 +134,10 @@ export default async function ContaPage({ params }: Props) {
         quando: l.created_at,
       }))}
       conta={bill}
+      temTelefone={Boolean(cliente?.phone)}
+      recebeAvisos={Boolean(
+        cliente?.marketing_opt_in_at && !cliente?.marketing_opt_out_at,
+      )}
     />
   );
 }

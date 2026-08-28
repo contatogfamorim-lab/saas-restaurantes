@@ -343,6 +343,13 @@ function Linha({
 }) {
   const [pendente, iniciar] = useTransition();
   const [confirmando, setConfirmando] = useState(false);
+  const [quando, setQuando] = useState('');
+  // O mínimo do campo é calculado no CLIQUE, não no render.
+  //
+  // `Date.now()` durante o render é função impura, e o React Compiler recusa —
+  // com razão: o valor mudaria a cada re-render, e um `min` que anda sozinho
+  // invalidaria a data que a pessoa acabou de escolher.
+  const [minimo, setMinimo] = useState('');
   const rotulo = ROTULO[c.status] ?? ROTULO.draft;
 
   function agir(fn: () => Promise<{ ok: boolean; erro?: string }>) {
@@ -395,7 +402,10 @@ function Linha({
 
           {(c.status === 'draft' || c.status === 'paused') && c.pendentes > 0 && (
             <Botao
-              onClick={() => setConfirmando(true)}
+              onClick={() => {
+                setMinimo(paraCampoLocal(new Date(Date.now() + 60_000)));
+                setConfirmando(true);
+              }}
               disabled={pendente || !podeDisparar}
               destaque
               titulo={
@@ -451,14 +461,55 @@ function Linha({
             , uma a cada 40–90 segundos. Quem já recebeu não recebe de novo, e
             quem sair da lista no meio deixa de receber na hora.
           </p>
+
+          {/*
+            O AGENDAMENTO.
+
+            O banco aceita hora marcada desde que a fila existe, e a tela não
+            oferecia — uma capacidade que só o psql alcançava. E ela importa
+            para o caso mais comum: escrever a campanha às 15h, de cabeça
+            fria, e mandar às 18h, quando a pessoa vai olhar o celular.
+
+            Vazio significa AGORA. Um campo de data obrigatório obrigaria a
+            escolher um horário para disparar imediatamente, que é o oposto da
+            intenção.
+          */}
+          <label className="mt-3 block">
+            <span className="text-[12px] text-muted-foreground">
+              Quando (deixe vazio para mandar agora)
+            </span>
+            <input
+              type="datetime-local"
+              value={quando}
+              onChange={(e) => setQuando(e.target.value)}
+              min={minimo}
+              className="mt-1 h-10 rounded-lg border border-border bg-background px-2.5 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            />
+          </label>
+
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              onClick={() => agir(() => dispararCampanha(c.id))}
+              onClick={() =>
+                agir(() =>
+                  // O horário sai daqui em ISO com fuso — o `datetime-local` é
+                  // uma string sem fuso nenhum, e mandá-la crua faria o
+                  // servidor lê-la como UTC. Três horas de diferença numa
+                  // campanha agendada é a campanha saindo na hora errada.
+                  dispararCampanha(
+                    c.id,
+                    quando ? new Date(quando).toISOString() : undefined,
+                  ),
+                )
+              }
               disabled={pendente}
               className="h-9 rounded-lg bg-brand px-4 text-[13px] font-semibold text-background disabled:opacity-40"
             >
-              {pendente ? 'Começando…' : 'Sim, pode mandar'}
+              {pendente
+                ? 'Começando…'
+                : quando
+                  ? 'Agendar'
+                  : 'Sim, pode mandar'}
             </button>
             <button
               type="button"
@@ -494,6 +545,17 @@ function Linha({
               <span className="text-alert-critical">
                 <AlertTriangleIcon className="mr-1 inline size-3" />
                 {c.falharam} {c.falharam === 1 ? 'falhou' : 'falharam'}
+              </span>
+            )}
+            {c.status === 'draft' && c.agendadaPara && (
+              <span className="text-brand">
+                agendada para{' '}
+                {new Date(c.agendadaPara).toLocaleString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </span>
             )}
             {c.status === 'sending' && c.proximoEnvio && (
@@ -546,4 +608,16 @@ function Botao({
       {children}
     </button>
   );
+}
+
+/**
+ * Uma data para dentro de um `datetime-local`.
+ *
+ * `toISOString()` devolve UTC, e o campo interpreta o que recebe como hora
+ * LOCAL — colar um ISO ali adianta ou atrasa o mínimo em três horas no Brasil.
+ * Este caminho monta a string no fuso do navegador, que é o que o campo espera.
+ */
+function paraCampoLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }

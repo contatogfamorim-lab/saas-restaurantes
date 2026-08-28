@@ -43,7 +43,7 @@ const SECOES = [
   { href: '/app/gestao/configuracoes', rotulo: 'Configurações', icone: SettingsIcon },
 ] as const;
 
-export function ConsoleNav() {
+export function ConsoleNav({ visiveis }: { visiveis: string[] }) {
   const caminho = usePathname();
   const params = useSearchParams();
 
@@ -57,7 +57,7 @@ export function ConsoleNav() {
       aria-label="Seções da gestão"
       className="flex gap-1 overflow-x-auto border-b border-border p-2 lg:h-full lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r lg:p-3"
     >
-      {SECOES.map(({ href, rotulo, icone: Icone }) => {
+      {SECOES.filter((s) => visiveis.includes(s.href)).map(({ href, rotulo, icone: Icone }) => {
         // `/app/gestao` casaria com tudo em `startsWith`; a raiz é exata.
         const ativo = href === '/app/gestao' ? caminho === href : caminho.startsWith(href);
 

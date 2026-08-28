@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { exigirPermissao } from '@/lib/auth/staff';
 import { paraCentavos, paraMilesimos } from '@/lib/estoque/unidades';
 import { createClient } from '@/lib/supabase/server';
 
@@ -59,6 +60,10 @@ export async function criarInsumo(formData: FormData): Promise<Resultado> {
   if (minimo === null || minimo < 0) {
     return { ok: false, erro: 'Mínimo inválido' };
   }
+
+  // A autorização de verdade está na função do banco, que cobra o papel. Esta
+  // linha existe para a recusa chegar como frase em vez de erro de Postgres.
+  await exigirPermissao('stock.manage');
 
   const supabase = await createClient();
   const { error } = await supabase.rpc('criar_insumo', {

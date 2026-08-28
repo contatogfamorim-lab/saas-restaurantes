@@ -110,7 +110,18 @@ beforeAll(async () => {
                              email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
                              created_at, updated_at)
      values ('00000000-0000-0000-0000-000000000000', $1, 'authenticated', 'authenticated',
-             'gerente@brasaburger.test', extensions.crypt('x', extensions.gen_salt('bf', 4)),
+             -- E-mail PROPRIO deste teste, e nao o do seed.
+             --
+             -- O seed passou a ter um gerente de verdade, e a colisao foi no
+             -- E-MAIL: o "on conflict (id)" abaixo nao pega isso, porque o id
+             -- e outro. O arquivo inteiro caiu com 34 testes PULADOS, que e o
+             -- pior modo de falhar: verde por ausencia.
+             --
+             -- E o afterAll daqui APAGA este usuario. Apontar para o gerente
+             -- do seed faria este teste derrubar a conta que a verificacao de
+             -- portas usa logo depois.
+             'gerente-do-teste-cardapio@brasaburger.test',
+             extensions.crypt('x', extensions.gen_salt('bf', 4)),
              now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now())
      on conflict (id) do nothing`,
     [GERENTE_A],

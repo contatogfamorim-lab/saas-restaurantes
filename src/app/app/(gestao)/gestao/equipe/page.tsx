@@ -36,7 +36,10 @@ export default async function Equipe({
   searchParams: Promise<{ periodo?: string }>;
 }) {
   const staff = await exigirStaff();
-  if (!can(staff, 'dashboard.view')) forbidden();
+  // `staff.manage`, e não `dashboard.view`: é a mesma ação que a barra lateral
+  // usa para decidir se mostra este item. Enquanto as duas discordarem, existe
+  // um caminho para a barra oferecer o que a página recusa.
+  if (!can(staff, 'staff.manage')) forbidden();
 
   const periodo = normalizarPeriodo((await searchParams).periodo);
   const [equipe, acoes] = await Promise.all([

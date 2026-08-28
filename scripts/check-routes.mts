@@ -140,6 +140,10 @@ const CASOS: Caso[] = [
     descricao: 'garçom marca esgotado' },
   { caminho: '/app/disponibilidade', espera: 'pagina', como: 'admin',
     descricao: 'admin também marca esgotado' },
+  // Perdas: a porta que faltava para a cozinha. A capacidade existia no banco
+  // desde a 0052 e não tinha tela — só o psql alcançava.
+  { caminho: '/app/perdas', espera: 'pagina', como: 'admin',
+    contendo: 'O que estragou', descricao: 'perdas' },
 
   // --- e a porta fechada, que é o teste que vale ---------------------------
   { caminho: '/app/cardapio', espera: 'proibido', como: 'garcom',
@@ -160,6 +164,10 @@ const CASOS: Caso[] = [
     contendo: 'Área da gestão', descricao: 'garçom NÃO fala pelo WhatsApp da casa' },
   { caminho: '/app/gestao/estoque', espera: 'proibido', como: 'garcom',
     contendo: 'Área da gestão', descricao: 'garçom NÃO vê o estoque' },
+  // O garçom não anota perda: ele não está na cozinha vendo a comida estragar,
+  // e cada pessoa a mais que pode baixar estoque é uma explicação a menos.
+  { caminho: '/app/perdas', espera: 'proibido', como: 'garcom',
+    descricao: 'garçom NÃO anota perda' },
 ];
 
 /**

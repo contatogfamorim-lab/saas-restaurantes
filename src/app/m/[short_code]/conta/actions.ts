@@ -252,3 +252,59 @@ async function digerir(valor: string): Promise<string> {
   const { createHash } = await import('node:crypto');
   return createHash('sha256').update(valor).digest('hex');
 }
+
+/**
+ * O cliente liga e desliga os avisos de WhatsApp na própria conta.
+ *
+ * Estava faltando, e a falta tinha um nome: só quem CRIAVA conta via a caixa de
+ * aceite. Quem já era cliente da casa não tinha por onde dizer sim — e quem
+ * tinha dito sim só conseguia sair pelo link de uma mensagem que talvez nunca
+ * chegasse, porque ele estava fora da lista.
+ *
+ * O `customer_id` vem do COOKIE ASSINADO, nunca do corpo (§10.4). É a mesma
+ * regra do `session_id`: sem ela, um POST com o id de outra pessoa mudaria o
+ * consentimento dela.
+ */
+export async function alternarAvisos(
+  shortCode: string,
+  aceitar: boolean,
+): Promise<Resultado> {
+  const restaurante = await restauranteDaMesa(shortCode);
+  if (!restaurante) return { ok: false, erro: 'Mesa não encontrada' };
+
+  const conta = await lerContaDoCliente(restaurante);
+  if (!conta) return { ok: false, erro: 'Entre na sua conta primeiro' };
+
+  const admin = createAdminClient();
+
+  if (aceitar) {
+    const { error } = await admin.rpc('aceitar_marketing', {
+      p_customer: conta.clienteId,
+    });
+    if (error) return { ok: false, erro: 'Não deu certo agora' };
+    revalidatePath(`/m/${shortCode}/conta`);
+    return { ok: true };
+  }
+
+  // Sair pela própria conta usa o MESMO caminho do link da mensagem: a função
+  // do token. Um segundo caminho de saída seria um segundo lugar para esquecer
+  // de registrar na auditoria.
+  const { data: cliente } = await admin
+    .from('customers')
+    .select('unsubscribe_token')
+    .eq('id', conta.clienteId)
+    .maybeSingle();
+
+  if (!cliente?.unsubscribe_token) {
+    // Sem token não há do que sair: a pessoa nunca chegou a aceitar.
+    return { ok: true };
+  }
+
+  const { error } = await admin.rpc('descadastrar_marketing', {
+    p_token: cliente.unsubscribe_token,
+  });
+  if (error) return { ok: false, erro: 'Não deu certo agora' };
+
+  revalidatePath(`/m/${shortCode}/conta`);
+  return { ok: true };
+}

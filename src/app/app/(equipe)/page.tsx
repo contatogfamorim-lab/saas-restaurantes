@@ -17,6 +17,11 @@ export default async function AppIndex() {
   if (telas.cozinha) redirect('/app/cozinha');
   if (telas.caixa) redirect('/app/caixa');
   if (telas.gestao) redirect('/app/gestao');
+  // Perdas vem por último: é o destino de quem só tem essa tela, o que hoje
+  // não acontece (a cozinha tem KDS), mas acontecerá no dia em que alguém for
+  // cadastrado só para conferir estoque. Sem esta linha, essa pessoa cairia
+  // numa página que não sabe para onde mandá-la.
+  if (telas.perdas) redirect('/app/perdas');
 
   // Perfil ativo sem nenhum papel útil: acontece se alguém for cadastrado e
   // ficar sem função. Melhor dizer isso do que mostrar uma tela vazia.

@@ -31,6 +31,7 @@ interface Props {
     gestao: boolean;
     disponibilidade: boolean;
     cardapio: boolean;
+    perdas: boolean;
   };
   nome: string;
   restaurante: string;
@@ -47,8 +48,11 @@ export function StaffNav({ telas, nome, restaurante, papeis }: Props) {
     // "Acabou" é operação e fica junto das outras telas de serviço. O EDITOR
     // não aparece aqui: é ferramenta de quem administra, com casca própria.
     { href: '/app/disponibilidade', rotulo: 'Zerou', visivel: telas.disponibilidade },
-    // Gestão não aparece na navegação das outras telas (spec §8) — só para
-    // quem tem a permissão, que é exclusiva do dono.
+    // "Perdas" é o irmão de "Zerou": as duas são o que a cozinha reporta do
+    // mundo real para o sistema. O ESTOQUE inteiro fica na gestão, porque
+    // mostra custo e margem — dinheiro não é assunto de tela de serviço.
+    { href: '/app/perdas', rotulo: 'Perdas', visivel: telas.perdas },
+    // Gestão não aparece na navegação das outras telas (spec §8).
     { href: '/app/gestao', rotulo: 'Gestão', visivel: telas.gestao },
   ].filter((a) => a.visivel);
 

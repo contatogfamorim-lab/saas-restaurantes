@@ -43,6 +43,12 @@ const PASSOS: Passo[] = [
   // DEPOIS do build, sempre.
   { nome: 'nenhum segredo no bundle', comando: 'pnpm', args: ['check:secrets'] },
   { nome: 'rotas e portas fechadas', comando: 'pnpm', args: ['check:routes'], comServidor: true },
+  // "Tudo que a barra oferece tem que abrir." É a propriedade que faltava
+  // quando criei duas permissões sem porta e uma porta sem permissão.
+  { nome: 'portas e barra concordam', comando: 'pnpm', args: ['check:portas'], comServidor: true },
+  // O cliente JÁ CADASTRADO controla os próprios avisos. Era o buraco da
+  // Fase 0: a caixa de aceite só existia no cadastro.
+  { nome: 'o cliente controla os avisos', comando: 'pnpm', args: ['check:avisos'], comServidor: true },
   { nome: 'CSP com nonce', comando: 'pnpm', args: ['check:csp'], comServidor: true },
   { nome: 'força bruta freada', comando: 'pnpm', args: ['check:forca-bruta'], comServidor: true },
 ];

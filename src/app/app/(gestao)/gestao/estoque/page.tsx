@@ -33,9 +33,9 @@ export const dynamic = 'force-dynamic';
 export default async function EstoquePage() {
   const staff = await exigirStaff();
 
-  // O layout já cobrou `dashboard.view`; esta linha repete porque layout não é
-  // fronteira de rota (§10.3).
-  if (!can(staff, 'dashboard.view')) forbidden();
+  // `stock.manage`, e não `dashboard.view`: estoque é rotina de gerente. O
+  // layout só garante que a pessoa abre ALGUMA seção; o portão desta é este.
+  if (!can(staff, 'stock.manage')) forbidden();
 
   const supabase = await createClient();
 

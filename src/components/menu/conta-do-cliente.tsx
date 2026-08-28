@@ -10,6 +10,7 @@ import {
   criarConta,
   devolverSaldo,
   entrarNaConta,
+  alternarAvisos,
   sairDaConta,
   usarSaldo,
 } from '@/app/m/[short_code]/conta/actions';
@@ -46,6 +47,8 @@ export function ContaDoCliente({
   extrato = [],
   extratoIndisponivel = false,
   conta = null,
+  temTelefone = false,
+  recebeAvisos = false,
 }: {
   shortCode: string;
   restaurante: string;
@@ -58,6 +61,9 @@ export function ContaDoCliente({
   /** A consulta falhou — diferente de não haver lançamento nenhum. */
   extratoIndisponivel?: boolean;
   conta?: { totalCents: number; cashbackCents: number; tetoCents: number } | null;
+  /** Sem telefone não há para onde mandar aviso, então nem se oferece. */
+  temTelefone?: boolean;
+  recebeAvisos?: boolean;
 }) {
   const logado = Boolean(nome);
 
@@ -87,6 +93,8 @@ export function ContaDoCliente({
           extrato={extrato}
           extratoIndisponivel={extratoIndisponivel}
           conta={conta}
+          temTelefone={temTelefone}
+          recebeAvisos={recebeAvisos}
         />
       ) : (
         <SemConta shortCode={shortCode} cashbackPct={cashbackPct} />
@@ -244,10 +252,14 @@ function Logado({
   extrato,
   extratoIndisponivel,
   conta,
+  temTelefone,
+  recebeAvisos,
 }: {
   shortCode: string;
   nome: string;
   cashbackPct: number;
+  temTelefone: boolean;
+  recebeAvisos: boolean;
   saldoCents: number;
   carenciaCents: number;
   extrato: Lancamento[];
@@ -391,6 +403,42 @@ function Logado({
             </li>
           ))}
         </ul>
+      )}
+
+      {/*
+        OS AVISOS, e por que este bloco existe.
+
+        A caixa de aceite só aparecia para quem CRIAVA conta. Quem já era
+        cliente da casa não tinha por onde dizer sim — e quem tinha dito sim só
+        conseguia sair pelo link de uma mensagem que talvez nunca chegasse,
+        justamente porque ele estava fora da lista.
+
+        O interruptor mostra o estado REAL, lido do banco. Um botão que começa
+        sempre no mesmo lugar não informa nada, e nesta tela ele estaria
+        informando errado sobre uma permissão.
+      */}
+      {temTelefone && (
+        <div className="mt-8 rounded-2xl border border-border p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={recebeAvisos}
+              disabled={pendente}
+              onChange={(e) => acao(() => alternarAvisos(shortCode, e.target.checked))}
+              className="mt-0.5 size-4 shrink-0 accent-[var(--brand)]"
+            />
+            <span className="text-[13px] leading-snug">
+              <span className="block font-medium">
+                Avisos de saldo e promoções no WhatsApp
+              </span>
+              <span className="mt-0.5 block text-muted-foreground">
+                {recebeAvisos
+                  ? 'Você recebe. Desmarque aqui e paramos de mandar — vale também para o link no fim das mensagens.'
+                  : 'Você não recebe nada hoje. Marque para saber quando seu cashback liberar.'}
+              </span>
+            </span>
+          </label>
+        </div>
       )}
 
       <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-4">
