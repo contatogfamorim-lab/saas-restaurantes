@@ -1920,6 +1920,7 @@ export type Database = {
           cashback_validade_dias: number
           created_at: string
           currency: string
+          demo_tipo: string | null
           evolution_instance_name: string | null
           expires_at: string | null
           id: string
@@ -1943,6 +1944,7 @@ export type Database = {
           cashback_validade_dias?: number
           created_at?: string
           currency?: string
+          demo_tipo?: string | null
           evolution_instance_name?: string | null
           expires_at?: string | null
           id?: string
@@ -1966,6 +1968,7 @@ export type Database = {
           cashback_validade_dias?: number
           created_at?: string
           currency?: string
+          demo_tipo?: string | null
           evolution_instance_name?: string | null
           expires_at?: string | null
           id?: string
@@ -3122,7 +3125,10 @@ export type Database = {
         Args: { p_config?: Json; p_tipo: string }
         Returns: string
       }
-      aplicar_briefing: { Args: { p_respostas: Json }; Returns: Json }
+      aplicar_configuracoes_iniciais: {
+        Args: { p_respostas: Json }
+        Returns: Json
+      }
       apply_discount: {
         Args: {
           p_amount_cents?: number
@@ -3225,7 +3231,7 @@ export type Database = {
       }
       ensure_draft_layout: { Args: never; Returns: string }
       expirar_cashback_vencido: { Args: never; Returns: number }
-      gerar_demonstracao: { Args: never; Returns: Json }
+      gerar_demonstracao: { Args: { p_tipo?: string }; Returns: Json }
       iniciar_campanha: {
         Args: { p_campanha: string; p_quando?: string }
         Returns: number
@@ -3277,6 +3283,7 @@ export type Database = {
         Args: { p_campanha: string; p_definitivo?: boolean }
         Returns: boolean
       }
+      progresso_da_configuracao: { Args: never; Returns: Json }
       promover_agendadas: { Args: never; Returns: number }
       publish_menu_layout: { Args: never; Returns: Json }
       register_payment: {

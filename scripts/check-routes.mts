@@ -118,6 +118,19 @@ const CASOS: Caso[] = [
     descricao: 'estoque',
   },
   {
+    caminho: '/app/gestao/inicio',
+    espera: 'pagina',
+    como: 'admin',
+    // A frase do CABEÇALHO, e não a de um passo.
+    //
+    // Minha primeira escolha foi "não inventa o seu cardápio", que só aparece
+    // quando o cardápio está VAZIO — e o restaurante do seed tem cardápio. O
+    // teste caía num ambiente configurado e passaria num vazio, que é o pior
+    // dos dois mundos: verde quando não importa.
+    contendo: 'o que falta para a casa funcionar',
+    descricao: 'configurações iniciais',
+  },
+  {
     caminho: '/app/gestao/campanhas',
     espera: 'pagina',
     como: 'admin',
@@ -168,6 +181,8 @@ const CASOS: Caso[] = [
   // e cada pessoa a mais que pode baixar estoque é uma explicação a menos.
   { caminho: '/app/perdas', espera: 'proibido', como: 'garcom',
     descricao: 'garçom NÃO anota perda' },
+  { caminho: '/app/gestao/inicio', espera: 'proibido', como: 'garcom',
+    contendo: 'Área da gestão', descricao: 'garçom NÃO configura a casa' },
 ];
 
 /**

@@ -642,15 +642,19 @@ describe('a faxina não derruba a demonstração (0042)', () => {
            json_build_object('sub', $1::text, 'role','authenticated')::text, true)`,
         [DONO],
       );
-      await c.query(`update public.products set price_cents = 0, is_available = false
-                      where restaurant_id = $1`, [RESTAURANTE]);
+      // A demonstração agora traz o PRÓPRIO cardápio (0060), então não há mais
+      // preço zerado para ela consertar — o que este teste guarda continua
+      // sendo o mesmo: uma faxina quebrada não pode derrubar a geração.
+      const { rows } = await c.query(`select public.gerar_demonstracao('hamburgueria') as r`);
+      expect(rows[0].r.produtos).toBeGreaterThan(0);
+      expect(rows[0].r.mesas).toBeGreaterThan(0);
 
-      const { rows } = await c.query(`select public.gerar_demonstracao() as r`);
-      expect(rows[0].r.mesas_ocupadas).toBe(4);
-
+      // E o cardápio que ela criou nasce com preço: item a R$ 0,00 fica fora do
+      // ar, e uma demonstração com metade do cardápio invisível não demonstra.
       expect((await c.query(
         `select count(*)::int as n from public.products
-          where restaurant_id = $1 and price_cents = 0`, [RESTAURANTE],
+          where restaurant_id = $1 and price_cents = 0 and archived_at is null`,
+        [RESTAURANTE],
       )).rows[0].n).toBe(0);
     });
   });

@@ -196,20 +196,29 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
     return { ok: false, erro: parsed.error.issues[0]?.message ?? 'Dados inválidos' };
   }
 
-  // `getStaff()` e não `exigirStaff()`: esta é a ação que ABRE o portão do
-  // briefing, e o portão mora dentro de `exigirStaff`. Chamá-lo aqui seria a
-  // ação se redirecionando para a tela que a chamou.
+  // `getStaff()` e não `exigirStaff()`: esta é a ação que ABRE o portão das
+  // configurações iniciais, e o portão mora dentro de `exigirStaff`. Chamá-lo
+  // aqui seria a ação se redirecionando para a tela que a chamou.
   //
-  // Isto não afrouxa nada. A autorização de verdade está em `aplicar_briefing`,
-  // que cobra o papel `owner` dentro do banco, sob RLS — esta linha só faz o
-  // erro sair legível quando não há ninguém logado (§10.3).
+  // Isto não afrouxa nada. A autorização de verdade está em
+  // `aplicar_configuracoes_iniciais`, que cobra o papel `owner` dentro do
+  // banco, sob RLS — esta linha só faz o erro sair legível quando não há
+  // ninguém logado (§10.3).
   if (!(await getStaff())) return { ok: false, erro: 'Faça login de novo' };
 
   const supabase = await createClient();
 
-  const { data: aplicado, error } = await supabase.rpc('aplicar_briefing', {
+  // `tipo_cozinha` NÃO vai mais junto, e a ausência é a mudança inteira.
+  //
+  // O tipo servia para o sistema inventar um cardápio de hamburgueria genérica
+  // e entregá-lo como se fosse o da casa. Desde a 0059 o restaurante de verdade
+  // nasce com cardápio VAZIO: o sistema não sabe o que aquela casa vende, e
+  // fingir que sabe fazia o primeiro trabalho do dono ser apagar.
+  //
+  // O tipo continua existindo para a DEMONSTRAÇÃO, logo abaixo — lá ele
+  // escolhe entre cinco casas fictícias, que é outra coisa.
+  const { data: aplicado, error } = await supabase.rpc('aplicar_configuracoes_iniciais', {
     p_respostas: {
-      tipo_cozinha: parsed.data.tipoCozinha,
       cidade: parsed.data.cidade,
       timezone: parsed.data.timezone,
       mesas: parsed.data.mesas,
@@ -243,9 +252,15 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
   const { error: erroMarca } = await supabase.rpc('marcar_como_demonstracao');
   if (erroMarca) return { ok: false, erro: erroMarca.message };
 
-  const { data: demo, error: erroDemo } = await supabase.rpc('gerar_demonstracao');
+  // O TIPO agora escolhe a demonstração, e não o cardápio da casa: são cinco
+  // restaurantes fictícios diferentes — pizzaria, hamburgueria, oriental,
+  // açaiteria e balada — porque são cinco negócios que aparecem diferente na
+  // tela, e quem está avaliando quer se ver ali dentro.
+  const { data: demo, error: erroDemo } = await supabase.rpc('gerar_demonstracao', {
+    p_tipo: parsed.data.tipoCozinha,
+  });
 
-  // O briefing já foi aplicado quando isto falha, e o restaurante está de pé
+  // As configurações já foram aplicadas quando isto falha, e o restaurante está de pé
   // com cardápio. Dizer "não deu certo" e deixar a pessoa achar que precisa
   // recomeçar seria mentir sobre o estado do banco.
   if (erroDemo) {
@@ -257,11 +272,16 @@ export async function responderBriefing(formData: FormData): Promise<ResultadoBr
     };
   }
 
+  // A contagem de produtos vem da DEMONSTRAÇÃO, e não das configurações
+  // iniciais: desde a 0059 elas não criam produto nenhum, e ler dali daria
+  // sempre zero — que a tela mostraria como se fosse uma falha.
+  const gerada = (demo ?? {}) as { produtos?: number; expira_em?: string };
+
   return {
     ok: true,
     mesasCriadas: resumo.mesas_criadas ?? 0,
-    produtosCriados: resumo.produtos_criados ?? 0,
-    expiraEm: (demo as { expira_em?: string } | null)?.expira_em,
+    produtosCriados: gerada.produtos ?? 0,
+    expiraEm: gerada.expira_em,
   };
 }
 

@@ -6,6 +6,7 @@ import {
   BanknoteIcon,
   ClipboardListIcon,
   FlameIcon,
+  ListChecksIcon,
   MessageCircleIcon,
   PackageIcon,
   QrCodeIcon,
@@ -30,6 +31,9 @@ import { cn } from '@/lib/utils';
  * verdade é a de 1440px.
  */
 const SECOES = [
+  // Primeiro item de propósito: é para onde quem acabou de criar a casa deve
+  // olhar, e continua sendo o lugar de voltar depois.
+  { href: '/app/gestao/inicio', rotulo: 'Começar', icone: ListChecksIcon },
   { href: '/app/gestao', rotulo: 'Vendas', icone: BanknoteIcon },
   { href: '/app/gestao/operacao', rotulo: 'Operação', icone: FlameIcon },
   { href: '/app/gestao/cardapio', rotulo: 'Cardápio', icone: UtensilsCrossedIcon },

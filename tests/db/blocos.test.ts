@@ -207,16 +207,31 @@ describe('a demonstração nasce com prazo (0046)', () => {
       )).rows[0].tem;
       expect(marcado, 'o prazo precisa estar gravado antes de gerar').toBe(true);
 
-      // Agora a geração falha — e a marca continua lá, porque foi escrita fora.
+      // Agora a geração falha NO MEIO — e a marca continua lá, porque foi
+      // escrita fora.
+      //
+      // O jeito de derrubá-la mudou junto com ela. Antes bastava arquivar o
+      // cardápio, porque a demonstração dependia de um cardápio pré-existente;
+      // desde a 0060 ela traz o próprio. Agora a queda vem de uma MESA JÁ
+      // OCUPADA: a geração monta o cardápio inteiro, chega em `table_sessions`
+      // e esbarra na regra de uma comanda aberta por mesa.
+      //
+      // Falhar no meio é o que importa. Um tipo inválido também derrubaria,
+      // mas antes de escrever qualquer coisa — e aí o teste não provaria que a
+      // marca sobrevive a um ROLLBACK de verdade.
       await c.query(`set local role postgres`);
       await c.query(
-        `update public.products set is_available = false, archived_at = now()
-          where restaurant_id = $1`, [RESTAURANTE],
+        `insert into public.table_sessions (restaurant_id, table_id, guest_count)
+         select $1, id, 2 from public.restaurant_tables
+          where restaurant_id = $1 and active
+          order by label limit 1`,
+        [RESTAURANTE],
       );
       await c.query(`set local role authenticated`);
 
       await esperaFalhar(
-        c, `select public.gerar_demonstracao()`, [], /cardápio antes da demonstração/i,
+        c, `select public.gerar_demonstracao('hamburgueria')`, [],
+        /duplicate key|uma comanda|table_sessions/i,
       );
 
       expect((await c.query(

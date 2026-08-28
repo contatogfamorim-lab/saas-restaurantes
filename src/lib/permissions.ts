@@ -303,6 +303,7 @@ export function maskPhone(phone: string | null | undefined): string | null {
  * o resultado é um item de menu que leva a 403.
  */
 export const SECOES_DA_GESTAO = [
+  { href: '/app/gestao/inicio',         acao: 'restaurant.settings' },
   { href: '/app/gestao',                acao: 'dashboard.view' },
   { href: '/app/gestao/operacao',       acao: 'dashboard.view' },
   { href: '/app/gestao/cardapio',       acao: 'dashboard.view' },

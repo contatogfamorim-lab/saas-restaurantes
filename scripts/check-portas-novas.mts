@@ -83,6 +83,7 @@ async function pagina(caminho: string, cookie: string) {
  * Testado assim, o script continua valendo quando alguém acrescentar uma seção.
  */
 const SECOES = [
+  '/app/gestao/inicio',
   '/app/gestao',
   '/app/gestao/operacao',
   '/app/gestao/cardapio',
@@ -98,6 +99,7 @@ const SECOES = [
 
 /** Os rótulos como aparecem na barra, para saber o que ela ESTÁ oferecendo. */
 const ROTULO: Record<string, string> = {
+  '/app/gestao/inicio': 'Começar',
   '/app/gestao': 'Vendas',
   '/app/gestao/operacao': 'Operação',
   '/app/gestao/cardapio': 'Cardápio',

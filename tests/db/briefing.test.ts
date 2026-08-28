@@ -100,71 +100,57 @@ afterAll(async () => {
 });
 
 // ===========================================================================
-describe('0034 — o briefing monta o restaurante', () => {
-  it('gera cardápio SEM preço e FORA DO AR', async () => {
-    // O coração do arquivo. O sistema conhece os pratos que uma hamburgueria
-    // costuma ter; não conhece quanto ELA cobra. Um preço chutado aqui é o
-    // sistema afirmando um valor sobre o negócio de outra pessoa — e depois
-    // vira o preço congelado de um pedido de verdade (§10.1).
+describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () => {
+  it('NÃO gera cardápio nenhum — o sistema não sabe o que a casa vende', async () => {
+    // Este teste já foi o oposto: exigia que o briefing gerasse dez pratos de
+    // hamburgueria, sem preço e fora do ar. A intenção era boa (tela vazia é
+    // ruim de encarar) e a consequência não: o dono abria o editor e encontrava
+    // dez pratos que não vende, e o primeiro trabalho dele com o produto era
+    // APAGAR.
+    //
+    // O sistema conhece o cardápio que uma hamburgueria GENÉRICA costuma ter.
+    // Isso não é o cardápio daquela casa, e fingir que é quebra a mesma regra
+    // que o resto do projeto respeita: o servidor não sabe o que o dono sabe.
+    //
+    // O que vem pronto agora é DEMONSTRAÇÃO, e ela some em três horas.
     await como(DONO, async (c) => {
-      const restaurante = await novoRestaurante(c, 'Briefing Zero');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
-
-      const { rows } = await c.query(
-        `select count(*)::int as total,
-                count(*) filter (where price_cents <> 0)::int as com_preco,
-                count(*) filter (where is_available)::int as no_ar
-           from public.products where restaurant_id = $1`,
-        [restaurante],
-      );
-
-      expect(rows[0].total).toBeGreaterThan(8);
-      expect(rows[0].com_preco).toBe(0);
-      expect(rows[0].no_ar).toBe(0);
-    });
-  });
-
-  it('o cardápio gerado não aparece para o cliente enquanto não tem preço', async () => {
-    // A outra metade da mesma regra, vista da ponta que importa: item a
-    // "R$ 0,00" no celular do cliente é pior que item ausente.
-    await como(DONO, async (c) => {
-      const restaurante = await novoRestaurante(c, 'Briefing Invisivel');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
-
-      // Lido como ANÔNIMO, que é quem abre o cardápio pelo QR. Contar pela
-      // tabela com o dono logado responderia outra pergunta.
-      await c.query(`select set_config('request.jwt.claims', '', true)`);
-      await c.query(`set local role anon`);
-
-      const { rows } = await c.query(
-        `select count(*)::int as n from public.products where restaurant_id = $1`,
-        [restaurante],
-      );
-      expect(rows[0].n).toBe(0);
-    });
-  });
-
-  it('rodar duas vezes não duplica categoria nem produto', async () => {
-    await como(DONO, async (c) => {
-      const restaurante = await novoRestaurante(c, 'Briefing Duplo');
-      const primeira = await c.query(`select public.aplicar_briefing($1::jsonb) as r`, [
-        JSON.stringify(RESPOSTAS),
-      ]);
-      const segunda = await c.query(`select public.aplicar_briefing($1::jsonb) as r`, [
+      const restaurante = await novoRestaurante(c, 'Casa Vazia');
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
         JSON.stringify(RESPOSTAS),
       ]);
 
-      expect(primeira.rows[0].r.produtos_criados).toBeGreaterThan(0);
-      expect(segunda.rows[0].r.produtos_criados).toBe(0);
-      expect(segunda.rows[0].r.mesas_criadas).toBe(0);
-
       const { rows } = await c.query(
-        `select count(*)::int as n from (
-           select name from public.products where restaurant_id = $1
-           group by name having count(*) > 1) x`,
+        `select (select count(*) from public.products where restaurant_id = $1)::int as produtos,
+                (select count(*) from public.categories where restaurant_id = $1)::int as categorias,
+                (select count(*) from public.restaurant_tables where restaurant_id = $1)::int as mesas`,
         [restaurante],
       );
-      expect(rows[0].n).toBe(0);
+
+      expect(rows[0].produtos).toBe(0);
+      expect(rows[0].categorias).toBe(0);
+      // O que ELA respondeu, sim: as mesas foram criadas.
+      expect(rows[0].mesas).toBeGreaterThan(0);
+    });
+  });
+
+  it('rodar duas vezes não muda nada de novo', async () => {
+    // Era "não duplica categoria nem produto", e não há mais nem um nem outro.
+    // O que sobra para não duplicar são as mesas — e é o que importa: mesa
+    // duplicada é QR duplicado, e QR duplicado é cliente sentado na mesa errada.
+    await como(DONO, async (c) => {
+      const restaurante = await novoRestaurante(c, 'Duas Vezes');
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
+        JSON.stringify(RESPOSTAS),
+      ]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
+        JSON.stringify(RESPOSTAS),
+      ]);
+
+      const { rows } = await c.query(
+        `select count(*)::int as n from public.restaurant_tables where restaurant_id = $1`,
+        [restaurante],
+      );
+      expect(rows[0].n).toBe(RESPOSTAS.mesas);
     });
   });
 
@@ -173,7 +159,7 @@ describe('0034 — o briefing monta o restaurante', () => {
       const restaurante = await novoRestaurante(c, 'Briefing Mesas');
       await c.query(`select public.create_tables(8, 'Salão')`);
 
-      const r = await c.query(`select public.aplicar_briefing($1::jsonb) as r`, [
+      const r = await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb) as r`, [
         JSON.stringify({ ...RESPOSTAS, mesas: 12 }),
       ]);
       expect(r.rows[0].r.mesas_criadas).toBe(4);
@@ -191,7 +177,7 @@ describe('0034 — o briefing monta o restaurante', () => {
     // mensagem bonita; ESTA é a proteção.
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Briefing Ganancioso');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
         JSON.stringify({ ...RESPOSTAS, taxa_servico: 900, mesas: 99999 }),
       ]);
 
@@ -207,7 +193,7 @@ describe('0034 — o briefing monta o restaurante', () => {
     });
   });
 
-  it('quem não administra não responde o briefing', async () => {
+  it('quem não administra não faz as configurações iniciais', async () => {
     await como(DONO, async (c) => {
       await novoRestaurante(c, 'Briefing Fechado');
       await c.query(
@@ -226,7 +212,7 @@ describe('0034 — o briefing monta o restaurante', () => {
 
       await esperaFalhar(
         c,
-        `select public.aplicar_briefing($1::jsonb)`,
+        `select public.aplicar_configuracoes_iniciais($1::jsonb)`,
         [JSON.stringify(RESPOSTAS)],
         /administra o restaurante/i,
       );
@@ -239,7 +225,7 @@ describe('0034 — o briefing monta o restaurante', () => {
     // interrogado de novo toda madrugada sobre que tipo de comida ele vende.
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Briefing Duradouro');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
 
       // envelhece as respostas e roda a limpeza
       await c.query(
@@ -271,7 +257,7 @@ describe('0035 — a demonstração', () => {
   /** Monta um restaurante com briefing e demo, e devolve o id. */
   async function comDemo(c: Client, nome: string): Promise<string> {
     const restaurante = await novoRestaurante(c, nome);
-    await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+    await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
     await c.query(`select public.gerar_demonstracao()`);
     return restaurante;
   }
@@ -369,7 +355,7 @@ describe('0035 — a demonstração', () => {
     // alfabético coincide com o numérico. O bug precisa de 10 para aparecer.
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Demo Dez Mesas');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
         JSON.stringify({ ...RESPOSTAS, mesas: 10 }),
       ]);
       await c.query(`select public.gerar_demonstracao()`);
@@ -401,9 +387,28 @@ describe('0035 — a demonstração', () => {
         [GARCOM],
       );
       const real = await novoRestaurante(c, 'Casa Permanente');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
+        JSON.stringify(RESPOSTAS),
+      ]);
 
+      // O CARDÁPIO DELA É CRIADO À MÃO, e a mudança é o ponto.
+      //
+      // Antes, `aplicar_briefing` inventava um cardápio e a fixture ganhava
+      // produtos de graça. Desde a 0059 restaurante de verdade nasce vazio — e
+      // sem estas linhas o teste passaria a comparar "zero produtos antes" com
+      // "zero produtos depois", que é verdade por vacuidade e não prova que a
+      // faxina respeitou o vizinho.
       await c.query(`set local role postgres`);
+      const { rows: cat } = await c.query(
+        `insert into public.categories (restaurant_id, name, sort_order, station)
+         values ($1, 'Pratos', 1, 'cozinha') returning id`,
+        [real],
+      );
+      await c.query(
+        `insert into public.products (restaurant_id, category_id, name, price_cents)
+         values ($1, $2, 'Prato da casa', 3500)`,
+        [real, cat[0].id],
+      );
       await c.query(`update public.restaurants set expires_at = now() - interval '1 minute'
                       where id = $1`, [demo]);
 
@@ -442,7 +447,7 @@ describe('0035 — a demonstração', () => {
   it('restaurante de verdade NUNCA ganha prazo de validade', async () => {
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Casa Sem Prazo');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
 
       const { rows } = await c.query(
         `select expires_at from public.restaurants where id = $1`,
@@ -455,7 +460,7 @@ describe('0035 — a demonstração', () => {
   it('quem não administra não gera demonstração', async () => {
     await como(DONO, async (c) => {
       await novoRestaurante(c, 'Demo Fechada');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
       await c.query(
         `insert into public.profiles (id, restaurant_id, name, roles, active)
          values ($1, app.current_restaurant_id(), 'Garçom', array['waiter']::public.staff_role[], true)`,
@@ -486,7 +491,7 @@ describe('a fresta na imutabilidade do audit_log', () => {
     // dia em que a defesa ficasse mais forte.
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Auditoria Firme');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
 
       await esperaFalhar(
         c,
@@ -506,7 +511,7 @@ describe('a fresta na imutabilidade do audit_log', () => {
   it('nem o postgres apaga: a trava é do banco, não da permissão', async () => {
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Auditoria Firme 2');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
       await c.query(`set local role postgres`);
 
       await esperaFalhar(
@@ -523,7 +528,7 @@ describe('a fresta na imutabilidade do audit_log', () => {
     // intocável quanto o de uma casa de verdade.
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Auditoria Demo Viva');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
       // O PRAZO vem de `marcar_como_demonstracao`, e não de `gerar_demonstracao`
       // — desde a 0046. A geração é uma transação só, e uma falha nela desfaria
       // o `expires_at` junto com o resto; a marca precisa vir de fora.
@@ -549,7 +554,7 @@ describe('a fresta na imutabilidade do audit_log', () => {
   it('UPDATE segue proibido mesmo em demonstração vencida', async () => {
     await como(DONO, async (c) => {
       const restaurante = await novoRestaurante(c, 'Auditoria Sem Update');
-      await c.query(`select public.aplicar_briefing($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
+      await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
       await c.query(`set local role postgres`);
       await c.query(
         `update public.restaurants set expires_at = now() - interval '1 minute' where id = $1`,

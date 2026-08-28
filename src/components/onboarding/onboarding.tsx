@@ -314,6 +314,10 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
   const [pendente, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [demo, setDemo] = useState(false);
+  // Já vem escolhida: um formulário que exige escolher entre cinco coisas
+  // parecidas antes de continuar é um formulário que perde gente. Quem tem
+  // preferência troca; quem não tem, segue.
+  const [tipo, setTipo] = useState<string>('hamburgueria');
   const [cashback, setCashback] = useState(false);
   const [pronto, setPronto] = useState<{
     produtos: number;
@@ -347,30 +351,23 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
   return (
     <form action={enviar} className="space-y-3">
       <p className="text-[13px]">
-        <strong>{restaurante}</strong> está criado. Agora conte como a casa
-        funciona — o sistema monta o resto a partir daqui.
+        <strong>{restaurante}</strong> está criado. Faltam três coisas rápidas —
+        o cardápio você monta depois, com calma, e do seu jeito.
       </p>
 
-      <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">
-          Que tipo de comida vocês vendem?
-        </span>
-        <select name="tipoCozinha" required autoFocus defaultValue="" className={CAMPO}>
-          <option value="" disabled>
-            Escolha…
-          </option>
-          {COZINHAS.map((c) => (
-            <option key={c.valor} value={c.valor}>
-              {c.rotulo}
-            </option>
-          ))}
-        </select>
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          Gera as categorias e uma lista de pratos comuns do tipo, para você
-          editar. <strong>Sem preço e fora do ar</strong> — o preço é seu, o
-          sistema não inventa.
-        </span>
-      </label>
+      {/*
+        A ESCOLHA DO TIPO SÓ EXISTE PARA A DEMONSTRAÇÃO.
+
+        Antes ela era a primeira pergunta e gerava o cardápio da casa: escolhia
+        "hamburgueria" e ganhava dez pratos que a pessoa não vende, a R$ 0,00 e
+        fora do ar. O primeiro trabalho dela com o produto era apagar.
+
+        O campo continua sendo enviado quando a caixa está desmarcada — a
+        Server Action exige um valor — mas aí ele não é usado para nada. Fica
+        escondido em vez de ausente porque um `select` que aparece e some
+        embaixo do dedo é pior do que um que não aparece.
+      */}
+      {!demo && <input type="hidden" name="tipoCozinha" value="hamburgueria" />}
 
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
@@ -518,14 +515,53 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
           className="mt-0.5 size-4 accent-[var(--color-brand)]"
         />
         <span className="text-[13px] leading-snug">
-          Começar com o restaurante em movimento
+          Quero ver uma demonstração pronta
           <span className="mt-0.5 block text-[11px] text-muted-foreground">
-            Preenche preços e fabrica uma noite de serviço no meio: mesa
-            ocupada, pedido esperando aprovação, prato pronto na passagem,
-            comanda no caixa. Para ver o sistema cheio em vez de vazio.
+            Um restaurante fictício com cardápio, preços e uma noite de serviço
+            acontecendo: mesa ocupada, pedido esperando aprovação, prato na
+            passagem. Para ver o sistema cheio em vez de vazio.
           </span>
         </span>
       </label>
+
+      {demo && (
+        <div className="rounded-lg border border-border p-3">
+          <p className="text-[12px] font-semibold text-muted-foreground">
+            Qual casa você quer ver?
+          </p>
+          <div className="mt-2 space-y-1.5">
+            {COZINHAS.map((c) => (
+              <label
+                key={c.valor}
+                className={cn(
+                  'flex cursor-pointer items-start gap-2.5 rounded-lg border p-2.5',
+                  tipo === c.valor ? 'border-brand bg-brand/5' : 'border-border',
+                )}
+              >
+                <input
+                  type="radio"
+                  name="tipoCozinha"
+                  value={c.valor}
+                  checked={tipo === c.valor}
+                  onChange={() => setTipo(c.valor)}
+                  className="mt-0.5 size-4 accent-[var(--color-brand)]"
+                />
+                <span className="text-[13px] leading-snug">
+                  {c.rotulo}
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    {c.descricao}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            São cinco negócios que aparecem diferente na tela — uma balada não
+            tem entrada, uma açaiteria vive de adicional, uma pizzaria vende um
+            item que duas pessoas dividem.
+          </p>
+        </div>
+      )}
 
       {/*
         O aviso aparece só quando a caixa está marcada, e antes do botão. É
@@ -578,11 +614,25 @@ function BriefingPronto({
     <div className="space-y-3">
       <p className="text-[15px] font-semibold">Pronto.</p>
 
+      {/*
+        A LISTA MUDA CONFORME O CAMINHO, e a diferença é o assunto.
+
+        Numa demonstração há cardápio para contar. Num restaurante de verdade
+        não há — ele nasce vazio de propósito (0059) — e dizer "0 itens no
+        cardápio" soaria como falha, quando é a decisão.
+      */}
       <ul className="space-y-1 text-[13px] text-muted-foreground">
-        <li>
-          <strong className="tabular text-foreground">{produtos}</strong> itens
-          no cardápio
-        </li>
+        {hora ? (
+          <li>
+            <strong className="tabular text-foreground">{produtos}</strong> itens
+            no cardápio, com preço
+          </li>
+        ) : (
+          <li>
+            Cardápio <strong className="text-foreground">em branco</strong> — o
+            que a casa vende é você que sabe
+          </li>
+        )}
         <li>
           <strong className="tabular text-foreground">{mesas}</strong> mesas
           novas, cada uma com o código próprio
@@ -611,14 +661,16 @@ function BriefingPronto({
       ) : (
         <>
           <p className="rounded-md bg-secondary px-3 py-2 text-[12px] leading-snug">
-            Os itens estão <strong>fora do ar até você pôr o preço</strong>. O
-            cliente não vê nenhum deles ainda — é o próximo passo, no editor.
+            O sistema <strong>não inventa o seu cardápio</strong>: ele não sabe o
+            que a sua casa vende, e um cardápio chutado só daria trabalho de
+            apagar. A tela de <strong>Começar</strong> mostra o que falta e leva
+            você a cada lugar.
           </p>
           <button
-            onClick={() => router.push('/app/cardapio')}
+            onClick={() => router.push('/app/gestao/inicio')}
             className="h-12 w-full rounded-md bg-brand text-[15px] font-bold text-background"
           >
-            Abrir o editor de cardápio
+            Ver o que falta
           </button>
           <button
             onClick={() => router.push('/app/gestao/mesas')}

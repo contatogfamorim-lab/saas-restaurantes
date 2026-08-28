@@ -216,10 +216,20 @@ describe('§10.1 — o servidor nunca confia no cliente', () => {
   it('§4 — produto de categoria fora do horário é rejeitado', async () => {
     await emTransacao(async (c) => {
       const { session_id, guest_id } = await abrirComanda(c);
-      // Happy Hour vale 17h–20h de seg a sex. Fecha a janela para agora.
+      // Fecha a janela para agora — e a janela é calculada A PARTIR DE AGORA.
+      //
+      // A versão anterior fixava '03:00'–'03:30', supondo que ninguém rodaria
+      // os testes de madrugada. Rodei às 03:04 e o teste caiu: a janela que
+      // deveria estar FECHADA estava aberta, o produto passou pela checagem de
+      // horário, e o erro que apareceu foi o do modificador obrigatório.
+      //
+      // Um teste que só passa 23 horas e meia por dia não é um teste — é uma
+      // armadilha para quem trabalhar no horário errado.
       await c.query(
-        `update categories set available_from = '03:00', available_to = '03:30',
-                               days_of_week = array[0,1,2,3,4,5,6]
+        `update categories
+            set available_from = ((now() at time zone 'America/Sao_Paulo') + interval '2 hours')::time,
+                available_to   = ((now() at time zone 'America/Sao_Paulo') + interval '3 hours')::time,
+                days_of_week = array[0,1,2,3,4,5,6]
           where name = 'Happy Hour' and restaurant_id = $1`, [RESTAURANTE_A]);
 
       await expect(
