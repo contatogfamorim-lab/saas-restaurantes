@@ -4,13 +4,13 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
-import { FUSOS } from '@/lib/onboarding/briefing';
+import { FUSOS } from '@/lib/onboarding/configuracoes-iniciais';
 import { salvarConfiguracoes } from '@/app/app/(gestao)/gestao/configuracoes/actions';
 
 /**
  * Configurações da casa (§8).
  *
- * As mesmas perguntas do briefing, agora editáveis para sempre. Os campos são
+ * As mesmas perguntas da configuração inicial, agora editáveis para sempre. Os campos são
  * controlados porque o botão de salvar precisa saber se algo mudou — um botão
  * sempre aceso convida a salvar sem querer, num formulário que mexe em taxa e
  * cashback.

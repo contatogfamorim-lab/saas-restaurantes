@@ -1,5 +1,5 @@
 /**
- * Briefing e demonstração (migrations 0034 e 0035).
+ * Configuração inicial e demonstração (migrations 0034 e 0035).
  *
  * O que precisa ser verdade:
  *
@@ -7,7 +7,7 @@
  *      ar — a única regra deste projeto que vale mais que conveniência;
  *   2. rodar duas vezes não duplica nada. Alguém VAI rodar duas vezes;
  *   3. o que o cliente manda não vale: taxa de 900% vira o teto, não 900%;
- *   4. a marca de "briefing respondido" é PERMANENTE, mas as respostas somem em
+ *   4. a marca de "configuração inicial respondido" é PERMANENTE, mas as respostas somem em
  *      3 horas. Confundir as duas faz o restaurante ser barrado na porta toda
  *      madrugada — foi o bug que este arquivo existe para travar;
  *   5. a demo expira e leva o restaurante inteiro junto; o restaurante de
@@ -88,8 +88,8 @@ async function esperaFalhar(c: Client, sql: string, params: unknown[], padrao: R
 
 beforeAll(async () => {
   pool = new Pool({ connectionString: DATABASE_URL });
-  await criarUsuario(DONO, 'dona@briefing.test');
-  await criarUsuario(GARCOM, 'garcom@briefing.test');
+  await criarUsuario(DONO, 'dona@configuração inicial.test');
+  await criarUsuario(GARCOM, 'garcom@configuração inicial.test');
 });
 
 afterAll(async () => {
@@ -102,7 +102,7 @@ afterAll(async () => {
 // ===========================================================================
 describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () => {
   it('NÃO gera cardápio nenhum — o sistema não sabe o que a casa vende', async () => {
-    // Este teste já foi o oposto: exigia que o briefing gerasse dez pratos de
+    // Este teste já foi o oposto: exigia que a configuração inicial gerasse dez pratos de
     // hamburgueria, sem preço e fora do ar. A intenção era boa (tela vazia é
     // ruim de encarar) e a consequência não: o dono abria o editor e encontrava
     // dez pratos que não vende, e o primeiro trabalho dele com o produto era
@@ -156,7 +156,7 @@ describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () 
 
   it('as mesas COMPLETAM o que falta, não somam de novo', async () => {
     await como(DONO, async (c) => {
-      const restaurante = await novoRestaurante(c, 'Briefing Mesas');
+      const restaurante = await novoRestaurante(c, 'Configuração inicial Mesas');
       await c.query(`select public.create_tables(8, 'Salão')`);
 
       const r = await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb) as r`, [
@@ -176,7 +176,7 @@ describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () 
     // §10.1: o servidor nunca confia no cliente. O Zod da Server Action é a
     // mensagem bonita; ESTA é a proteção.
     await como(DONO, async (c) => {
-      const restaurante = await novoRestaurante(c, 'Briefing Ganancioso');
+      const restaurante = await novoRestaurante(c, 'Configuração inicial Ganancioso');
       await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [
         JSON.stringify({ ...RESPOSTAS, taxa_servico: 900, mesas: 99999 }),
       ]);
@@ -195,7 +195,7 @@ describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () 
 
   it('quem não administra não faz as configurações iniciais', async () => {
     await como(DONO, async (c) => {
-      await novoRestaurante(c, 'Briefing Fechado');
+      await novoRestaurante(c, 'Configuração inicial Fechado');
       await c.query(
         `insert into public.profiles (id, restaurant_id, name, roles, active)
          values ($1, app.current_restaurant_id(), 'Garçom', array['waiter']::public.staff_role[], true)`,
@@ -224,7 +224,7 @@ describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () 
     // como porteiro. Ela some em 3 horas de propósito — e o restaurante seria
     // interrogado de novo toda madrugada sobre que tipo de comida ele vende.
     await como(DONO, async (c) => {
-      const restaurante = await novoRestaurante(c, 'Briefing Duradouro');
+      const restaurante = await novoRestaurante(c, 'Configuração inicial Duradouro');
       await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
 
       // envelhece as respostas e roda a limpeza
@@ -254,7 +254,7 @@ describe('0059 — as configurações iniciais montam o que foi RESPONDIDO', () 
 
 // ===========================================================================
 describe('0035 — a demonstração', () => {
-  /** Monta um restaurante com briefing e demo, e devolve o id. */
+  /** Monta um restaurante com configuração inicial e demo, e devolve o id. */
   async function comDemo(c: Client, nome: string): Promise<string> {
     const restaurante = await novoRestaurante(c, nome);
     await c.query(`select public.aplicar_configuracoes_iniciais($1::jsonb)`, [JSON.stringify(RESPOSTAS)]);
@@ -393,7 +393,7 @@ describe('0035 — a demonstração', () => {
 
       // O CARDÁPIO DELA É CRIADO À MÃO, e a mudança é o ponto.
       //
-      // Antes, `aplicar_briefing` inventava um cardápio e a fixture ganhava
+      // Antes, `aplicar_configuracoes_iniciais` inventava um cardápio e a fixture ganhava
       // produtos de graça. Desde a 0059 restaurante de verdade nasce vazio — e
       // sem estas linhas o teste passaria a comparar "zero produtos antes" com
       // "zero produtos depois", que é verdade por vacuidade e não prova que a

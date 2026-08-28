@@ -34,7 +34,7 @@ export interface StaffSession extends Actor {
   restaurantName: string;
   restaurantBrandColor: string;
   /**
-   * O briefing (§14) ainda não foi respondido — restaurante recém-criado, sem
+   * O configuração inicial (§14) ainda não foi respondido — restaurante recém-criado, sem
    * cardápio, sem fuso e sem taxa definida.
    *
    * Lido de `restaurants.briefing_at`, que é PERMANENTE, e não da existência da
@@ -42,7 +42,7 @@ export interface StaffSession extends Actor {
    * linha aqui faria o restaurante ser barrado na porta toda madrugada,
    * perguntando de novo o que ele já respondeu.
    */
-  briefingPendente: boolean;
+  configuracaoPendente: boolean;
 }
 
 /** A equipe logada, ou `null`. Não redireciona — use em layout compartilhado. */
@@ -82,7 +82,7 @@ export async function getStaff(): Promise<StaffSession | null> {
     active: true,
     restaurantName: restaurante?.name ?? '',
     restaurantBrandColor: restaurante?.brand_color ?? '#D97A28',
-    briefingPendente: restaurante != null && restaurante.briefing_at == null,
+    configuracaoPendente: restaurante != null && restaurante.briefing_at == null,
   };
 }
 
@@ -119,15 +119,15 @@ async function porQueNaoTemStaff(): Promise<MotivoSemStaff> {
 }
 
 /**
- * Exige alguém logado, com perfil ativo E com o briefing respondido.
+ * Exige alguém logado, com perfil ativo E com a configuração inicial respondido.
  *
- * O briefing é obrigatório na primeira entrada, e o lugar de cobrar isso é
+ * O configuração inicial é obrigatório na primeira entrada, e o lugar de cobrar isso é
  * aqui: toda tela protegida e toda Server Action já passam por este funil. Pôr
  * a checagem num layout deixaria as Server Actions de fora — e Server Action é
  * endpoint HTTP público (§10.3), alcançável sem abrir tela nenhuma.
  *
- * Quem responde o briefing NÃO pode usar esta função, pela razão óbvia:
- * `responderBriefing` seria barrada pelo portão que ela existe para abrir. Ela
+ * Quem responde a configuração inicial NÃO pode usar esta função, pela razão óbvia:
+ * `responderConfiguracao` seria barrada pelo portão que ela existe para abrir. Ela
  * chama `getStaff()` direto.
  *
  * REGRA QUE NÃO PODE SER QUEBRADA: nunca mandar para `/app/entrar` alguém que
@@ -138,7 +138,7 @@ export async function exigirStaff(): Promise<StaffSession> {
   const staff = await getStaff();
 
   if (staff) {
-    if (staff.briefingPendente) redirect('/comecar');
+    if (staff.configuracaoPendente) redirect('/comecar');
     return staff;
   }
 

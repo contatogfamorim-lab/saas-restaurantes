@@ -1,5 +1,5 @@
 /**
- * As listas fechadas do briefing.
+ * As listas fechadas da configuração inicial.
  *
  * Em módulo próprio, e não junto das Server Actions, porque arquivo com
  * `'use server'` no topo só pode exportar função assíncrona — uma constante

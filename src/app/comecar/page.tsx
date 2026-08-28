@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
  *
  *   sem conta               → criar conta
  *   conta sem perfil        → criar restaurante
- *   sem briefing respondido → o briefing (obrigatório na primeira entrada)
+ *   sem configuração inicial respondida → a configuração inicial (obrigatório na primeira entrada)
  *   perfil sem mesa         → criar mesas
  *   tudo pronto             → sai daqui
  *
@@ -28,9 +28,9 @@ export const dynamic = 'force-dynamic';
  * pessoa fecha o navegador no meio, volta, e o sistema pergunta de novo uma
  * coisa que ela já respondeu — ou pior, tenta criar de novo.
  *
- * O passo "criar mesas" ficou como EXCEÇÃO, não como caminho normal: o briefing
+ * O passo "criar mesas" ficou como EXCEÇÃO, não como caminho normal: a configuração inicial
  * já pergunta quantas mesas e as cria. Ele sobra para restaurante que nasceu
- * antes do briefing existir e não tem mesa nenhuma.
+ * antes da configuração inicial existir e não tem mesa nenhuma.
  */
 export default async function Comecar() {
   const supabase = await createClient();
@@ -43,10 +43,10 @@ export default async function Comecar() {
   const staff = await getStaff();
   if (!staff) return <Onboarding passo="restaurante" email={user.email ?? null} />;
 
-  if (staff.briefingPendente) {
+  if (staff.configuracaoPendente) {
     return (
       <Onboarding
-        passo="briefing"
+        passo='configuracao'
         email={user.email ?? null}
         restaurante={staff.restaurantName}
       />

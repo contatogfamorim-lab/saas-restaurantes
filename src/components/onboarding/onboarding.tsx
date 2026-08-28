@@ -5,20 +5,20 @@ import { useRouter } from 'next/navigation';
 import { CheckIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { COZINHAS, FUSOS } from '@/lib/onboarding/briefing';
+import { COZINHAS, FUSOS } from '@/lib/onboarding/configuracoes-iniciais';
 import {
   criarConta,
   criarMesas,
   criarRestaurante,
-  responderBriefing,
+  responderConfiguracao,
 } from '@/app/comecar/actions';
 
-type Passo = 'conta' | 'restaurante' | 'briefing' | 'mesas';
+type Passo = 'conta' | 'restaurante' | 'configuracao' | 'mesas';
 
 const PASSOS: { chave: Passo; rotulo: string }[] = [
   { chave: 'conta', rotulo: 'Sua conta' },
   { chave: 'restaurante', rotulo: 'O restaurante' },
-  { chave: 'briefing', rotulo: 'Como é a casa' },
+  { chave: 'configuracao', rotulo: 'Como é a casa' },
 ];
 
 /**
@@ -38,7 +38,7 @@ export function Onboarding({
   restaurante?: string;
 }) {
   // `mesas` não tem barra própria: é o caminho de exceção, para restaurante que
-  // já existia antes do briefing existir e ficou sem mesa. Ocupa a terceira
+  // já existia antes da configuração inicial existir e ficou sem mesa. Ocupa a terceira
   // casa em vez de devolver -1, que apagaria a barra inteira.
   const indice = passo === 'mesas' ? 2 : PASSOS.findIndex((p) => p.chave === passo);
 
@@ -75,7 +75,7 @@ export function Onboarding({
 
       {passo === 'conta' && <PassoConta />}
       {passo === 'restaurante' && <PassoRestaurante email={email} />}
-      {passo === 'briefing' && <PassoBriefing restaurante={restaurante ?? ''} />}
+      {passo === 'configuracao' && <PassoConfiguracao restaurante={restaurante ?? ''} />}
       {passo === 'mesas' && <PassoMesas restaurante={restaurante ?? ''} />}
     </main>
   );
@@ -298,10 +298,10 @@ function PassoMesas({ restaurante }: { restaurante: string }) {
 }
 
 /**
- * O briefing (§14, terceiro passo).
+ * O configuração inicial (§14, terceiro passo).
  *
  * As respostas viram categoria, produto, mesa, fuso e taxa de serviço dentro de
- * UMA transação no banco (`aplicar_briefing`). O formulário não sabe montar
+ * UMA transação no banco (`aplicar_configuracoes_iniciais`). O formulário não sabe montar
  * cardápio nenhum: ele coleta seis campos e entrega.
  *
  * Os produtos gerados nascem SEM PREÇO e fora do ar, e a tela diz isso antes de
@@ -309,7 +309,7 @@ function PassoMesas({ restaurante }: { restaurante: string }) {
  * costuma ter; não conhece quanto ELA cobra, e chutar seria o sistema afirmando
  * um valor sobre o negócio de outra pessoa.
  */
-function PassoBriefing({ restaurante }: { restaurante: string }) {
+function PassoConfiguracao({ restaurante }: { restaurante: string }) {
   const router = useRouter();
   const [pendente, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -329,7 +329,7 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
   function enviar(formData: FormData) {
     setErro(null);
     iniciar(async () => {
-      const r = await responderBriefing(formData);
+      const r = await responderConfiguracao(formData);
       if (!r.ok) {
         setErro(r.erro ?? 'Não deu certo');
         return;
@@ -346,7 +346,7 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
     });
   }
 
-  if (pronto) return <BriefingPronto {...pronto} router={router} />;
+  if (pronto) return <ConfiguracaoPronta {...pronto} router={router} />;
 
   return (
     <form action={enviar} className="space-y-3">
@@ -589,7 +589,7 @@ function PassoBriefing({ restaurante }: { restaurante: string }) {
   );
 }
 
-function BriefingPronto({
+function ConfiguracaoPronta({
   produtos,
   mesas,
   expiraEm,

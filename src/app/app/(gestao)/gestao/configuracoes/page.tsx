@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Configurações da casa (§8).
  *
- * O que o briefing perguntou UMA vez, na primeira entrada, mora aqui para
+ * O que a configuração inicial perguntou UMA vez, na primeira entrada, mora aqui para
  * sempre. Sem esta tela, um restaurante que decidisse ligar o cashback três
  * meses depois não teria por onde — o sistema só aceitaria ser configurado no
  * dia em que nasceu.

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { exigirStaff, getStaff } from '@/lib/auth/staff';
-import { COZINHAS, FUSOS } from '@/lib/onboarding/briefing';
+import { COZINHAS, FUSOS } from '@/lib/onboarding/configuracoes-iniciais';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -141,7 +141,7 @@ export async function criarMesas(formData: FormData): Promise<ResultadoOnboardin
   return { ok: true };
 }
 
-const briefing = z.object({
+const configuracaoInicial = z.object({
   tipoCozinha: z.enum(COZINHAS.map((c) => c.valor) as [string, ...string[]]),
   cidade: z.string().trim().max(80),
   timezone: z.enum(FUSOS.map((f) => f.valor) as [string, ...string[]]),
@@ -152,12 +152,12 @@ const briefing = z.object({
   pedirTelefone: z.coerce.boolean(),
   gerarDemo: z.coerce.boolean(),
   // Percentual devolvido ao cliente cadastrado. 0 = sem cashback, e é o padrão.
-  // O teto de 20 é reapertado dentro de `aplicar_briefing` — este é só a
+  // O teto de 20 é reapertado dentro de `aplicar_configuracoes_iniciais` — este é só a
   // mensagem legível (§10.3).
   cashback: z.coerce.number().min(0).max(20),
 });
 
-export interface ResultadoBriefing extends ResultadoOnboarding {
+export interface ResultadoConfiguracao extends ResultadoOnboarding {
   produtosCriados?: number;
   mesasCriadas?: number;
   /** Só na demonstração: quando aquele restaurante inteiro deixa de existir. */
@@ -165,12 +165,12 @@ export interface ResultadoBriefing extends ResultadoOnboarding {
 }
 
 /**
- * Responde o briefing e monta o restaurante a partir das respostas.
+ * Responde a configuração inicial e monta o restaurante a partir das respostas.
  *
- * Duas chamadas RPC, nesta ordem e por um motivo: `aplicar_briefing` cria o
+ * Duas chamadas RPC, nesta ordem e por um motivo: `aplicar_configuracoes_iniciais` cria o
  * cardápio SEM preço e fora do ar, que é o correto para uma casa de verdade;
  * `gerar_demonstracao` só depois põe preço e movimento em cima do que já existe.
- * A demo é uma camada sobre o briefing, nunca um caminho paralelo — assim não
+ * A demo é uma camada sobre a configuração inicial, nunca um caminho paralelo — assim não
  * há dois geradores de restaurante para manter em pé.
  *
  * Nada aqui confia no cliente: o percentual da taxa é reapertado dentro da
@@ -178,8 +178,8 @@ export interface ResultadoBriefing extends ResultadoOnboarding {
  * também, e as duas funções cobram o papel `owner` na entrada. O Zod acima é
  * para a mensagem sair legível (§10.3: Server Action é endpoint público).
  */
-export async function responderBriefing(formData: FormData): Promise<ResultadoBriefing> {
-  const parsed = briefing.safeParse({
+export async function responderConfiguracao(formData: FormData): Promise<ResultadoConfiguracao> {
+  const parsed = configuracaoInicial.safeParse({
     tipoCozinha: formData.get('tipoCozinha'),
     cidade: formData.get('cidade') ?? '',
     timezone: formData.get('timezone'),
