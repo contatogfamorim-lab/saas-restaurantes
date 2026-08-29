@@ -230,6 +230,20 @@ export async function criarInstancia(instancia: string): Promise<{ ok: boolean; 
         url: webhook,
         byEvents: false,
         base64: false,
+        /*
+         * A CHAVE VAI NO CABEÇALHO, e é isto que autentica o webhook.
+         *
+         * A Evolution não manda credencial nenhuma por conta própria: sem esta
+         * linha, todo evento chega anônimo e a rota — que fecha por omissão —
+         * responde 401 para tudo. A caixa de entrada ficaria eternamente vazia
+         * com a conexão dizendo "conectado".
+         *
+         * É a MESMA chave da API, o que significa que quem já pode falar com a
+         * Evolution também pode escrever no webhook. Não é ideal (uma chave só
+         * para isto seria melhor), mas não afrouxa nada: quem tem essa chave já
+         * podia mandar mensagem pelo número da casa.
+         */
+        headers: { apikey: process.env.EVOLUTION_API_KEY ?? '' },
         events: [
           'CONNECTION_UPDATE',
           'CONTACTS_UPSERT',

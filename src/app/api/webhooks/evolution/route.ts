@@ -151,9 +151,20 @@ function autorizado(req: Request): boolean {
   for (const ip of (process.env.EVOLUTION_WEBHOOK_IPS ?? '').split(',')) {
     if (ip.trim()) permitidos.add(ip.trim());
   }
+  /*
+   * O host da EVOLUTION_API_URL só entra se ELE MESMO for um IP.
+   *
+   * O CRM adiciona o hostname direto nesta lista, e a lista é comparada com um
+   * IP — então para qualquer endereço com nome (o nosso é `…sslip.io`) a
+   * entrada nunca casa. É código morto que PARECE uma segunda camada.
+   *
+   * Resolver o nome aqui seria pior: uma consulta DNS por requisição, e um
+   * atacante que controle a resolução passa a decidir quem entra. Quem quiser
+   * a camada de IP põe o IP em `EVOLUTION_WEBHOOK_IPS`.
+   */
   try {
     const host = new URL(process.env.EVOLUTION_API_URL ?? '').hostname;
-    if (host) permitidos.add(host);
+    if (/^[0-9.]+$/.test(host) || host.includes(':')) permitidos.add(host);
   } catch {
     // URL ausente ou inválida: sobra a lista explícita, que pode estar vazia.
   }
