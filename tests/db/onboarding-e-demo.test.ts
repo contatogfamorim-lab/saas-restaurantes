@@ -430,17 +430,29 @@ describe('0035 — a demonstração', () => {
       expect(rows[0].real_viva).toBe(1);
       expect(rows[0].real_cardapio).toBeGreaterThan(0);
 
-      // O PERFIL sai, a CONTA DE LOGIN fica. A primeira versão apagava
-      // `auth.users` junto — e com a confirmação de e-mail ligada isso cobra um
-      // segundo ida-e-volta na caixa de entrada de quem gostou do sistema e
-      // voltou para montar o restaurante de verdade.
+      /*
+       * A DEMONSTRAÇÃO NÃO DEIXA RASTRO: perfil E conta de login somem (0061).
+       *
+       * A 0036 tinha decidido o contrário — preservar o login para poupar um
+       * segundo ida-e-volta na confirmação de e-mail. A decisão foi revertida.
+       *
+       * E a ressalva importa tanto quanto a regra: o GARÇOM é dono do
+       * restaurante de verdade deste mesmo teste, e a conta dele TEM que
+       * sobreviver. A 0034 fazia esta faxina sem esse cuidado e apagaria quem
+       * criasse uma demonstração para mostrar a alguém.
+       */
       const { rows: conta } = await c.query(
         `select (select count(*)::int from public.profiles where id = $1) as perfil,
-                (select count(*)::int from auth.users where id = $1) as login`,
-        [DONO],
+                (select count(*)::int from auth.users where id = $1) as login,
+                (select count(*)::int from auth.users where id = $2) as login_vizinho,
+                (select count(*)::int from public.profiles where id = $2) as perfil_vizinho`,
+        [DONO, GARCOM],
       );
       expect(conta[0].perfil).toBe(0);
-      expect(conta[0].login).toBe(1);
+      expect(conta[0].login).toBe(0);
+
+      expect(conta[0].perfil_vizinho).toBe(1);
+      expect(conta[0].login_vizinho).toBe(1);
     });
   });
 
