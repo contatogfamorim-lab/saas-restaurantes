@@ -1,0 +1,40 @@
+# =============================================================================
+# Caddy na frente da Evolution
+# =============================================================================
+# O endereço vem de fora, em DOMINIO. Duas formas de preencher:
+#
+#   - um domínio seu, apontado para o IP da máquina;
+#   - `<ip-com-hifens>.sslip.io` — o sslip.io resolve qualquer IP escrito no
+#     nome, e o Let's Encrypt emite certificado para ele. Serve para testar sem
+#     comprar domínio, e é HTTPS de verdade, não autoassinado.
+#
+# O Caddy pede e renova o certificado sozinho. Só precisa que as portas 80 e
+# 443 estejam abertas nas DUAS camadas de firewall da Oracle — a Security List
+# do painel e o iptables da máquina.
+# =============================================================================
+
+{$DOMINIO} {
+	encode gzip
+
+	# A Evolution mora só em localhost; o Caddy é a única porta de entrada.
+	reverse_proxy evolution:8080 {
+		# O webhook e o QR usam conexões longas.
+		flush_interval -1
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		# A Evolution não é feita para ser aberta no navegador por ninguém além
+		# de quem administra; nada aqui deve ser indexado.
+		-Server
+	}
+
+	log {
+		output file /data/acesso.log {
+			roll_size 10MB
+			roll_keep 3
+		}
+	}
+}

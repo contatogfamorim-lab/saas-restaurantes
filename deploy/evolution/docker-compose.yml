@@ -1,0 +1,127 @@
+# =============================================================================
+# Evolution API + Postgres, dimensionados para 1 GB de RAM
+# =============================================================================
+# A VM.Standard.E2.1.Micro da Oracle tem 956 MB. Não é pouco por acidente: é o
+# que o plano gratuito dá, e é o suficiente SE cada peça for contida. Sem
+# limite nenhum, o Postgres reserva o que quiser, a Evolution cresce por cima,
+# e o kernel mata a que estiver na frente — que costuma ser a Evolution, no
+# meio de uma sessão de WhatsApp.
+#
+# A conta, com folga para o sistema:
+#
+#   Postgres    128 MB   (shared_buffers 32 MB, 20 conexões)
+#   Evolution   420 MB
+#   Caddy        48 MB
+#   worker       80 MB
+#   ─────────────────
+#   total       676 MB   → sobram ~280 MB para o Ubuntu
+#
+# O swap de 2 GB do `setup.sh` é rede de proteção para o pico, não espaço de
+# trabalho: `vm.swappiness=10` mantém tudo na RAM enquanto der.
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_senha
+      POSTGRES_DB: evolution
+    secrets:
+      - pg_senha
+    volumes:
+      - postgres_dados:/var/lib/postgresql/data
+    # Só a rede interna: o Postgres NÃO é publicado em porta nenhuma do host.
+    # Ninguém de fora fala com ele, nem com senha.
+    expose:
+      - "5432"
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - max_connections=20
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      # Sem paralelismo: em 1 núcleo ele só troca contexto à toa.
+      - -c
+      - max_parallel_workers_per_gather=0
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  evolution:
+    # `evoapicloud`, e NÃO `atendai`.
+    #
+    # O `atendai/evolution-api` saiu do ar: o Docker Hub ainda lista as tags
+    # dele, mas o `pull` devolve "repository does not exist or may require
+    # docker login" — e o endpoint de metadados do repositório não responde
+    # mais nada. O projeto migrou para `evoapicloud`, que tem 3,3 milhões de
+    # pulls e imagens amd64 e arm64.
+    #
+    # Versão FIXADA, e não `latest`: numa máquina que sustenta sessão de
+    # WhatsApp, um `docker compose pull` puxando uma versão nova sem aviso é o
+    # tipo de surpresa que aparece como "todos os números caíram".
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # 127.0.0.1 no bind é o que impede a Evolution de ficar exposta sem TLS.
+    # Sem isso, a AUTHENTICATION_API_KEY viaja em texto aberto pela internet em
+    # cada requisição — e ela é a chave de tudo.
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - evolution_instancias:/evolution/instances
+    env_file:
+      - ./evolution.env
+    deploy:
+      resources:
+        limits:
+          memory: 420M
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    depends_on:
+      - evolution
+    # A variável precisa chegar DENTRO do contêiner, e não só ao `docker
+    # compose`. Sem isto, `{$DOMINIO}` no Caddyfile vira string vazia, o
+    # arquivo passa a começar com `{` solto, e o Caddy lê aquilo como bloco de
+    # opções globais — falhando com "unrecognized global option: encode", que
+    # não tem relação nenhuma com a causa.
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO ao subir}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+      - caddy_config:/config
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+
+secrets:
+  pg_senha:
+    file: ./pg_senha.txt
+
+volumes:
+  postgres_dados:
+  # O volume das instâncias é o que guarda a sessão do WhatsApp. Perder este
+  # volume = todo número pede o QR de novo.
+  evolution_instancias:
+  caddy_dados:
+  caddy_config:

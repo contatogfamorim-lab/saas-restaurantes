@@ -1,0 +1,51 @@
+# =============================================================================
+# O worker de campanhas, sob systemd
+# =============================================================================
+# Instalação:
+#   sudo cp pedidos-ia-worker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now pedidos-ia-worker
+#
+# As variáveis ficam em /opt/evolution/worker.env, com permissão 600 — não
+# neste arquivo, que é legível por qualquer um em /etc/systemd/system.
+# =============================================================================
+[Unit]
+Description=Worker de campanhas do Pedidos.IA
+# Depende do docker só para não subir antes da máquina estar pronta; ele não
+# fala com a Evolution direto — fala com o app na Vercel, que fala com ela.
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/evolution
+EnvironmentFile=/opt/evolution/worker.env
+ExecStart=/usr/bin/node /opt/evolution/marketing-worker.mjs
+
+# O worker sai sozinho com código 1 quando o segredo está errado — e nesse caso
+# reiniciar em laço só enche o log. `on-failure` com intervalo de 30 s dá tempo
+# de alguém arrumar a variável sem o serviço martelar a Vercel no meio.
+Restart=on-failure
+RestartSec=30s
+
+# Ele termina o tick em andamento no SIGTERM; 120 s é folga suficiente para o
+# envio mais lento (a Evolution tem timeout de 20 s por mensagem).
+TimeoutStopSec=120
+
+# Numa máquina de 1 GB, um vazamento no worker não pode derrubar a Evolution.
+MemoryMax=80M
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pedidos-ia-worker
+
+# Endurecimento: o worker só precisa da rede e de ler o próprio arquivo.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=
+
+[Install]
+WantedBy=multi-user.target

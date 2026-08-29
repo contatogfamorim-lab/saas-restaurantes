@@ -44,3 +44,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Segredos gerados NA MÁQUINA pelo setup.sh — nunca versionados.
+deploy/evolution/evolution.env
+deploy/evolution/pg_senha.txt
+deploy/evolution/worker.env
