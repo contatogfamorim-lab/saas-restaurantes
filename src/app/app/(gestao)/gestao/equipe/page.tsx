@@ -112,9 +112,8 @@ export default async function Equipe({
             </Tabela>
 
             <p className="mt-4 border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground">
-              Esta lista não mede produtividade. São as ações que movem valor sem uma venda
-              atrás — as três em que o prejuízo de restaurante costuma nascer. Número alto
-              não é acusação; é onde vale perguntar.
+              Não mede produtividade: são as ações que movem valor sem uma venda
+              atrás. Número alto não é acusação, é onde vale perguntar.
             </p>
           </>
         )}
@@ -173,10 +172,8 @@ export default async function Equipe({
         </Tabela>
 
         <p className="mt-4 border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground">
-          <strong className="text-foreground">Ninguém altera as próprias funções</strong> —
-          nem o administrador. A regra está na matriz de permissões e repetida num gatilho
-          do banco, que vale inclusive para a chave de serviço: escalonamento de privilégio
-          começa exatamente aí.
+          <strong className="text-foreground">Ninguém altera as próprias funções</strong>
+          {' '}— nem o administrador.
         </p>
       </Cartao>
     </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PlusIcon, Trash2Icon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { RotuloComAjuda } from '@/components/gestao/rotulo-com-ajuda';
 import {
   alternarSelo,
   apagarSelo,
@@ -74,8 +75,8 @@ export function EditorDeSelos({ selos }: { selos: SeloDaLista[] }) {
         etiqueta e a lista volta a ser uma lista.
       */}
       <p className="mt-5 rounded-lg bg-secondary/60 px-3 py-2 text-[12px] leading-snug text-muted-foreground">
-        Dois selos por prato já é muito, e animação em todos anula o efeito de
-        todos. Guarde o brilho para o que você realmente quer vender hoje.
+        Dois selos por prato já é muito. Se todo prato tem etiqueta, nenhuma
+        chama atenção.
       </p>
 
       <ul className="mt-4 space-y-2">
@@ -125,9 +126,9 @@ function Formulario({
   return (
     <div className="mt-4 rounded-xl border border-border bg-card p-4">
       <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">
+        <RotuloComAjuda ajuda="Até 18 caracteres — mais que isso não cabe no card.">
           O que vai escrito
-        </span>
+        </RotuloComAjuda>
         <input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
@@ -135,9 +136,6 @@ function Formulario({
           placeholder="SEM GLÚTEN"
           className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-[15px] uppercase outline-none focus-visible:ring-2 focus-visible:ring-brand"
         />
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          Até 18 caracteres. Mais que isso não cabe no card.
-        </span>
       </label>
 
       <div className="mt-4">

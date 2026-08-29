@@ -73,8 +73,7 @@ export function PainelDePerdas({
     <main className="mx-auto max-w-lg px-4 pb-24 pt-5">
       <h1 className="font-display text-[26px] leading-tight">Perdas</h1>
       <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
-        O que estragou, queimou ou caiu. Anotar aqui é o que impede o estoque de
-        mentir depois.
+        O que estragou, queimou ou caiu.
       </p>
 
       {insumos.length === 0 ? (
@@ -213,11 +212,9 @@ export function PainelDePerdas({
           </ul>
           {/*
             A lista existe para quem anotou ver que ficou anotado — e para a
-            pessoa seguinte não anotar de novo a mesma coisa.
+            pessoa seguinte não anotar de novo a mesma coisa. O texto que dizia
+            isso saiu: a lista já mostra.
           */}
-          <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-            Já anotado não precisa ser anotado de novo.
-          </p>
         </div>
       )}
     </main>

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { RotuloComAjuda } from '@/components/gestao/rotulo-com-ajuda';
 import { renderMensagem } from '@/lib/marketing/mensagem';
 import { SeletorDeSegmento, type Segmento } from './segmento';
 import {
@@ -260,9 +261,9 @@ function Editor({
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <label className="block">
-            <span className="text-[12px] font-semibold text-muted-foreground">
+            <RotuloComAjuda ajuda="Só você vê. Serve para achar depois.">
               Nome da campanha
-            </span>
+            </RotuloComAjuda>
             <input
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
@@ -271,9 +272,6 @@ function Editor({
               placeholder="Cashback liberado — outubro"
               className={CAMPO}
             />
-            <span className="mt-1 block text-[11px] text-muted-foreground">
-              Só você vê. Serve para achar depois.
-            </span>
           </label>
 
           <label className="mt-4 block">
@@ -327,10 +325,9 @@ function Editor({
             <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{previa}</p>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            Nome e saldo aqui são de exemplo. O{' '}
-            <strong className="text-foreground">link do fim é obrigatório</strong> e
-            entra sozinho, com um endereço diferente para cada pessoa — não
-            escreva o seu.
+            Nome e saldo são de exemplo. O{' '}
+            <strong className="text-foreground">link do fim entra sozinho</strong>
+            {' '}— não escreva o seu.
           </p>
         </div>
       </div>
@@ -499,8 +496,8 @@ function Linha({
             <strong>
               {c.pendentes} {c.pendentes === 1 ? 'pessoa' : 'pessoas'}
             </strong>
-            , uma a cada 40–90 segundos. Quem já recebeu não recebe de novo, e
-            quem sair da lista no meio deixa de receber na hora.
+            , uma a cada 40–90 segundos. Quem sair da lista no meio deixa de
+            receber na hora.
           </p>
 
           {/*

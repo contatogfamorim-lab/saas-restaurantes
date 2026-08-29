@@ -64,10 +64,8 @@ export function Gatilhos({
       </div>
 
       <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        Estes avisos entram na <strong>mesma fila</strong> das campanhas escritas
-        à mão: mesmo intervalo entre mensagens, mesmo teto do dia, mesma
-        conferência de permissão na hora de enviar, mesmo link de saída. Ninguém
-        recebe duas vezes pelo mesmo motivo.
+        Entram na <strong>mesma fila</strong> das campanhas escritas à mão, com
+        as mesmas regras. Ninguém recebe duas vezes pelo mesmo motivo.
       </p>
     </div>
   );
@@ -127,8 +125,7 @@ function Cartao({ gatilho: g, temValidade }: { gatilho: Gatilho; temValidade: bo
 
           {inutil && (
             <p className="mt-1 text-[12px] text-alert-warning">
-              Ligue a validade do cashback nas Configurações — sem ela o saldo
-              nunca expira, e este aviso nunca teria motivo para sair.
+              Sem validade do cashback nas Configurações, este aviso nunca sai.
             </p>
           )}
 

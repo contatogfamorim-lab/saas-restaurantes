@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlertTriangleIcon, PlusIcon, TrendingDownIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { RotuloComAjuda } from '@/components/gestao/rotulo-com-ajuda';
 import { formatCents } from '@/lib/money';
 import { deMilesimos, NOME_DA_UNIDADE, UNIDADE_DE_COMPRA } from '@/lib/estoque/unidades';
 import {
@@ -243,34 +244,32 @@ export function Estoque({
             </table>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            O custo vem da ficha técnica, pelo preço que você cadastrou no insumo. &ldquo;Dá para&rdquo; é quantas porções ainda saem com o que há na casa.
+            O custo vem da ficha técnica. &ldquo;Dá para&rdquo; é quantas
+            porções ainda saem com o que há na casa.
           </p>
         </div>
       )}
 
-      <div className="mt-6 space-y-2 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
-        <p>
-          <strong className="text-foreground">
-            A baixa acontece quando o item vai para a cozinha
-          </strong>{' '}
-          — não quando o cliente pede, porque o pedido ainda pode ser recusado, e
-          não quando o prato sai, porque o ingrediente já saiu antes.
-        </p>
-        <p>
-          <strong className="text-foreground">
-            Falta de estoque nunca recusa um pedido.
-          </strong>{' '}
-          Se não cobre, o saldo fica negativo e aparece aqui em cima. O garçom já
-          aprovou e o cliente está sentado: o sistema registrar a verdade é mais
-          útil do que ele discutir com a cozinha.
-        </p>
-        <p>
+      {/*
+        Três parágrafos com o porquê de cada regra viraram três fatos. O
+        raciocínio ("o pedido ainda pode ser recusado", "o cliente está
+        sentado") era defesa de decisão de projeto, não informação de operação.
+      */}
+      <ul className="mt-6 space-y-1.5 border-t border-border pt-4 text-[11px] text-muted-foreground">
+        <li>
+          <strong className="text-foreground">Baixa quando o item vai para a cozinha</strong>
+          {' '}— não quando o cliente pede.
+        </li>
+        <li>
+          <strong className="text-foreground">Falta de estoque nunca recusa um pedido.</strong>
+          {' '}O saldo fica negativo e aparece aqui em cima.
+        </li>
+        <li>
           Item recusado antes de a cozinha começar devolve o ingrediente. Depois
-          disso não devolve — virou comida, e comida jogada fora é{' '}
-          <strong className="text-foreground">perda</strong>, que você registra
-          aqui para o número aparecer.
-        </p>
-      </div>
+          disso é <strong className="text-foreground">perda</strong>, e você
+          registra em Perdas.
+        </li>
+      </ul>
     </>
   );
 }
@@ -341,7 +340,9 @@ function NovoInsumo({
         </label>
 
         <label className="block">
-          <span className="text-[12px] font-semibold text-muted-foreground">Unidade</span>
+          <RotuloComAjuda ajuda="Não dá para trocar depois — mudaria toda receita que aponta para o insumo.">
+            Unidade
+          </RotuloComAjuda>
           <select
             name="unidade"
             value={unidade}
@@ -352,23 +353,13 @@ function NovoInsumo({
             <option value="ml">mililitros</option>
             <option value="un">unidades</option>
           </select>
-          {/*
-            A unidade não muda depois. Trocar g por ml reinterpretaria toda
-            receita que aponta para o insumo, em silêncio.
-          */}
-          <span className="mt-1 block text-[11px] text-muted-foreground">
-            Não dá para trocar depois.
-          </span>
         </label>
 
         <label className="block">
-          <span className="text-[12px] font-semibold text-muted-foreground">
+          <RotuloComAjuda ajuda="Em reais. Opcional — sem ele o sistema não calcula margem.">
             Custo por {UNIDADE_DE_COMPRA[unidade]}
-          </span>
+          </RotuloComAjuda>
           <input name="custo" inputMode="decimal" placeholder="45,00" className={CAMPO} />
-          <span className="mt-1 block text-[11px] text-muted-foreground">
-            Em reais. Opcional.
-          </span>
         </label>
 
         <label className="block">
