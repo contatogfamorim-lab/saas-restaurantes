@@ -582,6 +582,52 @@ describe('configurações da casa (0041)', () => {
     });
   });
 
+  it('SALVAR CONFIGURAÇÕES NÃO DESCONECTA O WHATSAPP', async () => {
+    /*
+     * A tela de Configurações trocou o campo de texto "nome da instância" por
+     * um painel de conexão, e o painel NÃO faz parte do formulário. Ou seja: o
+     * formulário deixou de mandar `whatsapp`.
+     *
+     * Se ausência valesse "apagar", mudar a cor da marca derrubaria as
+     * campanhas da casa — e ninguém ligaria uma coisa à outra, porque o
+     * WhatsApp continuaria pareado no celular do dono. As mensagens só
+     * parariam de sair.
+     *
+     * As três formas são semanticamente diferentes, e é isso que o teste fixa:
+     *   ausente        → não mexe
+     *   string vazia   → desconecta (é o botão "Desligar")
+     *   nome válido    → conecta
+     *
+     * Sabotando a 0055 para escrever este teste eu descobri que a AUSÊNCIA é
+     * protegida por dois ramos independentes do mesmo `case` — o explícito
+     * (`when not (p_valores ? 'whatsapp')`) e o `else` final. Derrubar um só
+     * não produz defeito nenhum. Fica registrado porque a leitura ingênua é
+     * que o ramo explícito é o guarda, e quem mexer ali achando que é
+     * redundante precisa saber que o `else` é o outro metade do par.
+     */
+    await como(DONO, async (c) => {
+      const instancia = async () => (await c.query(
+        `select evolution_instance_name as v from public.restaurants where id = $1`,
+        [RESTAURANTE],
+      )).rows[0].v;
+
+      await c.query(`select public.atualizar_configuracoes('{"whatsapp": "brasa_burger_3f8b2c1d"}'::jsonb)`);
+      expect(await instancia()).toBe('brasa_burger_3f8b2c1d');
+
+      // O formulário inteiro, sem a chave `whatsapp` — é o que a tela manda hoje.
+      await c.query(`select public.atualizar_configuracoes('{
+        "nome": "Brasa Burger", "taxa_servico": 10, "cashback": 5,
+        "timezone": "America/Sao_Paulo", "pedir_telefone": true,
+        "cor": "#D97A28", "teto_diario": 200, "carencia": 24, "validade": 0
+      }'::jsonb)`);
+      expect(await instancia()).toBe('brasa_burger_3f8b2c1d');
+
+      // E o botão de desligar continua desligando.
+      await c.query(`select public.atualizar_configuracoes('{"whatsapp": ""}'::jsonb)`);
+      expect(await instancia()).toBeNull();
+    });
+  });
+
   it('os tetos são apertados no servidor: 200% vira 20%', async () => {
     await como(DONO, async (c) => {
       await c.query(`select public.atualizar_configuracoes(

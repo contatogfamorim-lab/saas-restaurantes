@@ -12,6 +12,7 @@ import {
   criarRestaurante,
   responderConfiguracao,
 } from '@/app/comecar/actions';
+import { ConexaoWhatsApp } from '@/components/gestao/conexao-whatsapp';
 
 type Passo = 'conta' | 'restaurante' | 'configuracao' | 'mesas';
 
@@ -666,6 +667,29 @@ function ConfiguracaoPronta({
             apagar. A tela de <strong>Começar</strong> mostra o que falta e leva
             você a cada lugar.
           </p>
+          {/*
+            O WHATSAPP ENTRA AQUI, E SÓ NO RESTAURANTE DE VERDADE.
+
+            Aqui porque é o momento em que a pessoa ainda está configurando e
+            está com o celular na mão. Deixar isto só em Configurações fazia a
+            casa descobrir que precisava conectar no dia em que tentasse
+            disparar a primeira campanha — e aí já era tarde: a campanha estava
+            escrita e o botão recusava.
+
+            E NÃO na demonstração, que é o outro galho deste mesmo `if`: a demo
+            se apaga em algumas horas, e parear um WhatsApp de verdade nela
+            deixaria uma sessão órfã, ligada ao número real de alguém, num
+            servidor compartilhado com as outras casas.
+          */}
+          <div className="rounded-md border border-border p-3">
+            <p className="text-[13px] font-semibold">WhatsApp da casa</p>
+            <p className="mb-3 text-[12px] text-muted-foreground">
+              É por ele que saem as promoções para quem autorizou receber. Dá
+              para fazer depois, em Configurações — nada aqui depende disso.
+            </p>
+            <ConexaoWhatsApp inicial={{ instancia: null, estado: 'inexistente' }} />
+          </div>
+
           <button
             onClick={() => router.push('/app/gestao/inicio')}
             className="h-12 w-full rounded-md bg-brand text-[15px] font-bold text-background"

@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 import { FUSOS } from '@/lib/onboarding/configuracoes-iniciais';
-import { salvarConfiguracoes } from '@/app/app/(gestao)/gestao/configuracoes/actions';
+import {
+  salvarConfiguracoes,
+  type SituacaoWhatsApp,
+} from '@/app/app/(gestao)/gestao/configuracoes/actions';
+import { ConexaoWhatsApp } from '@/components/gestao/conexao-whatsapp';
 
 /**
  * Configurações da casa (§8).
@@ -22,7 +26,7 @@ export function EditorDeConfiguracoes({
   nome: nomeInicial,
   taxaServico: taxaInicial,
   cashback: cashbackInicial,
-  whatsapp: whatsappInicial,
+  whatsapp,
   tetoDiario: tetoInicial,
   carencia: carenciaInicial,
   validade: validadeInicial,
@@ -33,7 +37,7 @@ export function EditorDeConfiguracoes({
   nome: string;
   taxaServico: number;
   cashback: number;
-  whatsapp: string;
+  whatsapp: SituacaoWhatsApp;
   tetoDiario: number;
   carencia: number;
   validade: number;
@@ -57,7 +61,6 @@ export function EditorDeConfiguracoes({
   // Antes era só um campo com zero por padrão, e "0" numa caixa de número não
   // diz "desligado" — diz "ainda não digitei". Ligado/desligado explícito, e o
   // percentual só aparece quando faz sentido responder.
-  const [whatsapp, setWhatsapp] = useState(whatsappInicial);
   const [teto, setTeto] = useState(String(tetoInicial));
   const [carencia, setCarencia] = useState(String(carenciaInicial));
   const [validadeLigada, setValidadeLigada] = useState(validadeInicial > 0);
@@ -70,7 +73,6 @@ export function EditorDeConfiguracoes({
   const sujo =
     nome !== nomeInicial ||
     Number(taxa) !== taxaInicial ||
-    whatsapp !== whatsappInicial ||
     Number(teto) !== tetoInicial ||
     Number(carencia) !== carenciaInicial ||
     (validadeLigada ? Number(validade) : 0) !== validadeInicial ||
@@ -346,24 +348,12 @@ export function EditorDeConfiguracoes({
         </Bloco>
 
         <Bloco titulo="WhatsApp">
-          <label className="block">
-            <Rotulo>Nome da instância na Evolution</Rotulo>
-            <input
-              name="whatsapp"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              maxLength={60}
-              placeholder="minha-casa"
-              autoComplete="off"
-              spellCheck={false}
-              className={CAMPO}
-            />
-            <Ajuda>
-              É o &ldquo;aparelho&rdquo; ligado ao número da casa. Sem isso,
-              nenhuma campanha sai — e a tela de Campanhas avisa. Apagar o campo
-              desconecta.
-            </Ajuda>
-          </label>
+          {/*
+            Fora do <form> de propósito. Este painel tem ações próprias, que
+            acontecem na hora — e um QR que expira em 45 segundos não pode
+            depender de alguém lembrar de rolar a página e clicar em "Salvar".
+          */}
+          <ConexaoWhatsApp inicial={whatsapp} />
 
           <label className="mt-4 block">
             <Rotulo>Máximo de mensagens por dia</Rotulo>

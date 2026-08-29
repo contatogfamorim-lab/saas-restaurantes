@@ -31,7 +31,8 @@
     "check:imagens": "node scripts/check-imagens.mts",
     "check:csp": "node --env-file=.env.local scripts/check-csp.mts",
     "check:portas": "node --env-file-if-exists=.env.local scripts/check-portas-novas.mts",
-    "check:avisos": "node --env-file-if-exists=.env.local scripts/check-avisos-do-cliente.mts"
+    "check:avisos": "node --env-file-if-exists=.env.local scripts/check-avisos-do-cliente.mts",
+    "check:whatsapp": "node --conditions=react-server --env-file-if-exists=.env.local scripts/check-conexao-whatsapp.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

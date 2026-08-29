@@ -45,7 +45,18 @@ export default async function ConfiguracoesPage() {
       timezone={data?.timezone ?? 'America/Sao_Paulo'}
       pedirTelefone={Boolean(data?.require_phone)}
       cor={data?.brand_color ?? '#D97A28'}
-      whatsapp={data?.evolution_instance_name ?? ''}
+      /*
+        O NOME VEM DO BANCO; O ESTADO VEM DEPOIS, do navegador.
+
+        Perguntar à Evolution aqui deixaria esta página — que trata de taxa de
+        serviço, fuso e cor da marca — pendurada até 15 segundos sempre que o
+        servidor de WhatsApp estivesse fora do ar. O dono que veio mudar a taxa
+        não deve nem perceber que existe uma Evolution.
+      */
+      whatsapp={{
+        instancia: data?.evolution_instance_name ?? null,
+        estado: data?.evolution_instance_name ? 'verificando' : 'inexistente',
+      }}
       tetoDiario={Number(data?.marketing_max_por_dia ?? 200)}
       carencia={Number(data?.cashback_carencia_horas ?? 24)}
       validade={Number(data?.cashback_validade_dias ?? 0)}
