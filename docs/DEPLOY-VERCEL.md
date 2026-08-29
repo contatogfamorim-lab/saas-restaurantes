@@ -94,13 +94,26 @@ Em **Settings → Environment Variables**, para Production e Preview:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Config** | Supabase → anon / public |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | Supabase → service_role |
 | `SESSION_COOKIE_SECRET` | **Secret** | `openssl rand -base64 48` |
+| `EVOLUTION_API_URL` | **Secret** | endereço da sua Evolution (ver §6) |
+| `EVOLUTION_API_KEY` | **Secret** | a `AUTHENTICATION_API_KEY` da Evolution |
+| `MARKETING_WORKER_SECRET` | **Secret** | `openssl rand -base64 36` |
 
 Ao salvar as duas primeiras a Vercel avisa: *"Remove the public framework prefix
 to keep this value private"*. O aviso está certo e a resposta é **mudar o tipo
 para Config** — não tirar o prefixo. Sem `NEXT_PUBLIC_` o Next não injeta o
 valor no código do cliente, e o cardápio deixa de falar com o Supabase.
 
-As duas de baixo ficam **Secret**.
+Todas as outras ficam **Secret**.
+
+**As três últimas são opcionais.** Sem elas o sistema sobe e funciona inteiro —
+só não manda mensagem. É de propósito: quem só quer cardápio, mesa e caixa não
+precisa de WhatsApp para nada, e obrigar a preencher levaria a preencher com
+lixo.
+
+O `MARKETING_WORKER_SECRET` tem piso de 24 caracteres, e a rota é
+**fail-closed**: sem ele configurado, `/api/marketing/tick` responde 401 para
+todo mundo, inclusive em desenvolvimento. Liberar quando falta configuração
+deixaria um endereço público capaz de disparar campanha de qualquer casa.
 
 `DATABASE_URL` **não** é necessária: só os scripts de verificação a usam.
 
@@ -172,3 +185,86 @@ configurado ainda.
   paga.
 - **Não aponte a Vercel para o Supabase local.** `127.0.0.1` não existe do lado
   de lá.
+
+
+---
+
+## 6. WhatsApp: a Evolution e o worker
+
+Duas peças que **não** rodam na Vercel, e moram na mesma máquina.
+
+### Por que não na Vercel
+
+A Evolution mantém a sessão do WhatsApp aberta — é um processo de vida longa
+com estado em disco. Função serverless morre entre requisições; a sessão
+morreria junto, e cada instância pediria o QR de novo.
+
+O worker é o mesmo caso por outro motivo: o `tick` devolve em quantos
+milissegundos vale a pena chamar de novo, para respeitar o intervalo de 40 a
+90 segundos entre mensagens. O cron da Vercel tem granularidade de **um
+minuto** no plano Pro — e de **um dia** no Hobby. Uma campanha de 200 pessoas
+levaria três horas e meia no Pro, e duzentos dias no Hobby.
+
+### A máquina
+
+Qualquer VM com 2 GB de RAM e disco persistente serve. O que ela precisa
+sustentar: a Evolution, um Postgres ou Redis para o estado dela, e um processo
+Node de vinte linhas.
+
+**Oracle Cloud Always Free** cabe com folga (4 núcleos ARM, 24 GB) e é grátis
+para sempre. Dois avisos honestos, que valem mais que a economia:
+
+- **capacidade.** As instâncias ARM (Ampere A1) vivem indisponíveis em várias
+  regiões — "Out of host capacity" é o erro mais comum de quem tenta criar.
+  Pode levar dias tentando, ou nunca sair.
+- **recuperação.** A Oracle reclama recursos gratuitos ociosos. A máquina que
+  sustenta a sessão do WhatsApp não pode sumir de madrugada: quando voltar,
+  toda instância pede o QR outra vez, e ninguém percebe até uma campanha não
+  sair.
+
+Para **testar**, é a escolha certa: é grátis e é suficiente. Para o dia em que
+um restaurante de verdade depender disso, uma VPS paga de 4 a 6 euros por mês
+(Hetzner CX22, por exemplo) tira as duas incertezas — e é menos que o custo de
+uma noite de campanha que não saiu.
+
+### Subir a Evolution
+
+```
+docker run -d --name evolution --restart always \
+  -p 8080:8080 \
+  -v evolution_instances:/evolution/instances \
+  -e AUTHENTICATION_API_KEY='troque-por-um-valor-longo-e-aleatorio' \
+  atendai/evolution-api:latest
+```
+
+O `-v` é o que importa: sem volume, reiniciar o container apaga a sessão.
+
+Ponha a Evolution atrás de HTTPS antes de usar de verdade — a
+`AUTHENTICATION_API_KEY` viaja em cabeçalho, e em HTTP puro ela viaja em texto
+aberto. Caddy ou nginx com Let's Encrypt resolvem em dez minutos.
+
+### Subir o worker
+
+Na mesma máquina, com o arquivo `worker/marketing-worker.mjs` deste repositório:
+
+```
+PEDIDOS_IA_URL=https://seu-app.vercel.app \
+MARKETING_WORKER_SECRET=<o mesmo valor da Vercel> \
+node worker/marketing-worker.mjs
+```
+
+Ele confere URL e secret **antes** de entrar no laço, e morre com mensagem
+própria se o secret não bater — que é o tropeço mais comum da instalação. Se o
+app tiver subido sem `EVOLUTION_API_URL`, ele avisa no primeiro segundo em vez
+de marcar destinatário como falho um a um.
+
+Em produção, ponha sob `systemd` ou num container com `--restart always`: o
+worker sai limpo no SIGTERM, terminando o tick em andamento antes.
+
+### Conectar o número de cada restaurante
+
+Uma instância da Evolution por restaurante. O nome dela vai em
+**Gestão → Configurações → WhatsApp**, e é ele que o sistema usa para saber por
+qual número mandar. Sem instância configurada, `iniciar_campanha` recusa — e a
+tela de Campanhas diz "Desligado" em vez de deixar você escrever a campanha
+inteira para descobrir no último clique.

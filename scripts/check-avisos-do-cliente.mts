@@ -17,7 +17,11 @@
 import { SignJWT } from 'jose';
 import { Client } from 'pg';
 
-const BASE = process.env.SMOKE_BASE ?? 'http://localhost:3000';
+// `BASE_URL` é o que o `verify.mts` injeta, e ele sobe o servidor na 3100 —
+// não na 3000. Eu tinha fixado 3000 aqui, e os dois scripts vinham passando
+// só porque havia um `next dev` meu ligado naquela porta: contra a CI limpa
+// teriam falhado sempre, e contra a minha máquina testavam o servidor errado.
+const BASE = process.env.BASE_URL ?? process.env.SMOKE_BASE ?? 'http://localhost:3000';
 const DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 
