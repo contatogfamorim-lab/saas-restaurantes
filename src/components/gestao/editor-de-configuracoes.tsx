@@ -10,6 +10,7 @@ import {
   type SituacaoWhatsApp,
 } from '@/app/app/(gestao)/gestao/configuracoes/actions';
 import { ConexaoWhatsApp } from '@/components/gestao/conexao-whatsapp';
+import { RotuloComAjuda } from '@/components/gestao/rotulo-com-ajuda';
 
 /**
  * Configurações da casa (§8).
@@ -99,14 +100,15 @@ export function EditorDeConfiguracoes({
     <main className="mx-auto max-w-2xl px-5 py-6">
       <h1 className="font-display text-2xl leading-tight">Configurações</h1>
       <p className="mt-0.5 text-[13px] text-muted-foreground">
-        O que o cadastro perguntou uma vez. Toda alteração aqui vai para a
-        auditoria, com o antes e o depois.
+        Toda alteração vai para a auditoria.
       </p>
 
       <form action={enviar} className="mt-6 space-y-5">
         <Bloco titulo="A casa">
           <label className="block">
-            <Rotulo>Nome do restaurante</Rotulo>
+            <RotuloComAjuda ajuda="É o nome que o cliente vê no celular.">
+              Nome do restaurante
+            </RotuloComAjuda>
             <input
               name="nome"
               value={nome}
@@ -116,7 +118,6 @@ export function EditorDeConfiguracoes({
               maxLength={80}
               className={CAMPO}
             />
-            <Ajuda>É o nome que o cliente vê no celular e no topo das telas.</Ajuda>
           </label>
 
           <label className="mt-4 block">
@@ -134,7 +135,9 @@ export function EditorDeConfiguracoes({
           </label>
 
           <label className="mt-4 block">
-            <Rotulo>Fuso horário</Rotulo>
+            <RotuloComAjuda ajuda="Decide em que dia cai cada fechamento de caixa.">
+              Fuso horário
+            </RotuloComAjuda>
             <select
               name="timezone"
               value={fuso}
@@ -150,13 +153,14 @@ export function EditorDeConfiguracoes({
                 <option value={fuso}>{fuso}</option>
               )}
             </select>
-            <Ajuda>Decide em que dia cai cada fechamento de caixa.</Ajuda>
           </label>
         </Bloco>
 
         <Bloco titulo="Dinheiro">
           <label className="block">
-            <Rotulo>Taxa de serviço</Rotulo>
+            <RotuloComAjuda ajuda="Vale para as comandas novas. As abertas recalculam sozinhas.">
+              Taxa de serviço
+            </RotuloComAjuda>
             <div className="relative">
               <input
                 name="taxaServico"
@@ -171,10 +175,6 @@ export function EditorDeConfiguracoes({
               />
               <Percento />
             </div>
-            <Ajuda>
-              Entra em toda conta aberta a partir de agora. Comandas já abertas
-              recalculam sozinhas.
-            </Ajuda>
           </label>
 
           {/* ---- CASHBACK: ligado ou desligado, explicitamente ---- */}
@@ -195,8 +195,7 @@ export function EditorDeConfiguracoes({
               <span className="text-[14px] font-semibold leading-snug">
                 Dar cashback a clientes cadastrados
                 <span className="mt-0.5 block text-[12px] font-normal text-muted-foreground">
-                  Quem se cadastrar com CPF ganha uma fatia do que consumiu.
-                  Desmarcado, o recurso some do cardápio e ninguém acumula nada.
+                  Sai do seu caixa.
                 </span>
               </span>
             </label>
@@ -204,7 +203,9 @@ export function EditorDeConfiguracoes({
             {cashbackLigado && (
               <div className="mt-3 border-t border-border pt-3">
                 <label className="block">
-                  <Rotulo>Quanto volta para o cliente</Rotulo>
+                  <RotuloComAjuda ajuda="Incide sobre os itens, sem a taxa de serviço.">
+                    Quanto volta para o cliente
+                  </RotuloComAjuda>
                   <div className="relative">
                     <input
                       name="cashback"
@@ -221,39 +222,25 @@ export function EditorDeConfiguracoes({
                 </label>
 
                 {/*
-                  As regras ditas por extenso, na tela em que a decisão é tomada.
-                  Quem liga isto está comprometendo dinheiro futuro e precisa
-                  saber exatamente quanto — não descobrir no fechamento.
+                  DUAS REGRAS, E NÃO QUATRO.
+
+                  Sobraram as que custam dinheiro e não estão escritas em campo
+                  nenhum. As outras duas viraram (?): a carência tem campo
+                  próprio logo abaixo, e "incide sobre os itens" é a ajuda do
+                  campo de porcentagem.
                 */}
                 <ul className="mt-3 space-y-1 text-[12px] leading-snug text-muted-foreground">
+                  <li>No resgate, abate no máximo <strong>30% da conta</strong>.</li>
                   <li>
-                    Incide sobre os <strong>itens</strong>, sem a taxa de serviço —
-                    a taxa é da equipe, não receita da casa.
-                  </li>
-                  <li>
-                    O cliente só pode usar{' '}
-                    <strong>
-                      {Number(carencia) === 0
-                        ? 'na hora'
-                        : Number(carencia) === 1
-                          ? '1 hora depois'
-                          : `${carencia} horas depois`}
-                    </strong>{' '}
-                    de ganhar.
-                  </li>
-                  <li>
-                    No resgate, o abatimento vai até <strong>30% da conta</strong>.
-                    Quem tem R$ 20 guardados só usa tudo numa conta de R$ 66,67
-                    ou mais.
-                  </li>
-                  <li>
-                    Saldo já acumulado <strong>não some</strong> se você desligar
-                    depois — só para de crescer.
+                    Se você desligar depois, o saldo acumulado{' '}
+                    <strong>não some</strong>.
                   </li>
                 </ul>
 
                 <label className="mt-4 block">
-                  <Rotulo>Tempo até poder usar</Rotulo>
+                  <RotuloComAjuda ajuda="Zero faz valer na hora — o que vira desconto imediato, não cashback.">
+                    Tempo até poder usar
+                  </RotuloComAjuda>
                   <div className="relative">
                     <input
                       name="carencia"
@@ -268,10 +255,6 @@ export function EditorDeConfiguracoes({
                       horas
                     </span>
                   </div>
-                  <Ajuda>
-                    Existe para o cashback não virar desconto na hora, que é
-                    outro produto. Zero faz valer imediatamente.
-                  </Ajuda>
                 </label>
 
                 {/*
@@ -292,15 +275,16 @@ export function EditorDeConfiguracoes({
                   <span className="text-[14px] leading-snug">
                     O saldo expira se não for usado
                     <span className="mt-0.5 block text-[12px] text-muted-foreground">
-                      Desligado, o saldo vale para sempre — e é assim que vem de
-                      fábrica.
+                      Desligado, vale para sempre.
                     </span>
                   </span>
                 </label>
 
                 {validadeLigada && (
                   <label className="mt-3 block">
-                    <Rotulo>Expira depois de</Rotulo>
+                    <RotuloComAjuda ajuda="Conta de cada crédito. Quem gasta consome o mais antigo primeiro, então usar o saldo empurra a data para frente.">
+                      Expira depois de
+                    </RotuloComAjuda>
                     <div className="relative">
                       <input
                         name="validade"
@@ -315,12 +299,6 @@ export function EditorDeConfiguracoes({
                         dias
                       </span>
                     </div>
-                    <Ajuda>
-                      Conta a partir de cada crédito, e quem gasta consome o mais
-                      antigo primeiro — então usar o saldo empurra a data para
-                      frente em vez de puxá-la. O cliente vê a expiração no
-                      extrato dele, com valor e data.
-                    </Ajuda>
                   </label>
                 )}
               </div>
@@ -340,8 +318,7 @@ export function EditorDeConfiguracoes({
             <span className="text-[14px] leading-snug">
               Pedir o telefone ao abrir a mesa
               <span className="mt-0.5 block text-[12px] text-muted-foreground">
-                Fica mascarado nas telas da equipe. Revelar o número inteiro
-                exige permissão e é registrado na auditoria.
+                Fica mascarado para a equipe. Revelar exige permissão.
               </span>
             </span>
           </label>
@@ -356,7 +333,9 @@ export function EditorDeConfiguracoes({
           <ConexaoWhatsApp inicial={whatsapp} />
 
           <label className="mt-4 block">
-            <Rotulo>Máximo de mensagens por dia</Rotulo>
+            <RotuloComAjuda ajuda="Acima disso, a campanha continua amanhã. Volume alto derruba o número.">
+              Máximo de mensagens por dia
+            </RotuloComAjuda>
             <input
               name="tetoDiario"
               value={teto}
@@ -364,12 +343,6 @@ export function EditorDeConfiguracoes({
               inputMode="numeric"
               className={CAMPO}
             />
-            <Ajuda>
-              As mensagens já saem uma a uma, com 40 a 90 segundos entre elas —
-              isso é o RITMO. Este número é o VOLUME, que é o que costuma
-              derrubar um WhatsApp. Chegando ao teto, a campanha espera o dia
-              seguinte em vez de falhar.
-            </Ajuda>
           </label>
         </Bloco>
 
@@ -426,10 +399,6 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 
 function Rotulo({ children }: { children: React.ReactNode }) {
   return <span className="text-[12px] font-semibold text-muted-foreground">{children}</span>;
-}
-
-function Ajuda({ children }: { children: React.ReactNode }) {
-  return <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">{children}</span>;
 }
 
 function Percento() {

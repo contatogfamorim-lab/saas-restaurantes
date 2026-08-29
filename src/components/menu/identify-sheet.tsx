@@ -426,8 +426,7 @@ function ComConta({
               Quero avisos de saldo e promoções no WhatsApp
             </span>
             <span className="mt-0.5 block text-muted-foreground">
-              É como você fica sabendo que seu cashback liberou. Dá para sair
-              pelo link no fim de qualquer mensagem.
+              Dá para sair pelo link no fim de qualquer mensagem.
             </span>
           </span>
         </label>

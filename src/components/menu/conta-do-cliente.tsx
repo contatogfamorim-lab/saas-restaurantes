@@ -157,8 +157,7 @@ function SemConta({ shortCode, cashbackPct }: { shortCode: string; cashbackPct: 
           </p>
         )}
         <p className="mt-2 text-[12px] text-muted-foreground">
-          Não quer conta? Tudo bem — dá para pedir normalmente como visitante,
-          só com o nome.
+          Dá para pedir como visitante, só com o nome.
         </p>
       </div>
 
@@ -223,8 +222,7 @@ function SemConta({ shortCode, cashbackPct }: { shortCode: string; cashbackPct: 
           />
           {aba === 'criar' && (
             <span className="mt-1 block text-[11px] text-muted-foreground">
-              Pelo menos 8 caracteres. Guarde bem: como não pedimos confirmação
-              de e-mail, ainda não há como recuperá-la sozinho.
+              Pelo menos 8 caracteres. Guarde bem: ainda não há recuperação de senha.
             </span>
           )}
         </label>

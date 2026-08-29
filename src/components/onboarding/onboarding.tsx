@@ -13,6 +13,7 @@ import {
   responderConfiguracao,
 } from '@/app/comecar/actions';
 import { ConexaoWhatsApp } from '@/components/gestao/conexao-whatsapp';
+import { RotuloComAjuda } from '@/components/gestao/rotulo-com-ajuda';
 
 type Passo = 'conta' | 'restaurante' | 'configuracao' | 'mesas';
 
@@ -128,8 +129,7 @@ function PassoConta() {
       <div className="space-y-3">
         <p className="text-[15px] font-semibold">Confirme seu e-mail</p>
         <p className="text-[13px] leading-relaxed text-muted-foreground">
-          Mandamos um link para o endereço que você digitou. Abra o link e volte
-          para cá — o restaurante é o próximo passo.
+          Mandamos um link para o seu e-mail. Abra e volte para cá.
         </p>
         <a
           href="/comecar"
@@ -158,7 +158,7 @@ function PassoConta() {
       </label>
 
       <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">Senha</span>
+        <RotuloComAjuda ajuda="Pelo menos 8 caracteres.">Senha</RotuloComAjuda>
         <input
           name="senha"
           type="password"
@@ -167,10 +167,6 @@ function PassoConta() {
           minLength={8}
           className={CAMPO}
         />
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          Pelo menos 8 caracteres. Uma frase que você lembra vale mais que um
-          símbolo no fim.
-        </span>
       </label>
 
       <Erro>{erro}</Erro>
@@ -213,21 +209,13 @@ function PassoRestaurante({ email }: { email?: string | null }) {
       )}
 
       <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">
-          Nome do restaurante
-        </span>
+        <RotuloComAjuda ajuda="É o nome que o cliente vê no celular.">Nome do restaurante</RotuloComAjuda>
         <input name="nome" required minLength={2} maxLength={80} autoFocus className={CAMPO} />
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          É o nome que o cliente vê no celular.
-        </span>
       </label>
 
       <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">Seu nome</span>
+        <RotuloComAjuda ajuda="Aparece para a equipe.">Seu nome</RotuloComAjuda>
         <input name="seuNome" required minLength={2} maxLength={80} className={CAMPO} />
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          Aparece para a equipe e no histórico do que você fizer.
-        </span>
       </label>
 
       <Erro>{erro}</Erro>
@@ -265,9 +253,7 @@ function PassoMesas({ restaurante }: { restaurante: string }) {
       </p>
 
       <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">
-          Quantas mesas?
-        </span>
+        <RotuloComAjuda ajuda="Cada mesa ganha um código próprio. Dá para criar mais depois.">Quantas mesas?</RotuloComAjuda>
         <input
           name="quantidade"
           type="number"
@@ -278,10 +264,6 @@ function PassoMesas({ restaurante }: { restaurante: string }) {
           autoFocus
           className={cn(CAMPO, 'tabular')}
         />
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          Dá para criar mais depois. Cada mesa ganha um código próprio e
-          aleatório.
-        </span>
       </label>
 
       <label className="block">
@@ -352,8 +334,7 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
   return (
     <form action={enviar} className="space-y-3">
       <p className="text-[13px]">
-        <strong>{restaurante}</strong> está criado. Faltam três coisas rápidas —
-        o cardápio você monta depois, com calma, e do seu jeito.
+        <strong>{restaurante}</strong> está criado. Faltam três coisas rápidas.
       </p>
 
       {/*
@@ -414,7 +395,9 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
       </label>
 
       <label className="block">
-        <span className="text-[12px] font-semibold text-muted-foreground">Fuso horário</span>
+        <RotuloComAjuda ajuda="Decide em que dia cai cada fechamento de caixa.">
+          Fuso horário
+        </RotuloComAjuda>
         <select name="timezone" defaultValue="America/Sao_Paulo" className={CAMPO}>
           {FUSOS.map((f) => (
             <option key={f.valor} value={f.valor}>
@@ -422,9 +405,6 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
             </option>
           ))}
         </select>
-        <span className="mt-1 block text-[11px] text-muted-foreground">
-          É o que decide em que dia cai cada fechamento de caixa.
-        </span>
       </label>
 
       {/*
@@ -452,8 +432,7 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
           <span className="text-[13px] font-semibold leading-snug">
             Dar cashback a clientes cadastrados
             <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
-              Quem se cadastrar com CPF ganha uma fatia do que consumiu, liberada
-              em 24 h. Dá para ligar depois, em Gestão → Configurações.
+              Sai do seu caixa. Dá para ligar depois.
             </span>
           </span>
         </label>
@@ -479,8 +458,7 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
                 </span>
               </div>
               <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
-                Incide sobre os itens, sem a taxa de serviço. No resgate, o
-                abatimento vai até 30% da conta.
+                Sobre os itens, sem a taxa. No resgate, abate até 30% da conta.
               </span>
             </label>
           </div>
@@ -496,8 +474,7 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
         <span className="text-[13px] leading-snug">
           Pedir o telefone do cliente ao abrir a mesa
           <span className="mt-0.5 block text-[11px] text-muted-foreground">
-            Fica mascarado nas telas da equipe; revelar é registrado na
-            auditoria.
+            Fica mascarado para a equipe.
           </span>
         </span>
       </label>
@@ -518,9 +495,8 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
         <span className="text-[13px] leading-snug">
           Quero ver uma demonstração pronta
           <span className="mt-0.5 block text-[11px] text-muted-foreground">
-            Um restaurante fictício com cardápio, preços e uma noite de serviço
-            acontecendo: mesa ocupada, pedido esperando aprovação, prato na
-            passagem. Para ver o sistema cheio em vez de vazio.
+            Um restaurante fictício, com uma noite de serviço acontecendo.
+            Para ver o sistema cheio em vez de vazio.
           </span>
         </span>
       </label>
@@ -557,9 +533,7 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
             ))}
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            São cinco negócios que aparecem diferente na tela — uma balada não
-            tem entrada, uma açaiteria vive de adicional, uma pizzaria vende um
-            item que duas pessoas dividem.
+            Cada um aparece diferente na tela.
           </p>
         </div>
       )}
@@ -567,17 +541,13 @@ function PassoConfiguracao({ restaurante }: { restaurante: string }) {
       {/*
         O aviso aparece só quando a caixa está marcada, e antes do botão. É
         destrutivo de verdade — não é um "modo demo" que se desliga depois — e
-        precisa ser exato sobre o que some e o que fica: some o restaurante,
-        fica o login. Dizer que a conta some seria assustar à toa; omitir que o
-        restaurante some seria a mentira oposta.
+        precisa ser exato: desde a 0061 some TUDO, inclusive a conta. Omitir
+        isso deixaria a pessoa achando que pode voltar com o mesmo login.
       */}
       {demo && (
         <p className="rounded-md bg-alert-critical/10 px-3 py-2 text-[12px] leading-snug text-alert-critical">
-          <strong>Isto expira em 3 horas.</strong> O restaurante, o cardápio e
-          os pedidos são apagados, e não dá para recuperar.{' '}
-          <strong>Seu login continua valendo</strong> — depois você monta o
-          restaurante de verdade com a mesma conta. Para uma casa que já vai
-          entrar em operação, deixe desmarcado.
+          <strong>Expira em 3 horas.</strong> Apaga tudo, inclusive a sua
+          conta. Para uma casa que vai entrar em operação, deixe desmarcado.
         </p>
       )}
 
@@ -645,9 +615,8 @@ function ConfiguracaoPronta({
       {hora ? (
         <>
           <p className="rounded-md bg-alert-critical/10 px-3 py-2 text-[12px] leading-snug text-alert-critical">
-            A demonstração some às <strong className="tabular">{hora}</strong>.
-            Seu login continua — é só voltar em <span className="font-mono">/comecar</span>{' '}
-            para montar o restaurante de verdade.
+            Some às <strong className="tabular">{hora}</strong>, junto com a
+            sua conta. Para o restaurante de verdade, cadastre-se de novo.
           </p>
           <button
             onClick={() => router.push('/app/salao')}
@@ -656,16 +625,14 @@ function ConfiguracaoPronta({
             Ver o salão em movimento
           </button>
           <p className="text-center text-[12px] text-muted-foreground">
-            Comece pelo salão: é lá que a mesa esperando aprovação aparece.
+            Comece pelo salão.
           </p>
         </>
       ) : (
         <>
           <p className="rounded-md bg-secondary px-3 py-2 text-[12px] leading-snug">
-            O sistema <strong>não inventa o seu cardápio</strong>: ele não sabe o
-            que a sua casa vende, e um cardápio chutado só daria trabalho de
-            apagar. A tela de <strong>Começar</strong> mostra o que falta e leva
-            você a cada lugar.
+            O cardápio é você que monta — o sistema não sabe o que a sua casa
+            vende. A tela de <strong>Começar</strong> mostra o que falta.
           </p>
           {/*
             O WHATSAPP ENTRA AQUI, E SÓ NO RESTAURANTE DE VERDADE.
@@ -684,8 +651,7 @@ function ConfiguracaoPronta({
           <div className="rounded-md border border-border p-3">
             <p className="text-[13px] font-semibold">WhatsApp da casa</p>
             <p className="mb-3 text-[12px] text-muted-foreground">
-              É por ele que saem as promoções para quem autorizou receber. Dá
-              para fazer depois, em Configurações — nada aqui depende disso.
+              Por onde saem as promoções. Dá para fazer depois.
             </p>
             <ConexaoWhatsApp inicial={{ instancia: null, estado: 'inexistente' }} />
           </div>

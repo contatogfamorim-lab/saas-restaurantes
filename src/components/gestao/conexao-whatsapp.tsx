@@ -144,8 +144,7 @@ export function ConexaoWhatsApp({ inicial }: { inicial: SituacaoWhatsApp }) {
               />
             ) : (
               <p className="rounded-md bg-alert-warn/10 px-3 py-2 text-[12px] text-alert-warn">
-                Não deu para desenhar o código aqui. Use o código de pareamento
-                ao lado, ou gere outro.
+                Não deu para desenhar o código. Use o de pareamento, ao lado.
               </p>
             )}
 
@@ -220,16 +219,13 @@ export function ConexaoWhatsApp({ inicial }: { inicial: SituacaoWhatsApp }) {
         {situacao.estado === 'conectado' ? (
           <>
             As campanhas saem por este número.{' '}
-            <strong className="text-foreground">Começar do zero</strong> apaga a conexão e
-            obriga a ler o QR outra vez — só serve quando o WhatsApp trava e não
-            reconecta.
+            <strong className="text-foreground">Começar do zero</strong> apaga a conexão e obriga a ler o QR de novo. Só serve quando o WhatsApp trava.
           </>
         ) : (
           <>
-            Sem conexão nenhuma campanha sai, e a tela de Campanhas avisa. O
-            sistema <strong className="text-foreground">não lê</strong> as
-            conversas do aparelho nem importa a agenda dele: quem recebe
-            mensagem é só quem autorizou receber, aqui dentro.
+            Sem conexão, nenhuma campanha sai. O sistema{' '}
+            <strong className="text-foreground">não lê</strong> as conversas do
+            aparelho nem importa a agenda dele.
           </>
         )}
       </p>

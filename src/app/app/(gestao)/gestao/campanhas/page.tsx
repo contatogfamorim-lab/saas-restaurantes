@@ -115,34 +115,30 @@ export default async function CampanhasPage() {
         />
       </div>
 
-      <div className="mt-6 space-y-2 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
-        <p>
-          <strong className="text-foreground">
-            Só recebe quem marcou que aceita.
-          </strong>{' '}
-          Ninguém é incluído por ter deixado o telefone na mesa — aquilo autoriza
-          contato sobre o pedido, não promoção. E quem sair da lista depois de a
-          campanha começar é <em>pulado</em> no meio do caminho, não no começo:
-          a permissão é conferida no instante de cada envio.
-        </p>
-        <p>
-          <strong className="text-foreground">O link de saída vai sempre.</strong>{' '}
-          Você não precisa escrever, e não consegue tirar — ele é colado ao final
-          de cada mensagem, com um endereço próprio para cada pessoa.
-        </p>
-        <p>
-          As mensagens saem uma a uma, com um intervalo de 40 a 90 segundos entre
-          elas, e no máximo{' '}
+      {/*
+        TRÊS PARÁGRAFOS VIRARAM TRÊS LINHAS.
+
+        O texto antigo explicava o RACIOCÍNIO de cada regra — por que o telefone
+        da mesa não autoriza promoção, por que o link de saída é colado pelo
+        banco, por que o intervalo não é lentidão. Quem abre esta tela quer
+        disparar uma campanha, não ler a defesa das decisões de projeto.
+
+        Ficaram os três fatos que mudam o que a pessoa faz.
+      */}
+      <ul className="mt-6 space-y-1.5 border-t border-border pt-4 text-[11px] text-muted-foreground">
+        <li>Só recebe quem marcou que aceita — e quem sair no meio deixa de receber na hora.</li>
+        <li>O link de saída entra sozinho em toda mensagem.</li>
+        <li>
+          Uma a cada 40–90 segundos, no máximo{' '}
           <strong className="text-foreground">
             {casa.data?.marketing_max_por_dia ?? 0} por dia
           </strong>
-          . Não é lentidão: é o que evita o número da casa ser bloqueado.{' '}
+          .{' '}
           <Link href="/app/gestao/configuracoes" className="underline">
-            Mudar em Configurações
+            Mudar
           </Link>
-          .
-        </p>
-      </div>
+        </li>
+      </ul>
     </div>
   );
 }

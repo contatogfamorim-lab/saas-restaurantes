@@ -177,8 +177,7 @@ export function Estoque({
           <p className="rounded-xl border border-dashed border-border p-8 text-center text-[13px] leading-relaxed text-muted-foreground">
             Nenhum insumo ainda.
             <br />
-            Enquanto não houver ficha técnica, nada baixa sozinho — o cardápio
-            funciona igual, só não conta o que sai.
+            Sem ficha técnica nada baixa sozinho.
           </p>
         )}
 
@@ -244,10 +243,7 @@ export function Estoque({
             </table>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            O custo sai da ficha técnica pelo preço que você cadastrou no insumo —
-            então ele vale o quanto o cadastro estiver atualizado. &ldquo;Dá
-            para&rdquo; é quantas porções ainda saem com o que há na casa, limitado
-            pelo ingrediente que acaba primeiro.
+            O custo vem da ficha técnica, pelo preço que você cadastrou no insumo. &ldquo;Dá para&rdquo; é quantas porções ainda saem com o que há na casa.
           </p>
         </div>
       )}
@@ -624,7 +620,7 @@ function LinhaInsumo({
               <strong className="text-foreground">
                 {deMilesimos(i.quantidade)} {NOME_DA_UNIDADE[i.unidade]}
               </strong>
-              . A diferença vira um movimento de ajuste, com seu nome.
+              . A diferença vira um ajuste, com seu nome.
             </p>
           )}
 

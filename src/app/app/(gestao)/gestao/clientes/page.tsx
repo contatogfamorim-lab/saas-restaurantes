@@ -64,16 +64,11 @@ export default async function Clientes({
         <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
           {publicoDeMarketing === 0 ? (
             <>
-              Ninguém ainda — e isso é o esperado. O aceite de mensagens é uma
-              autorização NOVA, que nasceu agora e só é marcada por quem cria
-              conta daqui para frente. Quem já estava cadastrado autorizou
-              guardar o telefone para o pedido, que é outra coisa.
+              Ninguém ainda, e é o esperado: só quem criar conta daqui para frente marca esse aceite.
             </>
           ) : (
             <>
-              Pessoas que marcaram, no cadastro, que aceitam receber avisos de
-              cashback e promoções. Cada uma tem um link próprio para sair, e
-              sair é definitivo até ela mesma voltar a aceitar.
+              Quem aceitou receber avisos de cashback e promoções. Cada um tem link próprio para sair.
             </>
           )}
         </p>
@@ -145,8 +140,6 @@ export default async function Clientes({
               </p>
               <p>
                 O registro guarda <em>que</em> um telefone foi consultado, nunca o número.
-                Gravar o valor no log criaria uma segunda cópia do dado pessoal numa tabela
-                que ninguém pode apagar.
               </p>
             </div>
           </>

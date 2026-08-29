@@ -289,8 +289,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
             Cardápio a caminho
           </p>
           <p className="mx-auto mt-2 max-w-70 text-[14px] leading-relaxed text-muted-foreground">
-            Este restaurante ainda está montando o cardápio. Chame quem está
-            atendendo — o pedido pode ser feito na mesa do mesmo jeito.
+            Cardápio ainda em montagem. Chame quem está atendendo.
           </p>
         </main>
       ) : (
