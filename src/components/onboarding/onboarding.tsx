@@ -651,7 +651,8 @@ function ConfiguracaoPronta({
           <div className="rounded-md border border-border p-3">
             <p className="text-[13px] font-semibold">WhatsApp da casa</p>
             <p className="mb-3 text-[12px] text-muted-foreground">
-              Por onde saem as promoções. Dá para fazer depois.
+              Por onde saem as promoções e chegam as conversas. Dá para fazer
+              depois.
             </p>
             <ConexaoWhatsApp inicial={{ instancia: null, estado: 'inexistente' }} />
           </div>

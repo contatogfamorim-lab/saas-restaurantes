@@ -51,6 +51,8 @@ export const ACTIONS = [
   'audit.view',
   'restaurant.settings',
   'campaign.manage',
+  'chat.view',
+  'chat.send',
   'stock.manage',
   'stock.waste',
   // cardápio (delegáveis)
@@ -107,6 +109,11 @@ export const PERMISSION_MATRIX: Readonly<Record<Action, readonly Role[]>> = {
   // O que gerente NÃO faz é ligar o WhatsApp a uma instância: isso é
   // `restaurant.settings`, de dono, porque errar a instância manda a campanha
   // pelo número de outro restaurante.
+  // Conversa é a caixa de entrada do número da casa: dado pessoal de cliente
+  // em texto livre. Fica com quem já vê telefone — gerente e dono.
+  'chat.view':                ['manager', 'owner'],
+  'chat.send':                ['manager', 'owner'],
+
   'campaign.manage':          ['manager', 'owner'],
 
   // Estoque é rotina de gerente, e perda é a cozinha que vê acontecer. O
@@ -312,6 +319,8 @@ export const SECOES_DA_GESTAO = [
   { href: '/app/gestao/equipe',         acao: 'staff.manage' },
   { href: '/app/gestao/clientes',       acao: 'dashboard.view' },
   { href: '/app/gestao/estoque',        acao: 'stock.manage' },
+  { href: '/app/gestao/conversas',      acao: 'chat.view' },
+  { href: '/app/gestao/contatos',       acao: 'chat.view' },
   { href: '/app/gestao/campanhas',      acao: 'campaign.manage' },
   { href: '/app/gestao/auditoria',      acao: 'audit.view' },
   { href: '/app/gestao/configuracoes',  acao: 'restaurant.settings' },

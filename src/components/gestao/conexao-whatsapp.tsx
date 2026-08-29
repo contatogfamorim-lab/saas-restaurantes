@@ -223,9 +223,10 @@ export function ConexaoWhatsApp({ inicial }: { inicial: SituacaoWhatsApp }) {
           </>
         ) : (
           <>
-            Sem conexão, nenhuma campanha sai. O sistema{' '}
-            <strong className="text-foreground">não lê</strong> as conversas do
-            aparelho nem importa a agenda dele.
+            Sem conexão não há campanha nem caixa de entrada. Conectado, o
+            sistema recebe as conversas e a agenda do aparelho — e{' '}
+            <strong className="text-foreground">a agenda não vira lista de
+            disparo</strong>: campanha continua só para quem marcou o aceite.
           </>
         )}
       </p>

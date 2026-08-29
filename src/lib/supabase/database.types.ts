@@ -2429,6 +2429,97 @@ export type Database = {
           },
         ]
       }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string
+          foto_url: string | null
+          id: string
+          jid: string
+          nome: string | null
+          phone: string | null
+          restaurant_id: string
+          visto_em: string
+        }
+        Insert: {
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          jid: string
+          nome?: string | null
+          phone?: string | null
+          restaurant_id: string
+          visto_em?: string
+        }
+        Update: {
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          jid?: string
+          nome?: string | null
+          phone?: string | null
+          restaurant_id?: string
+          visto_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          corpo: string
+          created_at: string
+          direcao: string
+          enviada_em: string
+          id: string
+          jid: string
+          lida_em: string | null
+          restaurant_id: string
+          status: string
+          tipo_midia: string | null
+          wa_id: string | null
+        }
+        Insert: {
+          corpo: string
+          created_at?: string
+          direcao: string
+          enviada_em?: string
+          id?: string
+          jid: string
+          lida_em?: string | null
+          restaurant_id: string
+          status?: string
+          tipo_midia?: string | null
+          wa_id?: string | null
+        }
+        Update: {
+          corpo?: string
+          created_at?: string
+          direcao?: string
+          enviada_em?: string
+          id?: string
+          jid?: string
+          lida_em?: string | null
+          restaurant_id?: string
+          status?: string
+          tipo_midia?: string | null
+          wa_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       approval_queue: {
@@ -2499,6 +2590,29 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "message_campaigns_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversas_do_whatsapp: {
+        Row: {
+          foto_url: string | null
+          jid: string | null
+          nao_lidas: number | null
+          nome: string | null
+          phone: string | null
+          restaurant_id: string | null
+          total: number | null
+          ultima_direcao: string | null
+          ultima_em: string | null
+          ultimo_corpo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -3172,6 +3286,7 @@ export type Database = {
         }
         Returns: string
       }
+      casa_da_instancia: { Args: { p_instancia: string }; Returns: string }
       concluir_envio: {
         Args: { p_alvo: string; p_erro?: string; p_ok: boolean }
         Returns: boolean
@@ -3251,6 +3366,7 @@ export type Database = {
         Returns: boolean
       }
       marcar_como_demonstracao: { Args: never; Returns: string }
+      marcar_conversa_lida: { Args: { p_jid: string }; Returns: number }
       mark_item_delivered: { Args: { p_item_id: string }; Returns: undefined }
       montar_publico: {
         Args: { p_campanha: string; p_segmento?: Json }

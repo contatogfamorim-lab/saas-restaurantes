@@ -68,14 +68,18 @@ export function nomeDaInstancia(nome: string, restauranteId: string): string {
  * decisão acontece uma vez só. Depois de pareado não dá para voltar atrás sem
  * desconectar e ler o QR de novo. Então `/settings/set` vai ANTES do QR, sempre.
  *
- * `syncFullHistory` aqui é `false`, ao contrário do CRM — e é a única diferença
- * de valor entre os dois. Lá o produto é uma caixa de entrada, e o histórico é
- * o conteúdo. Aqui não se lê mensagem nenhuma: a base de quem pode receber é
- * construída por opt-in explícito (0049). Puxar a agenda inteira do aparelho
- * traria milhares de contatos que nunca autorizaram nada, para dentro de um
- * sistema cujo trabalho é justamente saber quem autorizou.
+ * `syncFullHistory` ERA `false` aqui, e passou a `true` na 0062, quando o
+ * produto ganhou caixa de entrada e agenda. O raciocínio antigo continua
+ * verdadeiro e virou uma regra de banco em vez de uma de configuração: a agenda
+ * do aparelho NÃO é base de marketing, e por isso mora em `whatsapp_contacts`,
+ * separada de `customers`. Ver o cabeçalho da 0062.
  *
- * `groupsIgnore` é `true` pelo mesmo motivo: grupo não é cliente.
+ * ISSO CUSTOU UM PAREAMENTO. A primeira instância desta casa foi pareada com
+ * `false` e ficou com zero contatos e zero mensagens — a decisão acontece uma
+ * vez, no QR, e não dá para voltar atrás sem desconectar e ler outro.
+ *
+ * `groupsIgnore` segue `true`: grupo não é conversa com cliente, e a caixa de
+ * entrada de um restaurante afogada no grupo da família não serve para nada.
  */
 const AJUSTES = {
   rejectCall: false, // o cliente que ligar não leva porta na cara
@@ -83,7 +87,7 @@ const AJUSTES = {
   alwaysOnline: false,
   readMessages: false, // não marcamos como lida uma conversa que não lemos
   readStatus: false,
-  syncFullHistory: false,
+  syncFullHistory: true,
 } as const;
 
 interface Resposta {
@@ -166,6 +170,8 @@ export async function estadoDaInstancia(instancia: string): Promise<Estado> {
  * caminho curto que fecha a janela descrita em `AJUSTES`.
  */
 export async function criarInstancia(instancia: string): Promise<{ ok: boolean; erro?: string }> {
+  const webhook = enderecoDoWebhook();
+
   const criacao = await evolution('POST', '/instance/create', {
     instanceName: instancia,
     qrcode: false,
@@ -202,7 +208,67 @@ export async function criarInstancia(instancia: string): Promise<{ ok: boolean; 
     };
   }
 
+  /*
+   * O WEBHOOK, E POR QUE ELE VEM AQUI E NÃO NO PRIMEIRO PAREAMENTO.
+   *
+   * É por ele que mensagem e agenda chegam — sem webhook a caixa de entrada
+   * fica vazia para sempre, e o defeito é mudo: a conexão diz "conectado", a
+   * conversa acontece no celular, e a tela não mostra nada.
+   *
+   * `CONTACTS_UPSERT` traz a agenda no pareamento (só quando `syncFullHistory`
+   * está ligado); `MESSAGES_UPSERT` traz cada mensagem nova; `MESSAGES_UPDATE`
+   * traz "entregue" e "lida"; `CONNECTION_UPDATE` avisa quando o número cai.
+   *
+   * Falha aqui NÃO impede conectar. A casa que já tem o número pareado prefere
+   * uma caixa de entrada quebrada a uma conexão que se recusa a existir — e o
+   * botão de reconectar refaz esta chamada.
+   */
+  if (webhook) {
+    const w = await evolution('POST', `/webhook/set/${encodeURIComponent(instancia)}`, {
+      webhook: {
+        enabled: true,
+        url: webhook,
+        byEvents: false,
+        base64: false,
+        events: [
+          'CONNECTION_UPDATE',
+          'CONTACTS_UPSERT',
+          'CONTACTS_UPDATE',
+          'MESSAGES_UPSERT',
+          'MESSAGES_UPDATE',
+        ],
+      },
+    });
+    if (!w.ok) {
+      console.error('[whatsapp] webhook recusado', {
+        instancia,
+        status: w.status,
+        detalhe: w.detalhe,
+      });
+    }
+  }
+
   return { ok: true };
+}
+
+/**
+ * Para onde a Evolution manda os eventos.
+ *
+ * Sai de `NEXT_PUBLIC_APP_URL`, e devolve `null` quando não há endereço ou
+ * quando ele é `localhost` — a Evolution roda noutra máquina e não alcança o
+ * seu `next dev`. Registrar mesmo assim gravaria um webhook que só falha.
+ */
+function enderecoDoWebhook(): string | null {
+  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '');
+  if (!base) return null;
+  try {
+    const { hostname, protocol } = new URL(base);
+    if (protocol !== 'https:') return null;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return null;
+  } catch {
+    return null;
+  }
+  return `${base}/api/webhooks/evolution`;
 }
 
 export interface Conexao {
@@ -291,4 +357,39 @@ export async function recriarInstancia(
 export async function desconectar(instancia: string): Promise<void> {
   await evolution('DELETE', `/instance/logout/${encodeURIComponent(instancia)}`);
   await evolution('DELETE', `/instance/delete/${encodeURIComponent(instancia)}`);
+}
+
+/**
+ * Puxa a agenda da Evolution, sob demanda.
+ *
+ * O webhook `CONTACTS_UPSERT` traz isto sozinho no pareamento, mas só quando
+ * `syncFullHistory` estava ligado NAQUELE pareamento — e a primeira instância
+ * desta casa foi pareada sem. Este caminho existe para quem já está conectado
+ * poder buscar sem depender de um evento que não vai chegar mais.
+ *
+ * Devolve o cru; quem filtra grupo e normaliza é quem chama, com as MESMAS
+ * regras do webhook, para os dois caminhos não divergirem.
+ */
+export async function buscarContatos(
+  instancia: string,
+): Promise<{ ok: boolean; contatos: Record<string, unknown>[]; erro?: string }> {
+  const r = await evolution('POST', `/chat/findContacts/${encodeURIComponent(instancia)}`, {});
+
+  if (!r.ok) {
+    console.error('[whatsapp] findContacts recusado', {
+      instancia,
+      status: r.status,
+      detalhe: r.detalhe,
+    });
+    return { ok: false, contatos: [], erro: 'O servidor de WhatsApp não respondeu.' };
+  }
+
+  const corpo = r.corpo as unknown;
+  const lista = Array.isArray(corpo)
+    ? corpo
+    : Array.isArray((corpo as { records?: unknown[] })?.records)
+      ? ((corpo as { records: unknown[] }).records)
+      : [];
+
+  return { ok: true, contatos: lista as Record<string, unknown>[] };
 }
