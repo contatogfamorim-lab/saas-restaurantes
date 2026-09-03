@@ -49,7 +49,7 @@ const PASSOS: Passo[] = [
   // O cliente JÁ CADASTRADO controla os próprios avisos. Era o buraco da
   // Fase 0: a caixa de aceite só existia no cadastro.
   { nome: 'o cliente controla os avisos', comando: 'pnpm', args: ['check:avisos'], comServidor: true },
-  { nome: 'CSP com nonce', comando: 'pnpm', args: ['check:csp'], comServidor: true },
+  { nome: 'CSP casa com a renderização', comando: 'pnpm', args: ['check:csp'], comServidor: true },
   { nome: 'força bruta freada', comando: 'pnpm', args: ['check:forca-bruta'], comServidor: true },
 ];
 

@@ -90,7 +90,16 @@
       "Bash(awk '/create table.*message_campaign_targets/,/^\\\\\\);/' schema.sql)",
       "Bash(bash \"/private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/bf1c2f91-bb6c-4c36-a8a2-d17aa63089b2/scratchpad/sabota-campanhas.sh\")",
       "Bash(bash \"/private/tmp/claude-501/-Users-gabrielamorim-Desktop-SaaS-RESTAURANTE/bf1c2f91-bb6c-4c36-a8a2-d17aa63089b2/scratchpad/sabota-estoque.sh\")",
-      "Bash(curl -s 'http://127.0.0.1:54321/rest/v1/product_ingredients?select=ingredient_id,quantidade,ingredients\\(name,unit\\)' -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __TRACKED_VAR__')"
+      "Bash(curl -s 'http://127.0.0.1:54321/rest/v1/product_ingredients?select=ingredient_id,quantidade,ingredients\\(name,unit\\)' -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(node -e ' *)",
+      "Bash(qlmanage -t -s 1400 -o /tmp/pdfprev \"Sistema cromático — racional.pdf\")",
+      "Read(//tmp/**)",
+      "Bash(mkdir -p /tmp/pdfprev)",
+      "Bash(qlmanage -t -s 1200 -o /tmp/pdfprev \"Sistema cromático — racional.pdf\")",
+      "Bash(export FONTES=\"/Users/gabrielamorim/Desktop/Pedidos.IA — Marca/05 Fontes/Par 1 — Archivo\")",
+      "Bash(mkdir -p '__TRACKED_VAR__/06 Assinatura/Vetor' '__TRACKED_VAR__/06 Assinatura/PNG transparente' '__TRACKED_VAR__/06 Assinatura/PNG fundo sólido')",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(SAIDA='__TRACKED_VAR__/06 Assinatura/Vetor' node --input-type=module -e ' *)"
     ]
   }
 }
