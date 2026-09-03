@@ -16,6 +16,7 @@ import { IdentifySheet } from './identify-sheet';
 import { SeloDaPlataforma } from './selo-da-plataforma';
 import { OrderTracker } from './order-tracker';
 import { ProductCard } from './product-card';
+import { PalcoProvider } from './palco/palco-3d';
 import { ProductSheet } from './product-sheet';
 import { PromoRail } from './promo-rail';
 import { BannerDoCardapio } from './banner-do-cardapio';
@@ -233,6 +234,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
   const temPedidoEmAndamento = status.ativo && status.itens.length > 0;
 
   return (
+    <PalcoProvider>
     <div className="mx-auto min-h-dvh max-w-lg" style={brandStyle(menu.restaurant.brandColor)}>
       <header className="flex items-start justify-between gap-3 px-4 pt-5">
         <div>
@@ -443,6 +445,7 @@ export function MenuScreen({ menu, shortCode }: Props) {
         temMaisDeUmaPessoa={status.convidados.length > 1}
       />
     </div>
+    </PalcoProvider>
   );
 }
 

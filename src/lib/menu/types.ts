@@ -46,6 +46,24 @@ export interface MenuPromotionBadge {
   remaining: number | null;
 }
 
+/**
+ * Modelo 3D do prato, pronto para servir.
+ *
+ * Só existe quando o modelo está PRONTO no banco — pendente, processando e
+ * falhou chegam aqui como `null`, e o card volta a ser a foto. O cardápio do
+ * cliente não é lugar de mostrar estado de pipeline.
+ */
+export interface ModeloDoPrato {
+  /** GLB leve, o que roda na lista. Já é URL pública. */
+  card: string;
+  /** GLB pesado, para tela cheia e para o AR do Android. */
+  hero: string;
+  /** USDZ do Quick Look do iPhone. Ausente enquanto a conversão não roda. */
+  usdz: string | null;
+  /** Maior dimensão horizontal, em centímetros. Sustenta o tamanho real no AR. */
+  larguraCm: number | null;
+}
+
 export interface MenuProduct {
   id: string;
   name: string;
@@ -55,6 +73,8 @@ export interface MenuProduct {
   /** Preço cheio, presente APENAS quando há desconto real. Vira o valor riscado. */
   originalPriceCents: number | null;
   imageUrl: string | null;
+  /** Modelo 3D do prato. `null` quando a casa ainda não digitalizou este item. */
+  modelo: ModeloDoPrato | null;
   prepMinutes: number;
   servesPeople: number;
   /**

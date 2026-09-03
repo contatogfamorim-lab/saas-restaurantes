@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const BUCKET_FOTOS = 'product-photos';
+export const BUCKET_MODELOS = 'product-models';
 
 /**
  * `products.image_url` guarda o CAMINHO no bucket, não a URL inteira.
@@ -26,4 +27,23 @@ export function urlPublicaDaFoto(
   if (/^https?:\/\//i.test(valor)) return valor;
 
   return supabase.storage.from(BUCKET_FOTOS).getPublicUrl(valor).data.publicUrl;
+}
+
+
+/**
+ * Mesma convenção da foto, outro bucket: `product_models` guarda o CAMINHO.
+ *
+ * Vale relembrar por quê, porque aqui dói mais. Modelo é arquivo grande e
+ * cacheado por muito tempo; URL absoluta gravada no banco significa que a
+ * mudança de ambiente não só quebra o link como deixa o navegador do cliente
+ * segurando o endereço errado até o cache expirar.
+ */
+export function urlPublicaDoModelo(
+  supabase: SupabaseClient,
+  valor: string | null | undefined,
+): string | null {
+  if (!valor) return null;
+  if (/^https?:\/\//i.test(valor)) return valor;
+
+  return supabase.storage.from(BUCKET_MODELOS).getPublicUrl(valor).data.publicUrl;
 }

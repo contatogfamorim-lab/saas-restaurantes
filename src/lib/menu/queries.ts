@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { urlPublicaDaFoto } from '@/lib/supabase/storage';
+import { urlPublicaDaFoto, urlPublicaDoModelo } from '@/lib/supabase/storage';
 import { createPublicClient } from '@/lib/supabase/public';
 
 import type {
@@ -10,6 +10,7 @@ import type {
   MenuData,
   MenuModifierGroup,
   MenuProduct,
+  ModeloDoPrato,
   MenuPromotionBadge,
   ProductBadge,
 } from './types';
@@ -68,7 +69,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
 
   const supabase = createPublicClient();
 
-  const [categoriesRes, productsRes, linksRes, groupsRes, optionsRes, pricesRes, selosRes, restricoesRes] =
+  const [categoriesRes, productsRes, linksRes, groupsRes, optionsRes, pricesRes, modelosRes, selosRes, restricoesRes] =
     await Promise.all([
       supabase
         .from('categories')
@@ -100,6 +101,13 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
         .from('product_effective_prices')
         .select('*')
         .eq('restaurant_id', restaurantId),
+      // Modelos 3D. `anon` lê pela policy `modelos: leitura pública` (0063) —
+      // o cardápio é público, e o modelo com ele.
+      supabase
+        .from('product_models')
+        .select('product_id, card_path, hero_path, usdz_path, largura_cm')
+        .eq('restaurant_id', restaurantId)
+        .eq('status', 'pronto'),
       // Os selos da casa: cor e animação vêm daqui, e não de um mapa fixo no
       // código. `anon` lê pela policy `badges_public_read`, que já filtra os
       // inativos.
@@ -122,6 +130,28 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
   const precos = new Map((pricesRes.data ?? []).map((p) => [p.product_id as string, p]));
 
   const publicUrl = (value: string | null) => urlPublicaDaFoto(supabase, value);
+  const modeloUrl = (value: string | null) => urlPublicaDoModelo(supabase, value);
+
+  // --- modelos 3D ------------------------------------------------------------
+  //
+  // A consulta já filtrou por `status = 'pronto'`, e a 0063 garante por
+  // constraint que 'pronto' tem os dois caminhos. A checagem aqui é a terceira
+  // rede: entre o banco e a tela existe migração pela metade, réplica atrasada e
+  // ambiente restaurado à mão, e um `card` nulo chegando ao palco vira pedido de
+  // rede para a string "null".
+  const modelos = new Map<string, ModeloDoPrato>();
+  for (const m of modelosRes.data ?? []) {
+    const card = modeloUrl(m.card_path);
+    const hero = modeloUrl(m.hero_path);
+    if (!card || !hero) continue;
+
+    modelos.set(m.product_id, {
+      card,
+      hero,
+      usdz: modeloUrl(m.usdz_path),
+      larguraCm: m.largura_cm === null ? null : Number(m.largura_cm),
+    });
+  }
 
   // --- modificadores ---------------------------------------------------------
   const optionsByGroup = new Map<string, MenuModifierGroup['options']>();
@@ -172,6 +202,7 @@ export async function loadMenu(shortCode: string): Promise<MenuData | null> {
       // praticou é publicidade enganosa (spec §4)
       originalPriceCents: temDesconto ? listPrice : null,
       imageUrl: publicUrl(p.image_url),
+      modelo: modelos.get(p.id) ?? null,
       prepMinutes: p.prep_minutes,
       servesPeople: Number(p.serves_people),
       dietTags: (p.diet_tags ?? []) as string[],

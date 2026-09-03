@@ -17,6 +17,7 @@ import {
 import type { MenuProduct, RestricaoDoCardapio } from '@/lib/menu/types';
 
 import { ProductImage } from './product-image';
+import { VerNaMesa } from './palco/ver-na-mesa';
 import { PromoCountdown } from './promo-countdown';
 
 /**
@@ -129,6 +130,22 @@ function ProductSheetBody({
               </span>
             )}
           </div>
+
+          {/* O AR fica AQUI, e não no card da lista.
+              Na lista ele seria um botão a mais competindo com o toque que abre
+              o item, repetido trinta vezes. Aqui o cliente já escolheu o prato e
+              está decidindo se pede — que é exatamente o momento em que "isso
+              serve duas pessoas?" aparece. O componente some sozinho quando o
+              aparelho não dá conta ou o prato não tem modelo. */}
+          {product.modelo && (
+            <div className="px-4 pt-4">
+              <VerNaMesa
+                glb={product.modelo.hero}
+                usdz={product.modelo.usdz ?? undefined}
+                nome={product.name}
+              />
+            </div>
+          )}
 
           <div className="px-4 pt-4">
             <SheetTitle className="font-display text-2xl leading-tight">
