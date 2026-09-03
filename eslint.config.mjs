@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+
+    // Decodificador Draco: código de terceiro, minificado, copiado de
+    // `node_modules/three` por `public/draco/LEIA-ME.md`. Não é nosso para
+    // arrumar, e a cada atualização do `three` ele volta como veio.
+    "public/draco/**",
   ]),
 ]);
 

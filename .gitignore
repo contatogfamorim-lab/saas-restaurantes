@@ -49,3 +49,10 @@ next-env.d.ts
 deploy/evolution/evolution.env
 deploy/evolution/pg_senha.txt
 deploy/evolution/worker.env
+
+# Malhas cruas do gerador 3D, guardadas para reprocessar sem gastar cota de GPU.
+# São grandes e reproduzíveis; não entram no repositório.
+.modelos-brutos/
+
+# Chaves do Supabase da nuvem. A service_role ignora RLS — nunca versionar.
+.env.nuvem
