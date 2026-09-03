@@ -1480,6 +1480,7 @@ export type Database = {
       }
       product_models: {
         Row: {
+          bruto_path: string | null
           card_bytes: number | null
           card_path: string | null
           erro: string | null
@@ -1499,6 +1500,7 @@ export type Database = {
           usdz_path: string | null
         }
         Insert: {
+          bruto_path?: string | null
           card_bytes?: number | null
           card_path?: string | null
           erro?: string | null
@@ -1518,6 +1520,7 @@ export type Database = {
           usdz_path?: string | null
         }
         Update: {
+          bruto_path?: string | null
           card_bytes?: number | null
           card_path?: string | null
           erro?: string | null

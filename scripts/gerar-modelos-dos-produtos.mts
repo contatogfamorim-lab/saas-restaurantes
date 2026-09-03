@@ -8,6 +8,7 @@
  *   pnpm modelos:gerar --qualidade=baixa # alta (padrão) | media | baixa
  *   pnpm modelos:gerar --simulado     # sem rede, para testar o encanamento
  *   pnpm modelos:gerar --reprocessar  # refaz o acabamento do bruto guardado
+ *   pnpm modelos:gerar --acabar       # acaba o que a GPU de fora já gerou
  *
  * O BRUTO FICA GUARDADO, E ISSO NÃO É DETALHE
  *
@@ -19,6 +20,18 @@
  *
  * Com o bruto em disco, ajustar simplificação, textura ou escala é `--reprocessar`
  * e custa zero de GPU. A parte cara é a geração; ela deve acontecer uma vez.
+ *
+ * `--acabar` É O OUTRO LADO DA MESMA IDEIA
+ *
+ * Gerar exige GPU de 16 GB, que este notebook não tem. Quem tem é o caderno do
+ * Kaggle, que roda longe daqui e só sabe uma coisa: gerar a malha e subir como
+ * veio, marcando `bruto_path` (migration 0065).
+ *
+ * `--acabar` é a metade barata: procura no banco as linhas em 'processando' que
+ * já têm bruto, baixa cada uma, aplica escala, limpeza de mesa, simplificação e
+ * compressão, e publica. Roda em qualquer máquina, sem tocar em GPU nenhuma — e
+ * mantém o acabamento como UM código só, em vez de uma cópia em Python que
+ * divergiria na primeira correção.
  *
  * O CAMINHO INTEIRO, EM ORDEM
  *
@@ -85,6 +98,7 @@ const arg = (nome: string) =>
 
 const REFAZER = args.has('--refazer');
 const REPROCESSAR = args.has('--reprocessar');
+const ACABAR = args.has('--acabar');
 
 /** Onde a malha crua do serviço fica guardada, para reprocessar sem gastar GPU. */
 const BRUTOS = join(import.meta.dirname, '..', '.modelos-brutos');
@@ -132,7 +146,7 @@ async function main() {
   // afirmação mais forte do que eu consigo sustentar — e a mensagem de erro do
   // próprio serviço diz exatamente quantos segundos restam, o que é mais útil
   // que um palpite meu.
-  if (!SIMULADO && !process.env.HF_TOKEN) {
+  if (!SIMULADO && !ACABAR && !process.env.HF_TOKEN) {
     console.warn(
       '⚠ HF_TOKEN ausente — usando a cota anônima do ZeroGPU, que é mínima.\n' +
         '  Token gratuito em https://huggingface.co/settings/tokens\n',
@@ -144,11 +158,18 @@ async function main() {
     ? provedorSimulado()
     : new ProvedorTrellis(process.env.HF_TOKEN, QUALIDADES[QUALIDADE] ?? QUALIDADES.alta);
 
-  const { data: produtos, error } = await supabase
+  // A foto só é exigida por quem vai GERAR. No modo acabar a malha já existe, e
+  // filtrar por `image_url` ali descarta silenciosamente trabalho já pago em
+  // GPU — foi o que aconteceu no primeiro teste, com a fila voltando vazia
+  // enquanto o bruto estava no bucket.
+  const consulta = supabase
     .from('products')
     .select('id, name, restaurant_id, image_url, sort_order, categories!inner(name)')
-    .not('image_url', 'is', null)
     .order('sort_order');
+
+  const { data: produtos, error } = await (ACABAR
+    ? consulta
+    : consulta.not('image_url', 'is', null));
 
   if (error || !produtos) {
     console.error('✗ não consegui ler os produtos:', error?.message);
@@ -157,26 +178,41 @@ async function main() {
 
   const { data: existentes } = await supabase
     .from('product_models')
-    .select('product_id, status');
+    .select('product_id, status, bruto_path');
   const jaPronto = new Set(
     (existentes ?? []).filter((m) => m.status === 'pronto').map((m) => m.product_id),
   );
 
+  // No modo acabar a fila é quem JÁ TEM bruto esperando, não quem falta modelo.
+  const comBruto = new Map(
+    (existentes ?? [])
+      .filter((m) => m.status === 'processando' && m.bruto_path)
+      .map((m) => [m.product_id, m.bruto_path as string]),
+  );
+
   const fila = produtos
-    .filter((p) => REFAZER || !jaPronto.has(p.id))
+    .filter((p) => (ACABAR ? comBruto.has(p.id) : REFAZER || !jaPronto.has(p.id)))
     .filter((p) => !PRODUTO || p.name.toLowerCase().includes(PRODUTO))
     .slice(0, LIMITE);
 
   if (fila.length === 0) {
-    console.log('Nada a fazer: todos os produtos com foto já têm modelo pronto.');
-    console.log('Para refazer assim mesmo: --refazer');
+    if (ACABAR) {
+      console.log('Nada esperando acabamento: nenhuma linha em "processando" com bruto.');
+      console.log('O caderno do Kaggle precisa rodar antes e subir as malhas.');
+    } else {
+      console.log('Nada a fazer: todos os produtos com foto já têm modelo pronto.');
+      console.log('Para refazer assim mesmo: --refazer');
+    }
     return;
   }
 
   console.log(
-    `${fila.length} prato(s) na fila, provedor "${provedor.nome}"` +
-      (SIMULADO ? '' : `, qualidade "${QUALIDADE}"`) + '.' +
-      (SIMULADO ? '' : ' Um por vez — a cota de GPU é o gargalo.\n'),
+    ACABAR
+      ? `${fila.length} malha(s) esperando acabamento — só CPU, sem GPU.\n`
+      : `${fila.length} prato(s) na fila, provedor "${provedor.nome}"` +
+        (SIMULADO ? '' : `, qualidade "${QUALIDADE}"`) +
+        '.' +
+        (SIMULADO ? '' : ' Um por vez — a cota de GPU é o gargalo.\n'),
   );
 
   let prontos = 0;
@@ -206,7 +242,16 @@ async function main() {
       const bruto = join(BRUTOS, `${produto.id}.glb`);
       let gerado;
 
-      if (REPROCESSAR) {
+      if (ACABAR) {
+        // A malha veio de uma GPU de fora e está no bucket. Baixar custa
+        // egress e nada mais.
+        const caminho = comBruto.get(produto.id)!;
+        const { data, error: baixa } = await supabase.storage
+          .from(BUCKET_MODELOS)
+          .download(caminho);
+        if (baixa || !data) throw new Error(`bruto não baixou: ${baixa?.message}`);
+        gerado = { glb: new Uint8Array(await data.arrayBuffer()), segundos: 0 };
+      } else if (REPROCESSAR) {
         // Reaproveita a malha crua da geração anterior. É o que permite ajustar
         // o acabamento à vontade sem tocar na cota.
         gerado = { glb: new Uint8Array(await readFile(bruto)), segundos: 0 };
@@ -245,6 +290,9 @@ async function main() {
           segundos: Math.round(gerado.segundos * 10) / 10,
           card_path: caminhos.card,
           hero_path: caminhos.hero,
+          // Preservado: é o que permite reprocessar sem GPU quando o acabamento
+          // mudar. Apagar aqui obrigaria a gerar de novo.
+          bruto_path: ACABAR ? comBruto.get(produto.id) : undefined,
           card_bytes: card.glb.byteLength,
           hero_bytes: hero.glb.byteLength,
           largura_cm: hero.larguraCm,
