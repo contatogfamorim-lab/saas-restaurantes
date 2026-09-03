@@ -103,6 +103,15 @@ async function main() {
     // é por elas que o cliente celíaco filtra. Sem leitura pública, o filtro
     // volta vazio e o prato seguro fica invisível para quem mais precisa dele.
     'diet_restrictions',
+    // Modelos 3D (0063): também são CARDÁPIO, pelo mesmo raciocínio dos selos.
+    // O que a tabela guarda é caminho de arquivo, tamanho em bytes e a largura
+    // do prato em centímetros — nada de pessoa, nada de dinheiro, nada que já
+    // não esteja público no bucket, que também é de leitura aberta porque o
+    // cliente que escaneia o QR da mesa não está logado.
+    //
+    // Vale o mesmo aviso da linha dos selos: esta linha é DELIBERADA. O script
+    // acusou a tabela assim que ela nasceu, que é o trabalho dele.
+    'product_models',
   ]);
 
   const { rows: grantsAnon } = await client.query<{ table_name: string; privilege_type: string }>(`

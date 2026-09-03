@@ -1478,6 +1478,116 @@ export type Database = {
           },
         ]
       }
+      product_models: {
+        Row: {
+          card_bytes: number | null
+          card_path: string | null
+          erro: string | null
+          hero_bytes: number | null
+          hero_path: string | null
+          largura_cm: number | null
+          largura_estimada: boolean
+          origem: Database["public"]["Enums"]["origem_do_modelo"]
+          pedido_em: string
+          product_id: string
+          pronto_em: string | null
+          provedor: string | null
+          restaurant_id: string
+          segundos: number | null
+          status: Database["public"]["Enums"]["status_do_modelo"]
+          usdz_bytes: number | null
+          usdz_path: string | null
+        }
+        Insert: {
+          card_bytes?: number | null
+          card_path?: string | null
+          erro?: string | null
+          hero_bytes?: number | null
+          hero_path?: string | null
+          largura_cm?: number | null
+          largura_estimada?: boolean
+          origem?: Database["public"]["Enums"]["origem_do_modelo"]
+          pedido_em?: string
+          product_id: string
+          pronto_em?: string | null
+          provedor?: string | null
+          restaurant_id: string
+          segundos?: number | null
+          status?: Database["public"]["Enums"]["status_do_modelo"]
+          usdz_bytes?: number | null
+          usdz_path?: string | null
+        }
+        Update: {
+          card_bytes?: number | null
+          card_path?: string | null
+          erro?: string | null
+          hero_bytes?: number | null
+          hero_path?: string | null
+          largura_cm?: number | null
+          largura_estimada?: boolean
+          origem?: Database["public"]["Enums"]["origem_do_modelo"]
+          pedido_em?: string
+          product_id?: string
+          pronto_em?: string | null
+          provedor?: string | null
+          restaurant_id?: string
+          segundos?: number | null
+          status?: Database["public"]["Enums"]["status_do_modelo"]
+          usdz_bytes?: number | null
+          usdz_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_models_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_models_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_models_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_models_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "custo_dos_pratos"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "product_models_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "product_effective_prices"
+            referencedColumns: ["product_id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "product_models_product_id_restaurant_id_fkey"
+            columns: ["product_id", "restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "restaurant_id"]
+          },
+          {
+            foreignKeyName: "product_models_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_modifier_groups: {
         Row: {
           created_at: string
@@ -3510,6 +3620,7 @@ export type Database = {
         | "partially_approved"
         | "rejected"
         | "cancelled"
+      origem_do_modelo: "foto" | "captura" | "importado" | "teste"
       payment_method: "pix" | "credito" | "debito" | "dinheiro" | "voucher"
       product_badge: "novo" | "mais_pedido" | "picante" | "da_casa"
       promotion_applies_to: "auto" | "staff_only"
@@ -3524,6 +3635,7 @@ export type Database = {
       session_status: "open" | "closing" | "closed" | "cancelled"
       staff_role: "owner" | "manager" | "waiter" | "kitchen" | "cashier"
       station: "cozinha" | "bar"
+      status_do_modelo: "pendente" | "processando" | "pronto" | "falhou"
       stock_movement_kind:
         | "entrada"
         | "venda"
@@ -3704,6 +3816,7 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      origem_do_modelo: ["foto", "captura", "importado", "teste"],
       payment_method: ["pix", "credito", "debito", "dinheiro", "voucher"],
       product_badge: ["novo", "mais_pedido", "picante", "da_casa"],
       promotion_applies_to: ["auto", "staff_only"],
@@ -3719,6 +3832,7 @@ export const Constants = {
       session_status: ["open", "closing", "closed", "cancelled"],
       staff_role: ["owner", "manager", "waiter", "kitchen", "cashier"],
       station: ["cozinha", "bar"],
+      status_do_modelo: ["pendente", "processando", "pronto", "falhou"],
       stock_movement_kind: ["entrada", "venda", "devolucao", "perda", "ajuste"],
       stock_unit: ["g", "ml", "un"],
       waiter_call_status: ["open", "resolved", "cancelled"],
