@@ -4,6 +4,34 @@ import type { NextConfig } from "next";
  * Turbopack é o bundler padrão no Next 16 — não existe flag `--turbopack` nos
  * scripts, e configuração customizada de webpack quebra o build.
  */
+/**
+ * O host do Supabase deste ambiente, para o `next/image` aceitar as fotos.
+ *
+ * Em desenvolvimento ele nem sempre é `127.0.0.1`: para abrir o cardápio NO
+ * CELULAR — única forma de testar o AR e o 3D rolando de verdade — a variável
+ * vira o IP da máquina na rede local, porque `127.0.0.1` do outro lado do wi-fi
+ * é o próprio telefone. Sem esta entrada as fotos param de carregar com
+ * "hostname is not configured", enquanto os modelos 3D continuam aparecendo —
+ * e o cardápio fica meio quebrado de um jeito que confunde.
+ */
+function hostDoSupabase(): { protocol: "http" | "https"; hostname: string; port: string } | null {
+  const bruto = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!bruto) return null;
+
+  try {
+    const url = new URL(bruto);
+    return {
+      protocol: url.protocol === "https:" ? "https" : "http",
+      hostname: url.hostname,
+      port: url.port,
+    };
+  } catch {
+    return null;
+  }
+}
+
+const supabase = hostDoSupabase();
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
@@ -49,6 +77,12 @@ const nextConfig: NextConfig = {
       // Storage do Supabase (fotos de produto). Só o host do projeto.
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
       { protocol: "http", hostname: "127.0.0.1", port: "54321", pathname: "/storage/v1/object/public/**" },
+      // O host deste ambiente, quando não for um dos dois acima — o caso de
+      // desenvolvimento apontando para o IP da rede local, para testar no
+      // celular.
+      ...(supabase
+        ? [{ ...supabase, pathname: "/storage/v1/object/public/**" as const }]
+        : []),
     ],
     minimumCacheTTL: 60 * 60 * 24 * 30,
 
@@ -76,10 +110,12 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=()",
-          },
+          // Permissions-Policy NÃO fica aqui: ela depende da rota desde que o
+          // cardápio ganhou AR, e este arquivo não sabe qual rota está sendo
+          // servida. Passou para `src/proxy.ts`, ao lado da CSP, que já decide
+          // por caminho. Duas regras em `headers()` — uma genérica e uma para
+          // `/m/` — mandariam DOIS cabeçalhos na mesma resposta, e o navegador
+          // não promete qual deles vale.
         ],
       },
     ];
